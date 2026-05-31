@@ -87,8 +87,7 @@ const chip = (done?: boolean): React.CSSProperties => ({
   padding: '3px 9px',
   borderRadius: 12,
   whiteSpace: 'nowrap' as const,
-  textDecorationLine: done === true ? 'line-through' : 'none',
-  textDecorationColor: done === true ? 'rgba(245,158,11,0.5)' : undefined,
+  textDecoration: done === true ? 'line-through rgba(245,158,11,0.5)' : 'none',
 })
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
