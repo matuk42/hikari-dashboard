@@ -254,15 +254,11 @@ export default function CascadePage() {
 
               {/* Chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {layer.chips.map(c => {
-                  const isDone = c.startsWith('✅')
-                  const isFail = c.startsWith('❌')
-                  return (
-                    <span key={c} style={chip(isFail ? false : isDone ? undefined : undefined)}>
-                      {c}
-                    </span>
-                  )
-                })}
+                {layer.chips.map(c => (
+                  <span key={c} style={chip()}>
+                    {c}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
