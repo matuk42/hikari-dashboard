@@ -44,7 +44,6 @@ const LAYERS: LayerData[] = [
     n: 2,
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
-    description: '2 stabilní digitální produkty, 30–50k Kč/měs, schopen cestovat hned po střední',
     icon: 'clock',
     progress: 5,
   },
