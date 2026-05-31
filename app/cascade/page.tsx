@@ -6,7 +6,7 @@ interface LayerData {
   n: number
   title: string
   timeframe: string
-  description: string
+  quote?: string
   icon: IconKey
   progress: number
   countdown?: number
