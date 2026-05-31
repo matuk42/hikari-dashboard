@@ -51,7 +51,6 @@ const LAYERS: LayerData[] = [
     n: 3,
     title: 'Rok',
     timeframe: '1.9.2027',
-    description: 'Výprava na kole k moři, japonština N3–N4, 1 YouTube video, Erasmus CV hotové',
     icon: 'flag',
     progress: 15,
     countdown: 458,
