@@ -2,7 +2,7 @@ interface LayerData {
   n: number
   title: string
   timeframe: string
-  quote?: string
+  description: string
   progress: number
   countdown?: number
 }
@@ -12,19 +12,21 @@ const LAYERS: LayerData[] = [
     n: 1,
     title: 'Životní sen',
     timeframe: 'Věk 28+',
-    quote: 'Žiju v rytmu mezi módy světa',
+    description: 'Žiju v rytmu mezi módy světa',
     progress: 8,
   },
   {
     n: 2,
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
+    description: '2 stabilní digitální produkty, 30–50k Kč/měs, schopen cestovat hned po střední',
     progress: 5,
   },
   {
     n: 3,
     title: 'Rok',
     timeframe: '1.9.2027',
+    description: 'Výprava na kole k moři, japonština N3–N4, 1 YouTube video, Erasmus CV hotové',
     progress: 15,
     countdown: 458,
   },
@@ -32,12 +34,14 @@ const LAYERS: LayerData[] = [
     n: 4,
     title: 'Měsíc',
     timeframe: 'Červen 2026',
+    description: 'Složit autoškolu, dokončit Hikari 1–3, naučit Anděl na kytaře, rozjet DofE',
     progress: 0,
   },
   {
     n: 5,
     title: 'Týden',
     timeframe: 'W22',
+    description: 'Cascade vrstva 1+2 hotová, autoškola 4/4, ANI-WATCH sort icon zbývá',
     progress: 67,
   },
 ]
