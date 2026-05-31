@@ -234,9 +234,7 @@ export default function CascadePage() {
                     alignItems: 'center',
                   }}>
                     <span style={{ fontSize: 10, color: '#444' }}>
-                      {layer.done !== undefined && layer.total !== undefined
-                        ? `${layer.done} / ${layer.total} splněno`
-                        : `${layer.progress}%`}
+                      {layer.progress}%
                     </span>
                     {layer.countdown !== undefined && (
                       <span style={{ fontSize: 10, color: '#555' }}>
