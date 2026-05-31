@@ -15,7 +15,7 @@ const LAYERS: LayerData[] = [
     title: 'Životní sen',
     timeframe: 'Věk 28+',
     quote: 'Žiju v rytmu mezi módy světa',
-    chips: ['výpravy', 'Japonsko', 'fyzička', 'YouTube', 'svoboda'],
+    chips: [],
     progress: 8,
   },
   {
