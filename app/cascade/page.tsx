@@ -33,47 +33,40 @@ const LAYERS: LayerData[] = [
     n: 2,
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
-    // prijem.md: B1 → B2, 30–50k Kč/měs, 4 timeline milníky
-    // TODO: connect to real tracking — tady manuální odhad (B1 ještě nevybrán)
+    // Odhad blízkosti k cíli (sen.md + prijem.md):
+    // japonština streak 45+ dní ✓, fyzička na nule, YouTube 0, B1 nevybrán, DofE nezačato
+    // TODO: connect to real tracking
     chips: ['fyzička', 'japonština', 'YouTube', 'DofE'],
-    progress: 1,
-    done: 0,
-    total: 4,
+    progress: 5,
   },
   {
     n: 3,
     title: 'Rok',
     timeframe: '1.9.2027',
-    // sen.md: 10 dimenzí s milníky — japonština a cascade rozjety, zbytek 0
+    // sen.md 10 dimenzí: autoškola ~70 % (zkouška 30.6.), japonština progresuje,
+    // cascade set ✓, výprava/YouTube/fyzička na nule → odhad ~15 %
+    // TODO: connect to real tracking
     chips: ['výprava kolo k moři', 'N3–N4', 'YouTube video', 'Erasmus CV', 'DofE bronz'],
-    progress: 10,
-    done: 1,
-    total: 10,
+    progress: 15,
     countdown: 458,
   },
   {
     n: 4,
     title: 'Měsíc',
     timeframe: 'Červen 2026',
-    // 2026-06.md: 6 SEN milníků pro červen — červen právě začíná
+    // 2026-06.md: 6 SEN milníků — červen právě začíná, 0 splněno
     chips: ['autoškola zkouška', 'Hikari 1–3', 'kytara Anděl', 'DofE start', 'japonština', 'fyzička'],
+    chipsDone: [false, false, false, false, false, false],
     progress: 0,
-    done: 0,
-    total: 6,
   },
   {
     n: 5,
     title: 'Týden',
     timeframe: 'W22',
-    // 2026-W22.md — Pokrok projektů:
-    //   ✅ Cascade vrstva 1+2 (milestone)
-    //   ✅ Autoškola testy (4/4)
-    //   ❌ ANI-WATCH sort icon (4× perpetual-tomorrow eskalace)
+    // 2026-W22.md: Cascade vrstva 1+2 ✓, Autoškola 4/4 ✓, ANI-WATCH sort ✗ → 2/3 = 67 %
     chips: ['Cascade vrstva 1+2', 'Autoškola 4/4', 'ANI-WATCH sort'],
     chipsDone: [true, true, false],
     progress: 67,
-    done: 2,
-    total: 3,
   },
 ]
 
