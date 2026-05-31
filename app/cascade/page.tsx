@@ -36,7 +36,7 @@ const LAYERS: LayerData[] = [
     n: 1,
     title: 'Životní sen',
     timeframe: 'Věk 28+',
-    description: 'Žiju v rytmu mezi módy světa',
+    quote: 'Žiju v rytmu mezi módy světa',
     icon: 'star',
     progress: 8,
   },
