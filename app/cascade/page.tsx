@@ -12,9 +12,7 @@ interface LayerData {
   quote?: string
   chips: string[]
   chipsDone?: boolean[]     // true = splněno (zlaté + přeškrtnuté), false = čeká (šedé)
-  progress: number | null   // 0–100, null = žádný progress bar (L1)
-  done?: number
-  total?: number
+  progress: number | null   // 0–100 % blízkosti ke snu/cíli; null = L1 (směr bez metriky)
   countdown?: number        // dní zbývá
 }
 
