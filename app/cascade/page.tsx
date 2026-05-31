@@ -192,7 +192,7 @@ export default function CascadePage() {
               )}
 
               {/* Progress bar */}
-              {layer.progress !== null && (
+              {(
                 <div style={{ marginBottom: 10 }}>
                   <div style={{
                     height: 5,
