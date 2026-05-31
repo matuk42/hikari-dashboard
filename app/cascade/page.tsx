@@ -1,10 +1,32 @@
+type IconKey = 'star' | 'clock' | 'flag' | 'calendar' | 'zap'
+
 interface LayerData {
   n: number
   title: string
   timeframe: string
   description: string
+  icon: IconKey
   progress: number
   countdown?: number
+}
+
+function Icon({ name }: { name: IconKey }) {
+  const props = {
+    width: 13,
+    height: 13,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    style: { display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 },
+  }
+  if (name === 'star')     return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  if (name === 'clock')    return <svg {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  if (name === 'flag')     return <svg {...props}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+  if (name === 'calendar') return <svg {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  return <svg {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
 }
 
 const LAYERS: LayerData[] = [
