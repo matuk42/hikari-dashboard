@@ -257,8 +257,8 @@ export default function CascadePage() {
 
               {/* Chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {layer.chips.map(c => (
-                  <span key={c} style={chip()}>
+                {layer.chips.map((c, ci) => (
+                  <span key={c} style={chip(layer.chipsDone?.[ci])}>
                     {c}
                   </span>
                 ))}
