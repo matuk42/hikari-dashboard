@@ -59,7 +59,6 @@ const LAYERS: LayerData[] = [
     n: 4,
     title: 'Měsíc',
     timeframe: 'Červen 2026',
-    description: 'Složit autoškolu, dokončit Hikari 1–3, naučit Anděl na kytaře, rozjet DofE',
     icon: 'calendar',
     progress: 0,
   },
