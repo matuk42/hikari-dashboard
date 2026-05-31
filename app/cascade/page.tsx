@@ -1,39 +1,27 @@
-// ─── Static data z vaultu: sen.md · prijem.md · 2026-W22.md · 2026-06.md ─────
-
-// TODO: Layer 2 progress — connect to real 5-year tracking (prijem.md milníky)
-// TODO: Layer 3 progress — connect to real annual milestone completion
-// TODO: Layer 4 progress — connect to Supabase (monthly goal tracking)
-// TODO: Layer 5 progress — connect to Supabase (weekly task completion)
-
 interface LayerData {
   n: number
   title: string
   timeframe: string
   quote?: string
   chips: string[]
-  chipsDone?: boolean[]     // true = splněno (zlaté + přeškrtnuté), false = čeká (šedé)
-  progress: number | null   // 0–100 % blízkosti ke snu/cíli; null = L1 (směr bez metriky)
-  countdown?: number        // dní zbývá
+  chipsDone?: boolean[]
+  progress: number
+  countdown?: number
 }
 
-// Vrstvy cascade — data z vaultu k 2026-05-31
 const LAYERS: LayerData[] = [
   {
     n: 1,
     title: 'Životní sen',
     timeframe: 'Věk 28+',
     quote: 'Žiju v rytmu mezi módy světa',
-    // sen.md: 4 pilíře, 5 dimenzí
     chips: ['výpravy', 'Japonsko', 'fyzička', 'YouTube', 'svoboda'],
-    progress: null,
+    progress: 8,
   },
   {
     n: 2,
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
-    // Odhad blízkosti k cíli (sen.md + prijem.md):
-    // japonština streak 45+ dní ✓, fyzička na nule, YouTube 0, B1 nevybrán, DofE nezačato
-    // TODO: connect to real tracking
     chips: ['fyzička', 'japonština', 'YouTube', 'DofE'],
     progress: 5,
   },
@@ -41,9 +29,6 @@ const LAYERS: LayerData[] = [
     n: 3,
     title: 'Rok',
     timeframe: '1.9.2027',
-    // sen.md 10 dimenzí: autoškola ~70 % (zkouška 30.6.), japonština progresuje,
-    // cascade set ✓, výprava/YouTube/fyzička na nule → odhad ~15 %
-    // TODO: connect to real tracking
     chips: ['výprava kolo k moři', 'N3–N4', 'YouTube video', 'Erasmus CV', 'DofE bronz'],
     progress: 15,
     countdown: 458,
@@ -52,7 +37,6 @@ const LAYERS: LayerData[] = [
     n: 4,
     title: 'Měsíc',
     timeframe: 'Červen 2026',
-    // 2026-06.md: 6 SEN milníků — červen právě začíná, 0 splněno
     chips: ['autoškola zkouška', 'Hikari 1–3', 'kytara Anděl', 'DofE start', 'japonština', 'fyzička'],
     chipsDone: [false, false, false, false, false, false],
     progress: 0,
@@ -61,7 +45,6 @@ const LAYERS: LayerData[] = [
     n: 5,
     title: 'Týden',
     timeframe: 'W22',
-    // 2026-W22.md: Cascade vrstva 1+2 ✓, Autoškola 4/4 ✓, ANI-WATCH sort ✗ → 2/3 = 67 %
     chips: ['Cascade vrstva 1+2', 'Autoškola 4/4', 'ANI-WATCH sort'],
     chipsDone: [true, true, false],
     progress: 67,
