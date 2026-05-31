@@ -11,6 +11,7 @@ interface LayerData {
   timeframe: string
   quote?: string
   chips: string[]
+  chipsDone?: boolean[]     // true = splněno (zlaté + přeškrtnuté), false = čeká (šedé)
   progress: number | null   // 0–100, null = žádný progress bar (L1)
   done?: number
   total?: number
