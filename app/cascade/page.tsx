@@ -3,8 +3,6 @@ interface LayerData {
   title: string
   timeframe: string
   quote?: string
-  chips: string[]
-  chipsDone?: boolean[]
   progress: number
   countdown?: number
 }
@@ -15,21 +13,18 @@ const LAYERS: LayerData[] = [
     title: 'Životní sen',
     timeframe: 'Věk 28+',
     quote: 'Žiju v rytmu mezi módy světa',
-    chips: [],
     progress: 8,
   },
   {
     n: 2,
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
-    chips: ['fyzička', 'japonština', 'YouTube', 'DofE'],
     progress: 5,
   },
   {
     n: 3,
     title: 'Rok',
     timeframe: '1.9.2027',
-    chips: ['výprava kolo k moři', 'N3–N4', 'YouTube video', 'Erasmus CV', 'DofE bronz'],
     progress: 15,
     countdown: 458,
   },
@@ -37,16 +32,12 @@ const LAYERS: LayerData[] = [
     n: 4,
     title: 'Měsíc',
     timeframe: 'Červen 2026',
-    chips: ['autoškola zkouška', 'Hikari 1–3', 'kytara Anděl', 'DofE start', 'japonština', 'fyzička'],
-    chipsDone: [false, false, false, false, false, false],
     progress: 0,
   },
   {
     n: 5,
     title: 'Týden',
     timeframe: 'W22',
-    chips: ['Cascade vrstva 1+2', 'Autoškola 4/4', 'ANI-WATCH sort'],
-    chipsDone: [true, true, false],
     progress: 67,
   },
 ]
