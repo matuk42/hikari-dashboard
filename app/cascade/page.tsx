@@ -1,3 +1,5 @@
+'use client'
+
 type IconKey = 'star' | 'clock' | 'flag' | 'calendar' | 'zap'
 
 interface LayerData {
