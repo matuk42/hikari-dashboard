@@ -163,18 +163,15 @@ export default function CascadePage() {
                 </span>
               </div>
 
-              {/* Quote (jen L1 — směr, ne cíl) */}
-              {layer.quote && (
-                <div style={{
-                  fontSize: 13,
-                  color: '#aaa',
-                  fontStyle: 'italic',
-                  marginBottom: 12,
-                  lineHeight: 1.55,
-                }}>
-                  &ldquo;{layer.quote}&rdquo;
-                </div>
-              )}
+              {/* Popis cíle */}
+              <div style={{
+                fontSize: 12,
+                color: '#555',
+                marginBottom: 12,
+                lineHeight: 1.55,
+              }}>
+                {layer.description}
+              </div>
 
               {/* Progress bar */}
               {(
