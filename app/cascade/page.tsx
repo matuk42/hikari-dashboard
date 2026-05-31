@@ -77,15 +77,14 @@ const LAYERS: LayerData[] = [
 
 // ─── Chip style (sdílený) ─────────────────────────────────────────────────────
 
-const chip = (done?: boolean): React.CSSProperties => ({
+const chip = (): React.CSSProperties => ({
   fontSize: 11,
-  color: done === false ? '#666' : '#F59E0B',
-  background: done === false ? 'rgba(255,255,255,0.03)' : 'rgba(245,158,11,0.07)',
-  border: `1px solid ${done === false ? 'rgba(255,255,255,0.07)' : 'rgba(245,158,11,0.2)'}`,
+  color: '#F59E0B',
+  background: 'rgba(245,158,11,0.07)',
+  border: '1px solid rgba(245,158,11,0.2)',
   padding: '3px 9px',
   borderRadius: 12,
   whiteSpace: 'nowrap' as const,
-  textDecoration: done === false ? 'line-through' : 'none',
 })
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
