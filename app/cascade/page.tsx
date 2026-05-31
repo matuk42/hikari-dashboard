@@ -182,7 +182,8 @@ export default function CascadePage() {
                 }}>
                   L{layer.n}
                 </span>
-                <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                  <span style={{ color: '#F59E0B', opacity: 0.7 }}><Icon name={layer.icon} /></span>
                   {layer.title}
                 </span>
                 <span style={{ fontSize: 11, color: '#555', marginLeft: 'auto', flexShrink: 0 }}>
