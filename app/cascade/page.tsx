@@ -66,7 +66,6 @@ const LAYERS: LayerData[] = [
     n: 5,
     title: 'Týden',
     timeframe: 'W22',
-    description: 'Cascade vrstva 1+2 hotová, autoškola 4/4, ANI-WATCH sort icon zbývá',
     icon: 'zap',
     progress: 67,
   },
