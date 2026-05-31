@@ -70,6 +70,7 @@ const LAYERS: LayerData[] = [
     //   ✅ Autoškola testy (4/4)
     //   ❌ ANI-WATCH sort icon (4× perpetual-tomorrow eskalace)
     chips: ['Cascade vrstva 1+2', 'Autoškola 4/4', 'ANI-WATCH sort'],
+    chipsDone: [true, true, false],
     progress: 67,
     done: 2,
     total: 3,
