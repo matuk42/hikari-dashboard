@@ -35,6 +35,7 @@ const LAYERS: LayerData[] = [
     title: 'Životní sen',
     timeframe: 'Věk 28+',
     description: 'Žiju v rytmu mezi módy světa',
+    icon: 'star',
     progress: 8,
   },
   {
@@ -42,6 +43,7 @@ const LAYERS: LayerData[] = [
     title: '5 let',
     timeframe: 'Věk 21 · 2031',
     description: '2 stabilní digitální produkty, 30–50k Kč/měs, schopen cestovat hned po střední',
+    icon: 'clock',
     progress: 5,
   },
   {
@@ -49,6 +51,7 @@ const LAYERS: LayerData[] = [
     title: 'Rok',
     timeframe: '1.9.2027',
     description: 'Výprava na kole k moři, japonština N3–N4, 1 YouTube video, Erasmus CV hotové',
+    icon: 'flag',
     progress: 15,
     countdown: 458,
   },
@@ -57,6 +60,7 @@ const LAYERS: LayerData[] = [
     title: 'Měsíc',
     timeframe: 'Červen 2026',
     description: 'Složit autoškolu, dokončit Hikari 1–3, naučit Anděl na kytaře, rozjet DofE',
+    icon: 'calendar',
     progress: 0,
   },
   {
@@ -64,6 +68,7 @@ const LAYERS: LayerData[] = [
     title: 'Týden',
     timeframe: 'W22',
     description: 'Cascade vrstva 1+2 hotová, autoškola 4/4, ANI-WATCH sort icon zbývá',
+    icon: 'zap',
     progress: 67,
   },
 ]
