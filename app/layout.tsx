@@ -22,7 +22,8 @@ export const metadata: Metadata = {
     title: "光 Hikari",
   },
   icons: {
-    apple: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+    icon: "/icon.png",
   },
 };
 
