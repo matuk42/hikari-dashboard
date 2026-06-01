@@ -23,9 +23,8 @@ export async function GET(request: Request) {
       }
     )
 
-    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
-      .then(r => r.data?.user ? r : supabase.auth.getUser().then(u => ({ data: u.data, error: u.error })))
-      .catch(() => ({ data: { user: null }, error: null }))
+    const { data: exchangeData } = await supabase.auth.exchangeCodeForSession(code)
+    const user = exchangeData?.user ?? null
 
     if (user) {
       // Auto-create profile on first login
