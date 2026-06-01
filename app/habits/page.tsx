@@ -519,17 +519,18 @@ export default function HabitsPage() {
   }, [dateKey])
 
   const toggle = (id: string) => {
-    let nowDone = false
+    // Read current state directly — done is always fresh at click time
+    const nowDone = !done.has(id)
+    console.log('[toggle]', id, '→', nowDone, 'dbId:', habitIdMap[id])
+
     setDone(prev => {
       const next = new Set(prev)
-      nowDone = !prev.has(id)
       nowDone ? next.add(id) : next.delete(id)
       localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
       return next
     })
 
     const dbId = habitIdMap[id]
-    console.log('[toggle]', id, 'dbId:', dbId, 'nowDone will be set by updater')
     if (dbId) {
       const habit = ALL_HABITS.find(h => h.id === id)
       supabase.from('habit_logs').upsert(
