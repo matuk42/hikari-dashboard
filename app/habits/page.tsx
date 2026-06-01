@@ -337,15 +337,15 @@ export default function HabitsPage() {
           paddingTop: 14,
           paddingBottom: 28,
         }}>
-          <h1 style={{
+          <Link href="/" style={{
             fontSize: 17,
             fontWeight: 700,
             letterSpacing: '0.02em',
             color: '#F59E0B',
-            margin: 0,
+            textDecoration: 'none',
           }}>
             光 Hikari
-          </h1>
+          </Link>
 
           <span style={{
             fontSize: 11,
