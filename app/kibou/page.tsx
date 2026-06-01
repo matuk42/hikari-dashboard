@@ -122,6 +122,7 @@ export default function KibouPage() {
   const [range, setRange] = useState<'30' | 'all'>('30')
   const [chartData, setChartData] = useState<HopeEntry[]>(PLACEHOLDER_DATA)
   const [isPlaceholder, setIsPlaceholder] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
