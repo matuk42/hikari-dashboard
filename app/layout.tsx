@@ -41,7 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SwRegister />
-        <OnboardingModal />
+        <OnboardingWrapper />
         {children}
       </body>
     </html>
