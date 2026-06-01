@@ -8,12 +8,13 @@ export default function LoginPage() {
 
   async function handleLogin() {
     setLoading(true)
-    await supabase.auth.signInWithOAuth({
+    const redirectTo = `${window.location.origin}/auth/callback`
+    console.log('[login] redirectTo:', redirectTo)
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo },
     })
+    console.log('[login] signInWithOAuth result — url:', data?.url, 'error:', error?.message)
     setLoading(false)
   }
 
