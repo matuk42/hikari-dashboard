@@ -630,77 +630,93 @@ export default function HabitsPage() {
           </div>
         </header>
 
-        {/* Streak hero */}
-        <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
-          <StrawHatFigure />
-          <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{ankiStreak}</div>
-          <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
-          {allDone && (
-            <div style={{ marginTop: 20, padding: '0 24px' }}>
-              <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />
-              <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(245,158,11,0.82)', lineHeight: 1.6, margin: '0 0 6px' }}>
-                &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
-              </p>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em', margin: 0 }}>— Monkey D. Luffy</p>
+        {/* Below-header content: skeleton overlays invisible real content until loaded */}
+        <div style={{ position: 'relative' }}>
+
+          {/* Skeleton — absolutely positioned, visible while loading */}
+          {!dataLoaded && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1, pointerEvents: 'none' }}>
+              <HabitsSkeleton />
             </div>
           )}
-        </div>
 
-        {/* Voda */}
-        <section>
-          <SectionLabel>Voda</SectionLabel>
-          <WaterTracker profileId={profileId} isOnline={isOnline} />
-        </section>
+          {/* Real content — opacity 0 while loading, fades in when ready */}
+          <div style={{ opacity: dataLoaded ? 1 : 0, transition: 'opacity 0.35s ease' }}>
 
-        {/* Aktivní */}
-        <section style={{ marginBottom: 20 }}>
-          <SectionLabel>Aktivní</SectionLabel>
-          <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-            {ACTIVE.map(h => (
-              <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
-            ))}
-          </div>
-        </section>
+            {/* Streak hero */}
+            <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
+              <StrawHatFigure />
+              <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{ankiStreak}</div>
+              <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
+              {allDone && (
+                <div style={{ marginTop: 20, padding: '0 24px' }}>
+                  <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />
+                  <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(245,158,11,0.82)', lineHeight: 1.6, margin: '0 0 6px' }}>
+                    &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
+                  </p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em', margin: 0 }}>— Monkey D. Luffy</p>
+                </div>
+              )}
+            </div>
 
-        {/* Testovací */}
-        <section style={{ marginBottom: 20 }}>
-          <SectionLabel>Testovací</SectionLabel>
-          <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-            {TRIAL_SOLO.map(h => (
-              <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
-            ))}
-          </div>
-        </section>
+            {/* Voda */}
+            <section>
+              <SectionLabel>Voda</SectionLabel>
+              <WaterTracker profileId={profileId} isOnline={isOnline} />
+            </section>
 
-        {/* Balíčky */}
-        <section style={{ marginBottom: 20 }}>
-          <SectionLabel>Balíčky</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
-            <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
-          </div>
-        </section>
-
-        {/* Zautomatizováno */}
-        <section>
-          <SectionLabel>Zautomatizováno</SectionLabel>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {GRADUATED.map(h => (
-              <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
-                <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
+            {/* Aktivní */}
+            <section style={{ marginBottom: 20 }}>
+              <SectionLabel>Aktivní</SectionLabel>
+              <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+                {ACTIVE.map(h => (
+                  <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
 
-        <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
-          <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
-            &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
-          </p>
-          <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>— Monkey D. Luffy</p>
-        </div>
+            {/* Testovací */}
+            <section style={{ marginBottom: 20 }}>
+              <SectionLabel>Testovací</SectionLabel>
+              <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+                {TRIAL_SOLO.map(h => (
+                  <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
+                ))}
+              </div>
+            </section>
+
+            {/* Balíčky */}
+            <section style={{ marginBottom: 20 }}>
+              <SectionLabel>Balíčky</SectionLabel>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
+                <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
+              </div>
+            </section>
+
+            {/* Zautomatizováno */}
+            <section>
+              <SectionLabel>Zautomatizováno</SectionLabel>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {GRADUATED.map(h => (
+                  <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
+              <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
+                &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
+              </p>
+              <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>— Monkey D. Luffy</p>
+            </div>
+
+          </div>{/* end real content */}
+        </div>{/* end relative wrapper */}
 
       </div>
     </div>
