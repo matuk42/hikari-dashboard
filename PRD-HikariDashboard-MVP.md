@@ -352,26 +352,49 @@ hope_correlations (id, activity_type, avg_hope_after, sample_size, updated_at)
 
 **Hikari není jen dashboard — je to systém který přemýšlí.**
 
+### 7.1 Tři vrstvy "myšlení"
+
+**Vrstva 1 — Ranní cron (Vercel cron 6:00, ~30s, Claude API):**
+1. Spočítej streaky → `UPDATE streaks_cache`
+2. Spočítej cascade % per dimenze → `UPDATE cascade_dimensions.progress_pct`
+3. Detekuj patterns (např. "úterý vždy low energy") → `INSERT hikari_memory status='proposed'`
+4. Vygeneruj denní brief (3 hlavní + 2 vedlejší + 1 bonus) → `INSERT ai_daily_brief`
+5. Aktualizuj `energy_blocks` z HOPE 30d
+6. Loguj invokaci → `INSERT ai_invocations` (tokens, cost, duration)
+
+**Vrstva 2 — Reaktivní (klik / interakce, ~bez AI):**
+- Klikneš habit ✅ → `INSERT habit_logs` + rebuild streak. Žádný AI call.
+- Zadáš HOPE večer → `INSERT hope_logs`. Žádný AI call (korelace ráno).
+- ⚡ "Jaký máš názor na změnu úkolu?" → 1× AI call ~2s, neukládá se.
+- Schválíš `proposed` memory → `UPDATE hikari_memory status='active'`.
+
+**Vrstva 3 — On-demand tlačítko "Přepočítej Hikari":**
+- Re-run vrstvy 1 mimo cron rytmus. Cena: ~1 AI invokace.
+
+### 7.2 Schopnosti
+
 | Schopnost | Jak funguje | Kdy |
 |-----------|-------------|-----|
-| Návrh denních úkolů | Cascade + habits + HOPE → 3+2+1 úkoly | Každé ráno |
-| Časová osa energie | HOPE korelace (30 dní) → bloky dne | Real-time |
-| Názor na změnu úkolu | ⚡ ikonka → Hikari okomentuje | Na požádání |
-| Progress výpočet | Habits + HOPE + milníky → % v cascade | Týdenně |
-| Sync z Obsidianu | Načte review soubory → Supabase | Auto neděle + manuálně |
-| Hodnocení balíčků | 30.6. / 3.7. → zpráva na Home screenu | Automaticky |
-| Auto-retire habits | end_date uplynul → archivace | Automaticky |
-| Zlepšení za měsíc | Porovná všechny metriky s minulým měsícem | Měsíčně |
-| Paměť | Preference, výjimky, vzory → Supabase | Průběžně |
+| Návrh denních úkolů | Cascade + habits + HOPE + memory → 3+2+1 úkoly | Ranní cron 6:00 + tlačítko |
+| Časová osa energie | HOPE korelace (30 dní) → bloky dne | Vypočítá cron, UI čte z `energy_blocks` |
+| Názor na změnu úkolu | ⚡ ikonka → Hikari okomentuje | On-demand (1 AI call) |
+| Progress výpočet | Habits + HOPE + milníky → % v cascade | Ranní cron |
+| Sync z vaultu | Načte .md soubory přes Git → Supabase | Cron Ne 22:00 + manuál |
+| Konflikt detection | CLI Hikari porovná voice vs. dashboard | Při ingestu hlasového deníku |
+| Hodnocení balíčků | Trial end_date → návrh promote/extend/retire | Auto v den `trial_end` |
+| Auto-retire habits | `end_date` uplynul → `retired_on = today` | Denně |
+| Zlepšení za měsíc | Porovná metriky s minulým měsícem | Měsíční cron 1. den |
+| Paměť | proposed/active workflow (3.6) | Průběžně |
 | Chat | — | Placeholder V3 |
 
-**Hikari paměť ukládá:**
-- Výjimky (autoškola = mandatory)
-- Preference (těžké věci ráno, kytara večer)
-- Vzory chování (kdy Matyáš nejvíc prokrastinuje)
-- Životní kontext (nemoc → sníž nároky)
-- Školní rozvrh (kdy je volno)
-- Spánkový rytmus
+### 7.3 Co Hikari paměť ukládá
+
+- **Výjimky:** `autoškola = mandatory`, žádný grace day
+- **Preference:** "těžké věci ráno", "kytara večer", "les zvedá HOPE"
+- **Vzory chování:** kdy Matyáš prokrastinuje, kdy je peak energy, který den v týdnu je slabší
+- **Životní kontext:** nemoc → sníž nároky, víkend = legitimní pauza
+- **Školní rozvrh:** kdy je volno, kdy praxe
+- **Spánkový rytmus:** 22:00 → 06:15, víkend ±30 min
 
 ---
 
