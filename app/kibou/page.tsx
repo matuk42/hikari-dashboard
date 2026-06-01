@@ -58,6 +58,57 @@ function monthEntries(data: HopeEntry[]): HopeEntry[] {
   return data.slice(-30)
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function SkeletonRect({ width = '100%', height = 16, radius = 8, style: extra }: {
+  width?: string | number; height?: number; radius?: number; style?: React.CSSProperties
+}) {
+  return (
+    <div className="skeleton-pulse" style={{ width, height, borderRadius: radius, background: 'rgba(255,255,255,0.08)', flexShrink: 0, ...extra }} />
+  )
+}
+
+function KibouSkeleton() {
+  return (
+    <div>
+      {/* Sliders card */}
+      <div style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px 16px', marginBottom: 16 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ marginBottom: 22 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <SkeletonRect width={80} height={13} radius={6} />
+              <SkeletonRect width={32} height={26} radius={6} />
+            </div>
+            <SkeletonRect height={4} radius={2} />
+          </div>
+        ))}
+        <SkeletonRect height={40} radius={8} style={{ marginBottom: 14 }} />
+        <SkeletonRect height={44} radius={10} />
+      </div>
+
+      {/* Averages */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 10px' }}>
+            <SkeletonRect width="65%" height={9} radius={4} style={{ margin: '0 auto 10px' }} />
+            <SkeletonRect width={38} height={14} radius={6} style={{ margin: '0 auto 6px' }} />
+            <SkeletonRect width={58} height={9} radius={4} style={{ margin: '0 auto' }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 14px', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <SkeletonRect width={80} height={11} radius={4} />
+          <SkeletonRect width={80} height={26} radius={8} />
+        </div>
+        <SkeletonRect height={180} radius={8} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function SliderInput({
