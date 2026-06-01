@@ -422,6 +422,9 @@ function LayerCard({ layer }: { layer: Layer }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CascadePage() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   return (
     <div style={{
       minHeight: '100vh',
