@@ -372,7 +372,8 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
 
 // ─── Habit row ────────────────────────────────────────────────────────────────
 
-function HabitRow({ habit, done, onToggle }: { habit: Habit; done: boolean; onToggle: () => void }) {
+function HabitRow({ habit, done, onToggle, liveStreak }: { habit: Habit; done: boolean; onToggle: () => void; liveStreak?: number }) {
+  const displayStreak = liveStreak !== undefined ? liveStreak : habit.streak
   return (
     <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
       <button
