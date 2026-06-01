@@ -243,7 +243,7 @@ function LayerCard({ layer }: { layer: Layer }) {
               </svg>
             </div>
           )}
-        </button>
+        </div>
 
         {/* Collapsed progress bar (layers 2-5 when closed) */}
         {!isLife && !open && layer.progress !== undefined && (
