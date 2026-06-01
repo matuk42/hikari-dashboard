@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { OfflineBadge } from '@/app/components/OfflineBadge'
 
 // ─── Vault data (baked from 2nd_brain/wiki/cile/cascade/sen.md + prijem.md) ──
