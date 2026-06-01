@@ -420,7 +420,7 @@ export default function KibouPage() {
                 <Line type="monotone" dataKey="energy" stroke="rgba(245,158,11,0.4)" strokeWidth={1.5} dot={false} name="Energy" strokeDasharray="3 3" />
                 <Line type="monotone" dataKey="mood" stroke="rgba(245,158,11,0.25)" strokeWidth={1.5} dot={false} name="Mood" strokeDasharray="5 5" />
               </LineChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer>}
           </div>
 
           {/* Legend */}
