@@ -259,11 +259,7 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Přesunout habit: Trial → Active → Graduated
 - Archivovat (Retired) s důvodem
 
-**Supabase tabulky:**
-```sql
-habits (id, name, group, measurement, frequency, mandatory, end_date, cascade_ref, active)
-habit_logs (id, habit_id, date, completed, synced_offline)
-```
+**Supabase tabulky:** `habits` · `habit_logs` · `streaks_cache` — viz `supabase/migrations/001_init.sql` doména B.
 
 ---
 
