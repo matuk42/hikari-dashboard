@@ -481,6 +481,7 @@ export default function HabitsPage() {
   const [done, setDone] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
   const [habitIdMap, setHabitIdMap] = useState<Record<string, string>>({})
+  const [streakMap, setStreakMap] = useState<Record<string, number>>({})
 
   // Load localStorage on mount
   useEffect(() => {
