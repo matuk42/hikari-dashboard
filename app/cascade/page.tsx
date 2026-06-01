@@ -32,12 +32,42 @@ const LAYERS: Layer[] = [
     timeframe: 'Věk 28+',
     noProgressBar: true,
     chips: [
-      { label: '日本語 · N2', detail: 'Porozumění 90%+ anime, podcastů a videí. Japonština jako druhý domov.' },
-      { label: '🌏 Location-free', detail: '2 paralelní digitální produkty · cíl 50 000 Kč/měs · 2–3h ráno na laptopu.' },
-      { label: '⛰️ Výpravy', detail: 'Alpe Adria kolo · Japonsko na kole · Eurasie · Nepál · Camino z Česka.' },
-      { label: '🎬 YouTube', detail: 'Sdílet cestu autenticky — velké mini-filmy z výprav. Vliv jako vedlejší produkt.' },
-      { label: '💪 Fyzička · B', detail: '30 km/den hory · 100 km/den kolo · 10 km běh bez bolesti · shyby se závažím.' },
-      { label: '🌿 Příroda · rytmus', detail: 'Rytmus mezi módy: hluboká příroda · město · pomoc lidem · výpravy · klidové fáze.' },
+      {
+        label: '日本語 · N2',
+        detail: 'Porozumění 90%+ anime, podcastů a videí. Japonština jako druhý domov.',
+        linkedHabits: ['Anki procvičování', 'Anki tvorba', 'Japonská imerze'],
+        hikariNote: 'Anki streak je tvůj záchytný bod — každý den karta = každý den krok k N2. Nether miss it.',
+      },
+      {
+        label: '🌏 Location-free',
+        detail: '2 paralelní digitální produkty · cíl 50 000 Kč/měs · 2–3h ráno na laptopu.',
+        linkedHabits: [],
+        hikariNote: 'Hikari Dashboard je tvůj první produkt. Každý commit = 1 krok k location-free životu.',
+      },
+      {
+        label: '⛰️ Výpravy',
+        detail: 'Alpe Adria kolo · Japonsko na kole · Eurasie · Nepál · Camino z Česka.',
+        linkedHabits: ['Běh', 'Kolo 100km+', 'Boulder'],
+        hikariNote: 'Výpravy nevznikají náhodou — fyzička je základ. Každý trénink teď = výprava v budoucnu.',
+      },
+      {
+        label: '🎬 YouTube',
+        detail: 'Sdílet cestu autenticky — velké mini-filmy z výprav. Vliv jako vedlejší produkt.',
+        linkedHabits: ['Hlasový deník'],
+        hikariNote: 'Hlasový deník trénuje tvůj hlas a příběhové myšlení. Dokumentuj teď, sestříhej pak.',
+      },
+      {
+        label: '💪 Fyzička · B',
+        detail: '30 km/den hory · 100 km/den kolo · 10 km běh bez bolesti · shyby se závažím.',
+        linkedHabits: ['Posilování calisthenics', 'Běh', 'Studená sprcha 30s', 'Kolo 100km+'],
+        hikariNote: 'Fyzička trial balíček běží do 30. 6. — každý trénink se počítá. Buduj zvyk, ne výkon.',
+      },
+      {
+        label: '🌿 Příroda · rytmus',
+        detail: 'Rytmus mezi módy: hluboká příroda · město · pomoc lidem · výpravy · klidové fáze.',
+        linkedHabits: ['30 min v lese', 'Spánek 22:00–06:15'],
+        hikariNote: '30 min v lese = lepší fokus zbytek dne. Příroda nabíjí, ne odebírá.',
+      },
     ],
   },
   {
