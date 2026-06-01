@@ -294,12 +294,7 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Matyáš nepřidává % ručně — Hikari odhaduje sám
 - Velké milníky (autoškola složena, DofE bronz) → Matyáš potvrdí v dashboardu
 
-**Supabase tabulky:**
-```sql
-cascade_layers (id, layer, title, progress_pct, deadline, updated_at)
-cascade_dimensions (id, layer_id, name, progress_pct, completed)
-cascade_milestones (id, layer_id, name, completed, completed_date)
-```
+**Supabase tabulky:** `cascade_layers` · `cascade_dimensions` · `cascade_milestones` · `cascade_chips` — viz `supabase/migrations/001_init.sql` doména D.
 
 ---
 
