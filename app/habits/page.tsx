@@ -536,16 +536,11 @@ export default function HabitsPage() {
   }, [dateKey])
 
   const toggle = (id: string) => {
-    // Read current state directly — done is always fresh at click time
     const nowDone = !done.has(id)
-    console.log('[toggle]', id, '→', nowDone, 'dbId:', habitIdMap[id])
-
-    setDone(prev => {
-      const next = new Set(prev)
-      nowDone ? next.add(id) : next.delete(id)
-      localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
-      return next
-    })
+    const next = new Set(done)
+    nowDone ? next.add(id) : next.delete(id)
+    setDone(next)
+    localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
 
     const dbId = habitIdMap[id]
     if (dbId) {
@@ -560,7 +555,7 @@ export default function HabitsPage() {
         if (newStreak !== undefined) {
           setStreakMap(prev => ({ ...prev, [id]: newStreak }))
         }
-      })
+      }).catch(err => console.error('[toggle] streak error:', err))
     }
   }
 
