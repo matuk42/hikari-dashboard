@@ -398,14 +398,42 @@ hope_correlations (id, activity_type, avg_hope_after, sample_size, updated_at)
 
 ---
 
+## 7.5 Business modul — fázované zapnutí
+
+**Plný Jarvis pro byznys** (z [[prijem]]: *"já jen schvaluji, nastavuji, upravuji a řídím"*).
+Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
+
+| Fáze | Trigger | Co aktivovat (UI) |
+|------|---------|-------------------|
+| **0 — Příprava** | Hned (W23) | Tabulky v DB, UI skryté |
+| **1 — B1 v práci** | Když začneš stavět B1 (~Q3 2026) | Kanban (`product_tasks`) + hour tracker (`time_log`). Plus jednoduchá karta produktu (`products`). |
+| **2 — První Kč** | První zaplatý zákazník (cíl Vánoce 2026) | MRR graf, customer count, churn % (`product_metrics`). Trajektorie ke 30k/50k (`revenue_trajectory`). |
+| **3 — AI money mode** | 6+ měsíců dat (~Q2 2027) | `ai_business_suggestions` UI: pending návrhy s rationale + expected impact. Matyáš schvaluje / odmítá. Business cron 1×týdně. |
+
+**Princip:** UI se odhalí postupně, schéma je hned. Žádné migrace později při růstu příjmu.
+
+**Co AI v Fázi 3 navrhuje:**
+- Co udělat dál pro produkt (next step podle MRR trajektorie + cascade vrstvy 4 milníků)
+- Kde optimalizovat hodiny (time_log: kde čas neodpovídá výsledku)
+- Kdy spustit B2 (signál: B1 stabilní + bandwidth)
+- Cenové změny, marketingové experimenty, retention akce
+
+**Limit:** AI vždy navrhuje, nikdy neprovádí. Schvaluješ → `status='approved'` → ty (ne AI) reálně realizuješ → `status='done'` + actual_impact_notes.
+
+---
+
 ## 8. Autentifikace + Sync
 
 | Parametr | Hodnota |
 |----------|---------|
 | Login | Google OAuth (1 kliknutí) |
-| Session | Uložená v Supabase auth |
-| Sync | Mobil ↔ PC — real-time přes Supabase |
-| Offline | Habits odškrtnuty lokálně → sync při připojení |
+| Single-user | Supabase Auth Providers → Google → restrict to single email (matypleva1@gmail.com) |
+| Session | Uložená v Supabase auth.users + `profiles.auth_user_id` mirror |
+| RLS | Enabled, permissive policy `authenticated_all`. V2 přepne na per-profile pokud multi-user. |
+| Sync mobil ↔ PC | Real-time přes Supabase (websockets) |
+| Vault delivery | Private Git repo (GitHub). Push z PC (manuál nebo `pre-commit`/`post-save` hook). Server fetch při syncu. |
+| Vault sync cadence | Vercel cron neděle 22:00 + manuální tlačítko |
+| Offline (habits) | Odškrtnuto v localStorage → sync při připojení (last-write-wins per timestamp) |
 | Notifikace | Žádné (MVP) |
 
 ---
