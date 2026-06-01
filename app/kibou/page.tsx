@@ -125,6 +125,7 @@ export default function KibouPage() {
   const [chartData, setChartData] = useState<HopeEntry[]>([])
   const [isPlaceholder, setIsPlaceholder] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
   const [profileId, setProfileId] = useState<string | null>(null)
   const today = new Date().toISOString().slice(0, 10)
 
