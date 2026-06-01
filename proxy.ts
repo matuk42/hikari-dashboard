@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  // Let auth callback and login through without any Supabase call
+  if (path.startsWith('/auth/') || path === '/login') {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -24,8 +31,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const path = request.nextUrl.pathname
-  const isPublic = path === '/login' || path.startsWith('/auth/')
+  const isPublic = false // handled by early return above
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
