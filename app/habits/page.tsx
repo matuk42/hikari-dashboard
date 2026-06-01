@@ -410,9 +410,9 @@ function HabitRow({ habit, done, onToggle, liveStreak }: { habit: Habit; done: b
       </div>
 
       <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {habit.streak > 0 && (
+        {displayStreak > 0 && (
           <span style={{ fontSize: 15, fontWeight: 700, color: '#F59E0B', lineHeight: 1 }}>
-            {habit.streak}<span style={{ fontSize: 10, fontWeight: 400, color: 'rgba(245,158,11,0.55)', marginLeft: 1 }}>×</span>
+            {displayStreak}<span style={{ fontSize: 10, fontWeight: 400, color: 'rgba(245,158,11,0.55)', marginLeft: 1 }}>×</span>
           </span>
         )}
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', lineHeight: 1 }}>{habit.frequency}</span>
