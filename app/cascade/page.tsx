@@ -183,19 +183,18 @@ function LayerCard({ layer }: { layer: Layer }) {
         overflow: 'hidden',
       }}>
         {/* Header row — always visible */}
-        <button
+        <div
           onClick={() => !isLife && setOpen(o => !o)}
+          role={isLife ? undefined : 'button'}
+          tabIndex={isLife ? undefined : 0}
+          onKeyDown={e => !isLife && (e.key === 'Enter' || e.key === ' ') && setOpen(o => !o)}
           style={{
             width: '100%',
             display: 'flex',
             alignItems: 'center',
             gap: 10,
             padding: isLife ? '14px 16px 10px' : '12px 16px',
-            background: 'transparent',
-            border: 'none',
             cursor: isLife ? 'default' : 'pointer',
-            color: 'inherit',
-            textAlign: 'left',
           }}
         >
           <span style={{
