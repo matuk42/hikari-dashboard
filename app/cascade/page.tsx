@@ -6,7 +6,12 @@ import { OfflineBadge } from '@/app/components/OfflineBadge'
 
 // ─── Vault data (baked from 2nd_brain/wiki/cile/cascade/sen.md + prijem.md) ──
 
-interface Chip { label: string; detail: string }
+interface Chip {
+  label: string
+  detail: string
+  linkedHabits?: string[]
+  hikariNote?: string
+}
 interface Dimension { name: string; progress: number; completed?: boolean }
 
 interface Layer {
