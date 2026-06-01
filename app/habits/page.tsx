@@ -454,7 +454,7 @@ function PackSection({ title, subtitle, habits, done, onToggle, streakMap }: {
       </button>
       {open && (
         <div style={{ padding: '0 16px 8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          {habits.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => onToggle(h.id)} />)}
+          {habits.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => onToggle(h.id)} liveStreak={streakMap[h.id]} />)}
         </div>
       )}
     </div>
