@@ -122,7 +122,7 @@ export default function KibouPage() {
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
   const [range, setRange] = useState<'30' | 'all'>('30')
-  const [chartData, setChartData] = useState<HopeEntry[]>(PLACEHOLDER_DATA)
+  const [chartData, setChartData] = useState<HopeEntry[]>([])
   const [isPlaceholder, setIsPlaceholder] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [profileId, setProfileId] = useState<string | null>(null)
