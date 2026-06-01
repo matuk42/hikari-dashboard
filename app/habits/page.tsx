@@ -20,6 +20,7 @@ interface Habit {
   trialEnd?: string
   pack?: 'imunita' | 'fyzicka'
   packCode?: string
+  mandatory?: boolean
 }
 
 // ─── Data z vaultu (habits.md) ───────────────────────────────────────────────
