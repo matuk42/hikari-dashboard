@@ -527,8 +527,11 @@ export default function HabitsPage() {
         setStreakMap(dbStreaks)
         setDone(prev => {
           const merged = new Set([...prev, ...dbDone])
-          localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
           return merged
+        })
+        setDone(prev => {
+          localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...prev]))
+          return prev
         })
       }
     }).catch(err => console.error('[habits] init error:', err))
