@@ -540,6 +540,7 @@ export default function HabitsPage() {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [habitIdMap, setHabitIdMap] = useState<Record<string, string>>({})
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   // Instant feedback from localStorage while DB loads
   useEffect(() => {
