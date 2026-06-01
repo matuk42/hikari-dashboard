@@ -612,7 +612,7 @@ export default function HabitsPage() {
             光 Hikari
           </Link>
 
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
+          <span suppressHydrationWarning style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
             {formatCzechDate(today)}
           </span>
 
