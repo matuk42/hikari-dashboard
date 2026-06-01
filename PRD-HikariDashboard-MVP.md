@@ -316,11 +316,7 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Hikari analyzuje: kdy byl energy nejvyšší → co Matyáš dělal ten den (z habit_logs + poznámky)
 - Výstup napájí Home screen časovou osu
 
-**Supabase tabulky:**
-```sql
-hope_logs (id, date, mood, energy, hope, note)
-hope_correlations (id, activity_type, avg_hope_after, sample_size, updated_at)
-```
+**Supabase tabulky:** `hope_logs` · `energy_blocks` · `hope_correlations` — viz `supabase/migrations/001_init.sql` doména C.
 
 ---
 
