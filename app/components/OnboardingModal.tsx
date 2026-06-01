@@ -216,6 +216,19 @@ export function OnboardingModal() {
         >
           {saving ? 'Ukládám…' : 'Začít s Hikari →'}
         </button>
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          style={{
+            width: '100%', marginTop: 10,
+            background: 'transparent',
+            color: 'rgba(255,255,255,0.25)',
+            border: 'none', borderRadius: 10, padding: '10px 0',
+            fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer',
+          }}
+        >
+          Přeskočit
+        </button>
       </div>
     </div>
   )
