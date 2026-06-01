@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getProfileId } from '@/lib/profile'
-import { rebuildStreak } from '@/lib/streak'
-import type { User } from '@supabase/supabase-js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,7 +18,6 @@ interface Habit {
   trialEnd?: string
   pack?: 'imunita' | 'fyzicka'
   packCode?: string
-  mandatory?: boolean
 }
 
 // ─── Data z vaultu (habits.md) ───────────────────────────────────────────────
@@ -28,7 +25,7 @@ interface Habit {
 const ALL_HABITS: Habit[] = [
   // Active
   { id: 'anki',       name: 'Anki procvičování',    status: 'active',    serves: 'japonština · sen',          frequency: '25+ karet denně', streak: 45 },
-  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.', mandatory: true },
+  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.' },
   // Trial solo
   { id: 'mining',     name: 'Anki tvorba',          status: 'trial',     serves: 'japonština · sen',          frequency: '200 karet / týden', streak: 0, trialEnd: '30.6.' },
   { id: 'kytara',     name: 'Kytara',               status: 'trial',     serves: 'DofE talent',               frequency: '3× týdně · 20 min', streak: 1, trialEnd: '30.6.' },
@@ -60,8 +57,6 @@ const FYZICKA    = ALL_HABITS.filter(h => h.pack === 'fyzicka')
 const GRADUATED  = ALL_HABITS.filter(h => h.status === 'graduated')
 const TRACKABLE  = ALL_HABITS.filter(h => h.status !== 'graduated')
 
-const MAX_STREAK = Math.max(...ALL_HABITS.map(h => h.streak))
-
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
 function todayISO(): string {
@@ -90,9 +85,8 @@ function useOnlineStatus(): boolean {
   return online
 }
 
-// ─── Habit DB sync ────────────────────────────────────────────────────────────
+// ─── Habit DB helpers ─────────────────────────────────────────────────────────
 
-// Returns localId → dbId map after seeding missing habits
 async function syncHabitsToDb(profileId: string): Promise<Record<string, string>> {
   const { data: existing } = await supabase
     .from('habits').select('id, name').eq('profile_id', profileId)
@@ -122,7 +116,6 @@ async function syncHabitsToDb(profileId: string): Promise<Record<string, string>
   return idMap
 }
 
-// Load today's done habits from habit_logs
 async function loadTodayLogs(idMap: Record<string, string>, date: string): Promise<Set<string>> {
   const dbIds = Object.values(idMap)
   if (!dbIds.length) return new Set()
@@ -142,7 +135,6 @@ async function loadTodayLogs(idMap: Record<string, string>, date: string): Promi
   return new Set([...doneDbIds].map(dbId => reverse[dbId]).filter(Boolean))
 }
 
-// Load current streaks from streaks_cache
 async function loadStreaks(idMap: Record<string, string>): Promise<Record<string, number>> {
   const dbIds = Object.values(idMap)
   if (!dbIds.length) return {}
@@ -162,7 +154,7 @@ async function loadStreaks(idMap: Record<string, string>): Promise<Record<string
   return result
 }
 
-// ─── SVG: straw hat silhouette ────────────────────────────────────────────────
+// ─── Luffy figure ─────────────────────────────────────────────────────────────
 
 function StrawHatFigure() {
   return (
@@ -172,18 +164,10 @@ function StrawHatFigure() {
       alt=""
       aria-hidden="true"
       style={{
-        position: 'absolute',
-        top: '50%',
-        right: -10,
-        transform: 'translateY(-50%)',
-        height: 160,
-        width: 'auto',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        zIndex: 0,
-        filter: 'invert(1) grayscale(1)',
-        mixBlendMode: 'screen',
-        opacity: 0.09,
+        position: 'absolute', top: '50%', right: -10,
+        transform: 'translateY(-50%)', height: 160, width: 'auto',
+        pointerEvents: 'none', userSelect: 'none', zIndex: 0,
+        filter: 'invert(1) grayscale(1)', mixBlendMode: 'screen', opacity: 0.09,
       }}
     />
   )
@@ -226,7 +210,6 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey, lsPendingKey])
 
-  // Auto-sync on reconnect
   useEffect(() => {
     if (!prevOnline.current && isOnline && profileId) {
       const pending = localStorage.getItem(lsPendingKey)
@@ -235,7 +218,6 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
     prevOnline.current = isOnline
   }, [isOnline, profileId, lsPendingKey, syncToSupabase])
 
-  // Load goal from user_context
   useEffect(() => {
     if (!profileId || !isOnline) return
     supabase.from('user_context').select('value')
@@ -246,7 +228,6 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId, isOnline])
 
-  // Load today's water from Supabase
   useEffect(() => {
     if (!profileId || !isOnline) return
     supabase.from('water_logs').select('amount_ml')
@@ -289,14 +270,7 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
   const reached = amount >= goal
 
   return (
-    <div style={{
-      background: '#0e0e0e',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      padding: '14px 16px',
-      marginBottom: 20,
-    }}>
-      {/* Header */}
+    <div style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 16px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.65)' }}>💧 VODA</span>
@@ -331,18 +305,15 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
         </div>
       )}
 
-      {/* Progress bar */}
       <div style={{ position: 'relative', height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, marginBottom: 12, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: reached ? '#F59E0B' : 'rgba(245,158,11,0.55)', borderRadius: 99, transition: 'width 0.3s ease' }} />
       </div>
 
-      {/* Amount */}
       <div style={{ textAlign: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 28, fontWeight: 700, color: reached ? '#F59E0B' : 'rgba(255,255,255,0.8)', letterSpacing: '-0.02em', lineHeight: 1 }}>{amount}</span>
         <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', marginLeft: 4 }}>/ {goal} ml</span>
       </div>
 
-      {/* Controls */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button onClick={() => updateAmount(amount - 250)} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: 'rgba(255,255,255,0.6)', fontSize: 18, padding: '10px 0', cursor: 'pointer' }}>−</button>
         <div style={{ display: 'flex', flex: 2, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -372,12 +343,14 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
 
 // ─── Habit row ────────────────────────────────────────────────────────────────
 
-function HabitRow({ habit, done, onToggle, liveStreak }: { habit: Habit; done: boolean; onToggle: () => void; liveStreak?: number }) {
+function HabitRow({ habit, done, onToggle, liveStreak }: {
+  habit: Habit; done: boolean; onToggle: () => void; liveStreak?: number
+}) {
   const displayStreak = liveStreak !== undefined ? liveStreak : habit.streak
   return (
     <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
       <button
-        onClick={() => { console.log('[HabitRow] click', habit.id); onToggle() }}
+        onClick={onToggle}
         style={{
           flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
           border: done ? '2px solid #F59E0B' : '2px solid rgba(255,255,255,0.15)',
@@ -454,7 +427,9 @@ function PackSection({ title, subtitle, habits, done, onToggle, streakMap }: {
       </button>
       {open && (
         <div style={{ padding: '0 16px 8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          {habits.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => onToggle(h.id)} liveStreak={streakMap[h.id]} />)}
+          {habits.map(h => (
+            <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => onToggle(h.id)} liveStreak={streakMap[h.id]} />
+          ))}
         </div>
       )}
     </div>
@@ -482,9 +457,8 @@ export default function HabitsPage() {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [habitIdMap, setHabitIdMap] = useState<Record<string, string>>({})
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
-  const lsInitDoneRef = useRef(false)
 
-  // Load localStorage on mount
+  // Instant feedback from localStorage while DB loads
   useEffect(() => {
     const saved = localStorage.getItem(`hikari_habits_${dateKey}`)
     if (saved) {
@@ -492,52 +466,34 @@ export default function HabitsPage() {
     }
   }, [dateKey])
 
-  // Sync done → localStorage after any state change (skip first render to avoid empty-write)
+  // Load from DB on mount: seed habits, fetch today's logs + streaks
   useEffect(() => {
-    if (!lsInitDoneRef.current) { lsInitDoneRef.current = true; return }
-    localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...done]))
-  }, [done, dateKey])
-
-  // Init DB: resolve profile → seed habits → load today's logs
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }: { data: { user: User | null } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       const pid = await getProfileId(user)
       if (!pid) return
       setProfileId(pid)
 
-      // Use cached idMap from sessionStorage to skip the habits SELECT on repeat visits.
-      // syncHabitsToDb still runs in the background to catch any newly added habits.
-      const cacheKey = `hikari_idmap_${pid}`
-      const cached = sessionStorage.getItem(cacheKey)
-      let idMap: Record<string, string> = cached ? (JSON.parse(cached) as Record<string, string>) : {}
-
-      if (Object.keys(idMap).length === 0) {
-        // First visit for this profile — must sync before loading logs
-        idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
-        if (Object.keys(idMap).length > 0) sessionStorage.setItem(cacheKey, JSON.stringify(idMap))
-      } else {
-        // Background sync to catch any new habits added to ALL_HABITS
-        syncHabitsToDb(pid).then(fresh => {
-          sessionStorage.setItem(cacheKey, JSON.stringify(fresh))
-          setHabitIdMap(fresh)
-        }).catch(console.error)
-      }
-
+      const idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
+      if (Object.keys(idMap).length === 0) return
       setHabitIdMap(idMap)
 
-      if (Object.keys(idMap).length > 0) {
-        const [dbDone, dbStreaks] = await Promise.all([
-          loadTodayLogs(idMap, dateKey).catch(() => new Set<string>()),
-          loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
-        ])
-        setStreakMap(dbStreaks)
-        setDone(prev => new Set([...prev, ...dbDone]))
-      }
-    }).catch(err => console.error('[habits] init error:', err))
+      const [dbDone, dbStreaks] = await Promise.all([
+        loadTodayLogs(idMap, dateKey).catch(() => new Set<string>()),
+        loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
+      ])
+
+      setStreakMap(dbStreaks)
+      setDone(prev => {
+        const merged = new Set([...prev, ...dbDone])
+        localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
+        return merged
+      })
+    }).catch(console.error)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
+  // Optimistic toggle + background upsert
   const toggle = (id: string) => {
     const nowDone = !done.has(id)
     const next = new Set(done)
@@ -546,125 +502,122 @@ export default function HabitsPage() {
     localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
 
     const dbId = habitIdMap[id]
-    if (dbId) {
-      const habit = ALL_HABITS.find(h => h.id === id)
-      Promise.resolve(supabase.from('habit_logs').upsert(
-        { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
-        { onConflict: 'habit_id,date' }
-      )).then(({ error }) => {
-        if (error) { console.error('[toggle] upsert error:', error); return }
-        return rebuildStreak(dbId, habit?.mandatory ?? false)
-      }).then(newStreak => {
-        if (newStreak !== undefined) {
-          setStreakMap(prev => ({ ...prev, [id]: newStreak }))
-        }
-      }).catch((err: unknown) => console.error('[toggle] streak error:', err))
-    }
+    if (!dbId) return
+
+    supabase.from('habit_logs').upsert(
+      { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
+      { onConflict: 'habit_id,date' }
+    ).then(({ error }) => {
+      if (error) console.error('habit_logs upsert error:', error)
+    })
   }
 
   const doneCount = TRACKABLE.filter(h => done.has(h.id)).length
   const totalCount = TRACKABLE.length
   const allDone = doneCount === totalCount && totalCount > 0
+  const ankiStreak = streakMap['anki'] ?? ALL_HABITS.find(h => h.id === 'anki')?.streak ?? 0
 
   return (
-    <>
-      <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh', color: '#ededed', overflowX: 'hidden' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px 80px' }}>
+    <div style={{ minHeight: '100vh', color: '#ededed', overflowX: 'hidden' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px 80px' }}>
 
-          {/* ── Header ── */}
-          <header style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', paddingTop: 14, paddingBottom: 28 }}>
-            <Link href="/" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.02em', color: '#F59E0B', textDecoration: 'none' }}>
-              光 Hikari
-            </Link>
+        {/* Header */}
+        <header style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', paddingTop: 14, paddingBottom: 28 }}>
+          <Link href="/" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.02em', color: '#F59E0B', textDecoration: 'none' }}>
+            光 Hikari
+          </Link>
 
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
-              {formatCzechDate(today)}
-            </span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
+            {formatCzechDate(today)}
+          </span>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-              {!isOnline && (
-                <span style={{ fontSize: 9, color: 'rgba(255,100,50,0.7)', background: 'rgba(255,100,50,0.08)', border: '1px solid rgba(255,100,50,0.15)', borderRadius: 5, padding: '2px 6px', letterSpacing: '0.04em', fontWeight: 600 }}>
-                  OFFLINE
-                </span>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: doneCount > 0 ? '#F59E0B' : 'rgba(255,255,255,0.25)', lineHeight: 1 }}>{doneCount}</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', lineHeight: 1 }}>/</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)', lineHeight: 1 }}>{totalCount}</span>
-              </div>
-            </div>
-          </header>
-
-          {/* ── Streak hero ── */}
-          <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
-            <StrawHatFigure />
-            <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{streakMap['anki'] ?? MAX_STREAK}</div>
-            <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
-            {allDone && (
-              <div style={{ marginTop: 20, padding: '0 24px' }}>
-                <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />
-                <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(245,158,11,0.82)', lineHeight: 1.6, margin: '0 0 6px' }}>
-                  &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
-                </p>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em', margin: 0 }}>— Monkey D. Luffy</p>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+            {!isOnline && (
+              <span style={{ fontSize: 9, color: 'rgba(255,100,50,0.7)', background: 'rgba(255,100,50,0.08)', border: '1px solid rgba(255,100,50,0.15)', borderRadius: 5, padding: '2px 6px', letterSpacing: '0.04em', fontWeight: 600 }}>
+                OFFLINE
+              </span>
             )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: doneCount > 0 ? '#F59E0B' : 'rgba(255,255,255,0.25)', lineHeight: 1 }}>{doneCount}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', lineHeight: 1 }}>/</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)', lineHeight: 1 }}>{totalCount}</span>
+            </div>
           </div>
+        </header>
 
-          {/* ── Voda ── */}
-          <section>
-            <SectionLabel>Voda</SectionLabel>
-            <WaterTracker profileId={profileId} isOnline={isOnline} />
-          </section>
-
-          {/* ── Aktivní ── */}
-          <section style={{ marginBottom: 20 }}>
-            <SectionLabel>Aktivní</SectionLabel>
-            <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-              {ACTIVE.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />)}
+        {/* Streak hero */}
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
+          <StrawHatFigure />
+          <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{ankiStreak}</div>
+          <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
+          {allDone && (
+            <div style={{ marginTop: 20, padding: '0 24px' }}>
+              <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />
+              <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(245,158,11,0.82)', lineHeight: 1.6, margin: '0 0 6px' }}>
+                &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
+              </p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.06em', margin: 0 }}>— Monkey D. Luffy</p>
             </div>
-          </section>
-
-          {/* ── Testovací ── */}
-          <section style={{ marginBottom: 20 }}>
-            <SectionLabel>Testovací</SectionLabel>
-            <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-              {TRIAL_SOLO.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />)}
-            </div>
-          </section>
-
-          {/* ── Balíčky ── */}
-          <section style={{ marginBottom: 20 }}>
-            <SectionLabel>Balíčky</SectionLabel>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
-              <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
-            </div>
-          </section>
-
-          {/* ── Zautomatizováno ── */}
-          <section>
-            <SectionLabel>Zautomatizováno</SectionLabel>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {GRADUATED.map(h => (
-                <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
-            <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
-              &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
-            </p>
-            <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>— Monkey D. Luffy</p>
-          </div>
-
+          )}
         </div>
+
+        {/* Voda */}
+        <section>
+          <SectionLabel>Voda</SectionLabel>
+          <WaterTracker profileId={profileId} isOnline={isOnline} />
+        </section>
+
+        {/* Aktivní */}
+        <section style={{ marginBottom: 20 }}>
+          <SectionLabel>Aktivní</SectionLabel>
+          <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+            {ACTIVE.map(h => (
+              <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
+            ))}
+          </div>
+        </section>
+
+        {/* Testovací */}
+        <section style={{ marginBottom: 20 }}>
+          <SectionLabel>Testovací</SectionLabel>
+          <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+            {TRIAL_SOLO.map(h => (
+              <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
+            ))}
+          </div>
+        </section>
+
+        {/* Balíčky */}
+        <section style={{ marginBottom: 20 }}>
+          <SectionLabel>Balíčky</SectionLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
+            <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
+          </div>
+        </section>
+
+        {/* Zautomatizováno */}
+        <section>
+          <SectionLabel>Zautomatizováno</SectionLabel>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {GRADUATED.map(h => (
+              <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
+                <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
+          <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
+            &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
+          </p>
+          <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>— Monkey D. Luffy</p>
+        </div>
+
       </div>
-    </>
+    </div>
   )
 }
