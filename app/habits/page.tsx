@@ -503,9 +503,12 @@ export default function HabitsPage() {
       setHabitIdMap(idMap)
 
       if (Object.keys(idMap).length > 0) {
-        const dbDone = await loadTodayLogs(idMap, dateKey).catch(() => new Set<string>())
+        const [dbDone, dbStreaks] = await Promise.all([
+          loadTodayLogs(idMap, dateKey).catch(() => new Set<string>()),
+          loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
+        ])
+        setStreakMap(dbStreaks)
         setDone(prev => {
-          // DB is authoritative for today; merge with localStorage (DB wins)
           const merged = new Set([...prev, ...dbDone])
           localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
           return merged
