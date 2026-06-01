@@ -154,6 +154,89 @@ async function loadStreaks(idMap: Record<string, string>): Promise<Record<string
   return result
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function SkeletonRect({ width = '100%', height = 16, radius = 8, style: extra }: {
+  width?: string | number; height?: number; radius?: number; style?: React.CSSProperties
+}) {
+  return (
+    <div
+      className="skeleton-pulse"
+      style={{ width, height, borderRadius: radius, background: 'rgba(255,255,255,0.08)', flexShrink: 0, ...extra }}
+    />
+  )
+}
+
+function HabitRowSkeleton() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <div className="skeleton-pulse" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <SkeletonRect width="58%" height={13} />
+        <SkeletonRect width="38%" height={10} />
+      </div>
+      <SkeletonRect width={28} height={18} radius={6} />
+    </div>
+  )
+}
+
+function HabitsSkeleton() {
+  return (
+    <div>
+      {/* Streak hero */}
+      <div style={{ textAlign: 'center', marginBottom: 36, padding: '8px 0 0' }}>
+        <SkeletonRect width={80} height={64} radius={14} style={{ margin: '0 auto 10px' }} />
+        <SkeletonRect width={120} height={12} radius={6} style={{ margin: '0 auto' }} />
+      </div>
+
+      {/* Water tracker */}
+      <div style={{ marginBottom: 20 }}>
+        <SkeletonRect width={50} height={10} radius={4} style={{ marginBottom: 10 }} />
+        <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <SkeletonRect height={6} radius={99} style={{ marginBottom: 14 }} />
+          <SkeletonRect width={72} height={28} radius={8} style={{ margin: '0 auto 14px' }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <SkeletonRect height={42} radius={10} style={{ flex: 1 }} />
+            <SkeletonRect height={42} radius={10} style={{ flex: 2 }} />
+            <SkeletonRect height={42} radius={10} style={{ flex: 1 }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Aktivní */}
+      <div style={{ marginBottom: 20 }}>
+        <SkeletonRect width={56} height={10} radius={4} style={{ marginBottom: 10 }} />
+        <div style={{ background: '#0e0e0e', borderRadius: 14 }}>
+          <HabitRowSkeleton />
+          <HabitRowSkeleton />
+        </div>
+      </div>
+
+      {/* Testovací */}
+      <div style={{ marginBottom: 20 }}>
+        <SkeletonRect width={74} height={10} radius={4} style={{ marginBottom: 10 }} />
+        <div style={{ background: '#0e0e0e', borderRadius: 14 }}>
+          <HabitRowSkeleton />
+          <HabitRowSkeleton />
+        </div>
+      </div>
+
+      {/* Balíčky */}
+      <div style={{ marginBottom: 20 }}>
+        <SkeletonRect width={56} height={10} radius={4} style={{ marginBottom: 10 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[0, 1].map(i => (
+            <div key={i} style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <SkeletonRect width={96} height={13} radius={6} />
+              <SkeletonRect width={36} height={13} radius={6} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Luffy figure ─────────────────────────────────────────────────────────────
 
 function StrawHatFigure() {
