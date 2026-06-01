@@ -28,7 +28,7 @@ interface Habit {
 const ALL_HABITS: Habit[] = [
   // Active
   { id: 'anki',       name: 'Anki procvičování',    status: 'active',    serves: 'japonština · sen',          frequency: '25+ karet denně', streak: 45 },
-  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.' },
+  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.', mandatory: true },
   // Trial solo
   { id: 'mining',     name: 'Anki tvorba',          status: 'trial',     serves: 'japonština · sen',          frequency: '200 karet / týden', streak: 0, trialEnd: '30.6.' },
   { id: 'kytara',     name: 'Kytara',               status: 'trial',     serves: 'DofE talent',               frequency: '3× týdně · 20 min', streak: 1, trialEnd: '30.6.' },
