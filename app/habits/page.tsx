@@ -598,7 +598,7 @@ export default function HabitsPage() {
           <section style={{ marginBottom: 20 }}>
             <SectionLabel>Aktivní</SectionLabel>
             <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-              {ACTIVE.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} />)}
+              {ACTIVE.map(h => <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />)}
             </div>
           </section>
 
