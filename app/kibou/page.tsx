@@ -145,7 +145,7 @@ export default function KibouPage() {
     }
   }, [])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { setMounted(true); loadData() }, [loadData])
 
   async function handleSave() {
     setSaving(true)
