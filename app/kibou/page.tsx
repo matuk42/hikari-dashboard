@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { getProfileId } from '@/lib/profile'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,15 +124,14 @@ export default function KibouPage() {
   const [chartData, setChartData] = useState<HopeEntry[]>(PLACEHOLDER_DATA)
   const [isPlaceholder, setIsPlaceholder] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const today = new Date().toISOString().slice(0, 10)
 
-  const loadData = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
+  const loadData = useCallback(async (pid: string) => {
     const { data } = await supabase
       .from('hope_logs')
       .select('date, mood, energy, hope')
-      .eq('user_id', user.id)
+      .eq('profile_id', pid)
       .order('date', { ascending: true })
 
     if (data && data.length > 0) {
@@ -143,36 +143,52 @@ export default function KibouPage() {
       })))
       setIsPlaceholder(false)
     }
-  }, [])
 
-  useEffect(() => { setMounted(true); loadData() }, [loadData])
+    // Pre-fill today's values if they exist
+    const todayEntry = data?.find(r => r.date === today)
+    if (todayEntry) {
+      setMood(todayEntry.mood)
+      setEnergy(todayEntry.energy)
+      setHope(todayEntry.hope)
+    }
+  }, [today])
+
+  useEffect(() => {
+    setMounted(true)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      getProfileId(user).then(pid => {
+        if (!pid) return
+        setProfileId(pid)
+        loadData(pid)
+      })
+    })
+  }, [loadData])
 
   async function handleSave() {
     setSaving(true)
     setSavedMsg('')
-    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (!profileId) {
       setSavedMsg('Přihlaš se Google účtem pro ukládání dat.')
       setSaving(false)
       return
     }
 
-    const today = new Date().toISOString().slice(0, 10)
     const { error } = await supabase.from('hope_logs').upsert({
-      user_id: user.id,
+      profile_id: profileId,
       date: today,
       mood,
       energy,
       hope,
       note: note || null,
-    }, { onConflict: 'user_id,date' })
+    }, { onConflict: 'profile_id,date' })
 
     if (error) {
       setSavedMsg('Chyba uložení: ' + error.message)
     } else {
       setSavedMsg('Uloženo ✓')
-      await loadData()
+      await loadData(profileId)
     }
     setSaving(false)
   }
