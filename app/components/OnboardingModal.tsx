@@ -61,6 +61,12 @@ export function OnboardingModal() {
     setVisible(false)
   }
 
+  const handleSkip = async () => {
+    if (!profileId) { setVisible(false); return }
+    await supabase.from('profiles').update({ onboarded_at: new Date().toISOString() }).eq('id', profileId)
+    setVisible(false)
+  }
+
   if (!visible) return null
 
   return (
