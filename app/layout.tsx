@@ -21,10 +21,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black",
     title: "光 Hikari",
   },
-  icons: {
-    apple: "/apple-touch-icon.png",
-    icon: "/icon.png",
-  },
 };
 
 export const viewport: Viewport = {
