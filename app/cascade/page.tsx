@@ -135,6 +135,52 @@ function daysUntil(d: Date): number {
   return Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86_400_000))
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function SkeletonRect({ width = '100%', height = 16, radius = 8, style: extra }: {
+  width?: string | number; height?: number; radius?: number; style?: React.CSSProperties
+}) {
+  return (
+    <div className="skeleton-pulse" style={{ width, height, borderRadius: radius, background: 'rgba(255,255,255,0.08)', flexShrink: 0, ...extra }} />
+  )
+}
+
+function CascadeSkeleton() {
+  return (
+    <div>
+      {/* Hero */}
+      <div style={{ marginBottom: 28 }}>
+        <SkeletonRect width={110} height={10} radius={4} style={{ marginBottom: 10 }} />
+        <SkeletonRect width="72%" height={13} radius={6} style={{ marginBottom: 6 }} />
+        <SkeletonRect width="52%" height={13} radius={6} />
+      </div>
+
+      {/* Timeline — 5 layers */}
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} style={{ display: 'flex', gap: 0, marginBottom: i < 5 ? 12 : 0 }}>
+          <div style={{ width: 24, flexShrink: 0, paddingTop: 18, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="skeleton-pulse" style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(245,158,11,0.25)' }} />
+            {i < 5 && <div style={{ flex: 1, width: 2, minHeight: 20, background: 'rgba(245,158,11,0.08)', marginTop: 5 }} />}
+          </div>
+          <div style={{ flex: 1, paddingLeft: 14 }}>
+            <div style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <SkeletonRect width={28} height={20} radius={6} />
+                <div style={{ flex: 1 }}>
+                  <SkeletonRect width="42%" height={14} radius={6} style={{ marginBottom: 6 }} />
+                  <SkeletonRect width="28%" height={10} radius={4} />
+                </div>
+                {i > 1 && <SkeletonRect width={34} height={14} radius={6} />}
+              </div>
+              {i > 1 && <div style={{ marginTop: 12 }}><SkeletonRect height={4} radius={2} /></div>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function ProgressBar({ value, height = 5 }: { value: number; height?: number }) {
