@@ -426,8 +426,8 @@ function HabitRow({ habit, done, onToggle, liveStreak }: { habit: Habit; done: b
 
 // ─── Pack accordion ───────────────────────────────────────────────────────────
 
-function PackSection({ title, subtitle, habits, done, onToggle }: {
-  title: string; subtitle: string; habits: Habit[]; done: Set<string>; onToggle: (id: string) => void
+function PackSection({ title, subtitle, habits, done, onToggle, streakMap }: {
+  title: string; subtitle: string; habits: Habit[]; done: Set<string>; onToggle: (id: string) => void; streakMap: Record<string, number>
 }) {
   const [open, setOpen] = useState(false)
   const completedCount = habits.filter(h => done.has(h.id)).length
