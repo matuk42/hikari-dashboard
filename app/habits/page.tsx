@@ -532,14 +532,7 @@ export default function HabitsPage() {
           loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
         ])
         setStreakMap(dbStreaks)
-        setDone(prev => {
-          const merged = new Set([...prev, ...dbDone])
-          return merged
-        })
-        setDone(prev => {
-          localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...prev]))
-          return prev
-        })
+        setDone(prev => new Set([...prev, ...dbDone]))
       }
     }).catch(err => console.error('[habits] init error:', err))
   // eslint-disable-next-line react-hooks/exhaustive-deps
