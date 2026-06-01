@@ -528,15 +528,33 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 
 | Vrstva | Technologie |
 |--------|-------------|
-| Frontend | Next.js 15 + TypeScript + Tailwind CSS |
+| Frontend | Next.js 15 + TypeScript + Tailwind CSS 4 |
+| Charts | Recharts |
 | Databáze | Supabase (PostgreSQL + realtime + auth) |
-| Auth | Supabase Google OAuth |
+| Auth | Supabase Google OAuth, single-email restrict |
 | Hosting | Vercel (auto-deploy z GitHub) |
-| PWA | next-pwa |
-| AI výpočty | Claude API (Sonnet) — výsledky se cachují v Supabase |
-| Vault sync | Node.js script — čte .md soubory, parsuje, zapíše do Supabase |
-| Offline | Service Worker + localStorage fallback |
+| PWA | next-pwa nebo Next.js native manifest |
+| AI výpočty | Claude API (Sonnet 4.6) — výsledky cache v Supabase, log v `ai_invocations` |
+| Vault delivery | Private Git repo (GitHub) — push z PC, fetch ze serveru |
+| Vault parser | Node.js script — čte .md soubory, parsuje frontmatter + tables + wikilinks, zapíše do Supabase |
+| CLI Hikari ↔ Supabase | Claude Code CLI volá Supabase REST API přes service role key (server-side) |
+| Offline | Service Worker + localStorage fallback (habits odškrtnutí) |
+| Cron | Vercel cron jobs (`vercel.json` schedule) |
 
 ---
 
-*PRD v2.0 — 2026-06-01. Aktualizovat při každé větší změně scope.*
+## 14. Reference — kde co najdeš
+
+| Co | Kde |
+|----|-----|
+| Supabase migrace | `supabase/migrations/001_init.sql` |
+| Tento PRD | `PRD-HikariDashboard-MVP.md` |
+| Dashboard-specific Claude rules | `CLAUDE.md` (root projektu) |
+| Vault pravidla (master) | `../2nd_brain/CLAUDE.md` |
+| Cascade source of truth | `../2nd_brain/wiki/cile/cascade/sen.md` + `prijem.md` |
+| Habits master | `../2nd_brain/wiki/cile/habits.md` |
+| Hikari paměť bootstrap | `../2nd_brain/Memory.md` + `logs/hikari-self/patterns-observed.md` |
+
+---
+
+*PRD v2.1 — 2026-06-01. Aktualizovat při každé větší změně scope. Po implementaci W23–W27 přejít na v3.0.*
