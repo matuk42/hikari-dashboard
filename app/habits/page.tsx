@@ -614,8 +614,8 @@ export default function HabitsPage() {
           <section style={{ marginBottom: 20 }}>
             <SectionLabel>Balíčky</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} />
-              <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} />
+              <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
+              <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
             </div>
           </section>
 
