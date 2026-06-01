@@ -579,7 +579,7 @@ export default function HabitsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
-  // Optimistic toggle + background upsert
+  // Optimistic toggle + background upsert + streak rebuild
   const toggle = (id: string) => {
     const nowDone = !done.has(id)
     const next = new Set(done)
@@ -587,14 +587,22 @@ export default function HabitsPage() {
     setDone(next)
     localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
 
+    // Instant streak feedback
+    setStreakMap(prev => ({
+      ...prev,
+      [id]: Math.max(0, (prev[id] ?? 0) + (nowDone ? 1 : -1)),
+    }))
+
     const dbId = habitIdMap[id]
     if (!dbId) return
 
     supabase.from('habit_logs').upsert(
       { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
       { onConflict: 'habit_id,date' }
-    ).then(({ error }) => {
-      if (error) console.error('habit_logs upsert error:', error)
+    ).then(async ({ error }) => {
+      if (error) { console.error('habit_logs upsert error:', error); return }
+      const real = await rebuildStreak(dbId, false)
+      setStreakMap(prev => ({ ...prev, [id]: real }))
     })
   }
 
