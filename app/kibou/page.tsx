@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { getProfileId } from '@/lib/profile'
+import { OfflineBadge } from '@/app/components/OfflineBadge'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
