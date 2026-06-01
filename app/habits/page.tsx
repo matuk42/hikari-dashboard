@@ -499,7 +499,24 @@ export default function HabitsPage() {
       if (!pid) return
       setProfileId(pid)
 
-      const idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
+      // Use cached idMap from sessionStorage to skip the habits SELECT on repeat visits.
+      // syncHabitsToDb still runs in the background to catch any newly added habits.
+      const cacheKey = `hikari_idmap_${pid}`
+      const cached = sessionStorage.getItem(cacheKey)
+      let idMap: Record<string, string> = cached ? (JSON.parse(cached) as Record<string, string>) : {}
+
+      if (Object.keys(idMap).length === 0) {
+        // First visit for this profile — must sync before loading logs
+        idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
+        if (Object.keys(idMap).length > 0) sessionStorage.setItem(cacheKey, JSON.stringify(idMap))
+      } else {
+        // Background sync to catch any new habits added to ALL_HABITS
+        syncHabitsToDb(pid).then(fresh => {
+          sessionStorage.setItem(cacheKey, JSON.stringify(fresh))
+          setHabitIdMap(fresh)
+        }).catch(console.error)
+      }
+
       setHabitIdMap(idMap)
 
       if (Object.keys(idMap).length > 0) {
@@ -514,7 +531,7 @@ export default function HabitsPage() {
           return merged
         })
       }
-    })
+    }).catch(err => console.error('[habits] init error:', err))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
