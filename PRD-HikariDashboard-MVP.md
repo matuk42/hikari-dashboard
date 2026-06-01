@@ -1,5 +1,7 @@
 # PRD — Hikari Dashboard MVP
-**Verze:** 2.0 | **Datum:** 2026-06-01 | **Autor:** Matyáš + Claude
+**Verze:** 2.1 | **Datum:** 2026-06-01 | **Autor:** Matyáš + Claude
+
+> **v2.1 changelog:** Konflikt workflow (dashboard wins, voice flag), vault delivery přes Git, Hikari paměť hybrid plnění, plné Supabase schéma (6 domén), business modul fázovaně, single-user MVP s RLS, implementační pořadí W23–W27.
 
 ---
 
