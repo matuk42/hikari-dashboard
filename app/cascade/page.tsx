@@ -292,7 +292,7 @@ function LayerCard({ layer }: { layer: Layer }) {
             </div>
             {/* Countdown */}
             {layer.deadline && (
-              <div style={{ fontSize: 10, color: 'rgba(245,158,11,0.4)', marginTop: 2 }}>
+              <div suppressHydrationWarning style={{ fontSize: 10, color: 'rgba(245,158,11,0.4)', marginTop: 2 }}>
                 {daysUntil(layer.deadline)} dní
               </div>
             )}
