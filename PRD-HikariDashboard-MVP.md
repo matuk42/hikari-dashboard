@@ -513,10 +513,14 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 | Riziko | Mitigace |
 |--------|----------|
 | Supabase free tier | 500 MB / 50k req/měs — pro 1 uživatele stačí roky |
-| AI tokeny | Výpočty se cachují v Supabase, AI se nevolá při každém načtení |
-| Obsidian sync komplexita | Začít manuálním triggerem, auto-cron přidat v V2 |
-| Offline sync konflikty | Last-write-wins s timestampem |
-| MVP přílišná komplexita | AI logika striktně až V2 |
+| AI tokeny | Výsledky cache v `ai_daily_brief` + `cascade_dimensions.progress_pct`. AI se nevolá při render. |
+| Vault privacy na GitHub | Repo MUSÍ být private. Vault obsahuje hlasové deníky → před `git init` rozhodnout: (a) private GitHub (akceptovatelné pro MVP), (b) self-hosted Gitea (komplikované). |
+| OneDrive × Git konflikt | `.git` složka pod OneDrive sync = lock files, broken commits. **Před `git init`** přesunout 2nd_brain mimo OneDrive **nebo** přidat `.git` do OneDrive exclude listu. |
+| Vault sync komplexita | MVP: manuální tlačítko. V2: Vercel cron Ne 22:00 (kdy už není autorský konflikt s W review). |
+| Konflikt voice ↔ dashboard | Dashboard wins, ale CLI Hikari flagne ve večerní konverzaci (3.5). Žádná tichá oprava. |
+| Offline sync konflikty | Last-write-wins per timestamp v habit_logs. |
+| MVP přílišná komplexita | AI brain striktně až W26. W23–W25 = pasivní data + ruční vstup. |
+| Single-user RLS chyba | `authenticated_all` policy je permissive. Bezpečnost závisí na restrikci Google OAuth emailu v Supabase settings — **ověřit při setupu**. |
 
 ---
 
