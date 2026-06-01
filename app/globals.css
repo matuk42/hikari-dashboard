@@ -17,6 +17,15 @@ body {
   box-sizing: border-box;
 }
 
+/* Skeleton loading pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.55; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
 /* Gold slider thumb */
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
