@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,12 +90,65 @@ const TRACKABLE = ALL_HABITS.filter(h => h.status !== 'graduated')
 
 const MAX_STREAK = Math.max(...ALL_HABITS.map(h => h.streak))
 
-// ─── Date helper ─────────────────────────────────────────────────────────────
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+function todayISO(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 function formatCzechDate(d: Date): string {
   const dny = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota']
   const mesice = ['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince']
   return `${dny[d.getDay()]} ${d.getDate()}. ${mesice[d.getMonth()]}`
+}
+
+// ─── Online status hook ───────────────────────────────────────────────────────
+
+function useOnlineStatus(): boolean {
+  const [online, setOnline] = useState(true)
+  useEffect(() => {
+    setOnline(navigator.onLine)
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  return online
+}
+
+// ─── Profile helper ───────────────────────────────────────────────────────────
+
+async function getProfileId(user: User): Promise<string | null> {
+  // Try by auth_user_id first
+  const { data: byAuth } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .single()
+  if (byAuth) return byAuth.id
+
+  // Try by email (account existed before auth_user_id was set)
+  const email = user.email ?? ''
+  const { data: byEmail } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('google_email', email)
+    .single()
+  if (byEmail) {
+    // Backfill auth_user_id
+    await supabase.from('profiles').update({ auth_user_id: user.id }).eq('id', byEmail.id)
+    return byEmail.id
+  }
+
+  // Create new profile
+  const { data: created } = await supabase
+    .from('profiles')
+    .insert({ auth_user_id: user.id, google_email: email })
+    .select('id')
+    .single()
+  return created?.id ?? null
 }
 
 // ─── SVG: straw hat silhouette ────────────────────────────────────────────────
@@ -120,6 +175,319 @@ function StrawHatFigure() {
         opacity: 0.09,
       }}
     />
+  )
+}
+
+// ─── Water Tracker ────────────────────────────────────────────────────────────
+
+const DEFAULT_GOAL = 2000
+
+function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnline: boolean }) {
+  const dateKey = todayISO()
+  const lsAmountKey = `hikari_water_${dateKey}`
+  const lsGoalKey = 'hikari_water_goal'
+  const lsPendingKey = `hikari_water_pending_${dateKey}`
+
+  const [amount, setAmount] = useState(0)
+  const [goal, setGoal] = useState(DEFAULT_GOAL)
+  const [editingGoal, setEditingGoal] = useState(false)
+  const [goalInput, setGoalInput] = useState('')
+  const [customInput, setCustomInput] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const prevOnline = useRef(isOnline)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedAmount = localStorage.getItem(lsAmountKey)
+    const savedGoal = localStorage.getItem(lsGoalKey)
+    if (savedAmount) setAmount(Number(savedAmount))
+    if (savedGoal) setGoal(Number(savedGoal))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sync to Supabase
+  const syncToSupabase = useCallback(async (amountToSync: number, profileIdToUse: string) => {
+    setSyncing(true)
+    await supabase.from('water_logs').upsert(
+      { profile_id: profileIdToUse, date: dateKey, amount_ml: amountToSync, updated_at: new Date().toISOString() },
+      { onConflict: 'profile_id,date' }
+    )
+    localStorage.removeItem(lsPendingKey)
+    setSyncing(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateKey, lsPendingKey])
+
+  // Auto-sync on reconnect
+  useEffect(() => {
+    if (!prevOnline.current && isOnline && profileId) {
+      const pending = localStorage.getItem(lsPendingKey)
+      if (pending) syncToSupabase(Number(pending), profileId)
+    }
+    prevOnline.current = isOnline
+  }, [isOnline, profileId, lsPendingKey, syncToSupabase])
+
+  // Load goal from user_context when profileId is available
+  useEffect(() => {
+    if (!profileId || !isOnline) return
+    supabase
+      .from('user_context')
+      .select('value')
+      .eq('profile_id', profileId)
+      .eq('key', 'water_goal_ml')
+      .single()
+      .then(({ data }) => {
+        if (data?.value) {
+          const g = Number(data.value)
+          setGoal(g)
+          localStorage.setItem(lsGoalKey, String(g))
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId, isOnline])
+
+  // Load today's water from Supabase on mount (if online)
+  useEffect(() => {
+    if (!profileId || !isOnline) return
+    supabase
+      .from('water_logs')
+      .select('amount_ml')
+      .eq('profile_id', profileId)
+      .eq('date', dateKey)
+      .single()
+      .then(({ data }) => {
+        if (data?.amount_ml != null) {
+          const ml = Number(data.amount_ml)
+          setAmount(ml)
+          localStorage.setItem(lsAmountKey, String(ml))
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId, isOnline])
+
+  const updateAmount = useCallback((newAmount: number) => {
+    const clamped = Math.max(0, newAmount)
+    setAmount(clamped)
+    localStorage.setItem(lsAmountKey, String(clamped))
+    if (isOnline && profileId) {
+      syncToSupabase(clamped, profileId)
+    } else {
+      localStorage.setItem(lsPendingKey, String(clamped))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, profileId, lsAmountKey, lsPendingKey, syncToSupabase])
+
+  const saveGoal = useCallback(async (newGoal: number) => {
+    setGoal(newGoal)
+    localStorage.setItem(lsGoalKey, String(newGoal))
+    setEditingGoal(false)
+    if (isOnline && profileId) {
+      await supabase.from('user_context').upsert(
+        { profile_id: profileId, key: 'water_goal_ml', value: String(newGoal) },
+        { onConflict: 'profile_id,key' }
+      )
+    }
+  }, [isOnline, profileId])
+
+  const pct = Math.min(100, (amount / goal) * 100)
+  const reached = amount >= goal
+
+  return (
+    <div style={{
+      background: '#0e0e0e',
+      border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 14,
+      padding: '14px 16px',
+      marginBottom: 20,
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.65)' }}>
+            💧 VODA
+          </span>
+          {syncing && (
+            <span style={{ fontSize: 10, color: 'rgba(245,158,11,0.4)' }}>↑</span>
+          )}
+        </div>
+        <button
+          onClick={() => { setGoalInput(String(goal)); setEditingGoal(e => !e) }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 4,
+            color: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+          aria-label="Nastavit cíl"
+        >
+          {/* gear icon */}
+          <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14 }}>
+            <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Goal editor */}
+      {editingGoal && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+          <input
+            type="number"
+            value={goalInput}
+            onChange={e => setGoalInput(e.target.value)}
+            placeholder="Cíl v ml"
+            style={{
+              flex: 1,
+              background: '#1a1a1a',
+              border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 8,
+              color: '#ededed',
+              fontSize: 13,
+              padding: '6px 10px',
+              outline: 'none',
+            }}
+          />
+          <button
+            onClick={() => { const g = Number(goalInput); if (g > 0) saveGoal(g) }}
+            style={{
+              background: '#F59E0B',
+              color: '#080808',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '6px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            Uložit
+          </button>
+        </div>
+      )}
+
+      {/* Progress bar */}
+      <div style={{ position: 'relative', height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, marginBottom: 12, overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute',
+          left: 0, top: 0, bottom: 0,
+          width: `${pct}%`,
+          background: reached ? '#F59E0B' : 'rgba(245,158,11,0.55)',
+          borderRadius: 99,
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+
+      {/* Amount display */}
+      <div style={{ textAlign: 'center', marginBottom: 12 }}>
+        <span style={{
+          fontSize: 28,
+          fontWeight: 700,
+          color: reached ? '#F59E0B' : 'rgba(255,255,255,0.8)',
+          letterSpacing: '-0.02em',
+          lineHeight: 1,
+        }}>
+          {amount}
+        </span>
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', marginLeft: 4 }}>
+          / {goal} ml
+        </span>
+      </div>
+
+      {/* Buttons row */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button
+          onClick={() => updateAmount(amount - 250)}
+          style={{
+            flex: 1,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10,
+            color: 'rgba(255,255,255,0.6)',
+            fontSize: 18,
+            fontWeight: 400,
+            padding: '10px 0',
+            cursor: 'pointer',
+          }}
+        >
+          −
+        </button>
+
+        {/* Custom input */}
+        <div style={{ display: 'flex', flex: 2, gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <input
+            type="number"
+            value={customInput}
+            onChange={e => setCustomInput(e.target.value)}
+            placeholder="ml"
+            style={{
+              flex: 1,
+              background: 'rgba(255,255,255,0.05)',
+              border: 'none',
+              color: '#ededed',
+              fontSize: 13,
+              padding: '10px 10px',
+              outline: 'none',
+              minWidth: 0,
+              textAlign: 'center',
+            }}
+          />
+          <button
+            onClick={() => { const v = Number(customInput); if (v > 0) { updateAmount(amount + v); setCustomInput('') } }}
+            style={{
+              background: 'rgba(245,158,11,0.12)',
+              border: 'none',
+              borderLeft: '1px solid rgba(255,255,255,0.06)',
+              color: '#F59E0B',
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '10px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        <button
+          onClick={() => updateAmount(amount + 250)}
+          style={{
+            flex: 1,
+            background: 'rgba(245,158,11,0.1)',
+            border: '1px solid rgba(245,158,11,0.2)',
+            borderRadius: 10,
+            color: '#F59E0B',
+            fontSize: 18,
+            fontWeight: 600,
+            padding: '10px 0',
+            cursor: 'pointer',
+          }}
+        >
+          +
+        </button>
+      </div>
+
+      {/* Quick presets */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'center' }}>
+        {[250, 330, 500].map(ml => (
+          <button
+            key={ml}
+            onClick={() => updateAmount(amount + ml)}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 8,
+              color: 'rgba(255,255,255,0.3)',
+              fontSize: 11,
+              padding: '4px 10px',
+              cursor: 'pointer',
+            }}
+          >
+            +{ml}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -300,12 +668,32 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function HabitsPage() {
   const today = new Date()
+  const dateKey = todayISO()
+  const isOnline = useOnlineStatus()
+
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [profileId, setProfileId] = useState<string | null>(null)
+
+  // Load habits from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(`hikari_habits_${dateKey}`)
+    if (saved) {
+      try { setDone(new Set(JSON.parse(saved))) } catch { /* ignore */ }
+    }
+  }, [dateKey])
+
+  // Resolve profile ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) getProfileId(user).then(setProfileId)
+    })
+  }, [])
 
   const toggle = (id: string) =>
     setDone(prev => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
+      localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
       return next
     })
 
@@ -357,19 +745,35 @@ export default function HabitsPage() {
             {formatCzechDate(today)}
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'flex-end' }}>
-            <span style={{
-              fontSize: 15,
-              fontWeight: 700,
-              color: doneCount > 0 ? '#F59E0B' : 'rgba(255,255,255,0.25)',
-              lineHeight: 1,
-            }}>
-              {doneCount}
-            </span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', lineHeight: 1 }}>/</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)', lineHeight: 1 }}>
-              {totalCount}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+            {!isOnline && (
+              <span style={{
+                fontSize: 9,
+                color: 'rgba(255,100,50,0.7)',
+                background: 'rgba(255,100,50,0.08)',
+                border: '1px solid rgba(255,100,50,0.15)',
+                borderRadius: 5,
+                padding: '2px 6px',
+                letterSpacing: '0.04em',
+                fontWeight: 600,
+              }}>
+                OFFLINE
+              </span>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: doneCount > 0 ? '#F59E0B' : 'rgba(255,255,255,0.25)',
+                lineHeight: 1,
+              }}>
+                {doneCount}
+              </span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', lineHeight: 1 }}>/</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)', lineHeight: 1 }}>
+                {totalCount}
+              </span>
+            </div>
           </div>
         </header>
 
@@ -434,6 +838,12 @@ export default function HabitsPage() {
             </div>
           )}
         </div>
+
+        {/* ── Voda ── */}
+        <section>
+          <SectionLabel>Voda</SectionLabel>
+          <WaterTracker profileId={profileId} isOnline={isOnline} />
+        </section>
 
         {/* ── Aktivní ── */}
         <section style={{ marginBottom: 20 }}>
