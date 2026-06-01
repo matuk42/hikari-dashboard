@@ -377,7 +377,7 @@ function HabitRow({ habit, done, onToggle, liveStreak }: { habit: Habit; done: b
   return (
     <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
       <button
-        onClick={onToggle}
+        onClick={() => { console.log('[HabitRow] click', habit.id); onToggle() }}
         style={{
           flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
           border: done ? '2px solid #F59E0B' : '2px solid rgba(255,255,255,0.15)',
