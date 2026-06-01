@@ -518,25 +518,26 @@ export default function HabitsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
-  const toggle = (id: string) => {
+  const toggle = useCallback(async (id: string) => {
+    const nowDone = !done.has(id)
     setDone(prev => {
       const next = new Set(prev)
-      const nowDone = !next.has(id)
       nowDone ? next.add(id) : next.delete(id)
       localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
-
-      // Async DB write
-      const dbId = habitIdMap[id]
-      if (dbId) {
-        supabase.from('habit_logs').upsert(
-          { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
-          { onConflict: 'habit_id,date' }
-        ).then()
-      }
-
       return next
     })
-  }
+
+    const dbId = habitIdMap[id]
+    if (dbId) {
+      await supabase.from('habit_logs').upsert(
+        { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
+        { onConflict: 'habit_id,date' }
+      )
+      const habit = ALL_HABITS.find(h => h.id === id)
+      const newStreak = await rebuildStreak(dbId, habit?.mandatory ?? false)
+      setStreakMap(prev => ({ ...prev, [id]: newStreak }))
+    }
+  }, [done, dateKey, habitIdMap])
 
   const doneCount = TRACKABLE.filter(h => done.has(h.id)).length
   const totalCount = TRACKABLE.length
