@@ -31,14 +31,8 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isPublic = false // handled by early return above
-
-  if (!user && !isPublic) {
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (user && path === '/login') {
-    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return supabaseResponse
