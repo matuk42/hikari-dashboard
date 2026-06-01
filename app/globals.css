@@ -16,3 +16,24 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Gold slider thumb */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F59E0B;
+  cursor: pointer;
+  border: 2px solid #080808;
+  box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
+input[type='range']::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F59E0B;
+  cursor: pointer;
+  border: 2px solid #080808;
+  box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
