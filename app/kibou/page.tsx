@@ -225,9 +225,12 @@ export default function KibouPage() {
           }}>
             光 Hikari
           </Link>
-          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}>
-            きぼう
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <OfflineBadge />
+            <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}>
+              きぼう
+            </span>
+          </div>
         </header>
 
         {/* ── Sliders ── */}
