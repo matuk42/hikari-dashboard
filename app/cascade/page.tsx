@@ -459,100 +459,114 @@ export default function CascadePage() {
           </div>
         </header>
 
-        {/* ── Hero (Luffy behind Layer 1) ── */}
-        <div style={{ position: 'relative', marginBottom: 28 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/luffy.jpg"
-            alt=""
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: -16,
-              transform: 'translateY(-50%)',
-              height: 200,
-              width: 'auto',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              filter: 'invert(1) grayscale(1)',
-              mixBlendMode: 'screen',
-              opacity: 0.07,
-              zIndex: 0,
-            }}
-          />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <p style={{
-              fontSize: 11,
-              color: 'rgba(245,158,11,0.5)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}>
-              Životní trajektorie
-            </p>
-            <p style={{
-              fontSize: 13,
-              color: 'rgba(255,255,255,0.4)',
-              fontStyle: 'italic',
-              lineHeight: 1.6,
-              margin: 0,
-              maxWidth: 280,
-            }}>
-              &ldquo;Žiju v rytmu mezi módy světa — ráno krátký čas u laptopu, zbytek dne žiju dobrodružství.&rdquo;
-            </p>
-          </div>
-        </div>
+        {/* Skeleton + real content */}
+        <div style={{ position: 'relative' }}>
 
-        {/* ── Timeline ── */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {LAYERS.map((layer, i) => (
-            <div key={layer.n} style={{ display: 'flex', gap: 0 }}>
-
-              {/* Dot + line */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: 24,
-                flexShrink: 0,
-                paddingTop: 18,
-              }}>
-                <div style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: '#F59E0B',
-                  boxShadow: '0 0 8px rgba(245,158,11,0.5)',
-                  flexShrink: 0,
-                }} />
-                {i < LAYERS.length - 1 && (
-                  <div style={{
-                    flex: 1,
-                    width: 2,
-                    minHeight: 20,
-                    background: 'linear-gradient(to bottom, rgba(245,158,11,0.35), rgba(245,158,11,0.06))',
-                    marginTop: 5,
-                  }} />
-                )}
-              </div>
-
-              {/* Layer card */}
-              <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < LAYERS.length - 1 ? 12 : 0 }}>
-                <LayerCard layer={layer} />
-              </div>
-
+          {!mounted && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1, pointerEvents: 'none' }}>
+              <CascadeSkeleton />
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* ── Footer quote ── */}
-        <div style={{ textAlign: 'center', padding: '32px 24px 16px', opacity: 0.4 }}>
-          <p style={{ fontSize: 12, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
-            &ldquo;Dreams don&rsquo;t have expiration dates.&rdquo;
-          </p>
-          <p style={{ fontSize: 11, color: '#555', marginTop: 5 }}>— Monkey D. Luffy</p>
-        </div>
+          <div style={{ opacity: mounted ? 1 : 0, transition: 'opacity 0.35s ease' }}>
+
+            {/* ── Hero (Luffy behind Layer 1) ── */}
+            <div style={{ position: 'relative', marginBottom: 28 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/luffy.jpg"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: -16,
+                  transform: 'translateY(-50%)',
+                  height: 200,
+                  width: 'auto',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  filter: 'invert(1) grayscale(1)',
+                  mixBlendMode: 'screen',
+                  opacity: 0.07,
+                  zIndex: 0,
+                }}
+              />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <p style={{
+                  fontSize: 11,
+                  color: 'rgba(245,158,11,0.5)',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: 6,
+                }}>
+                  Životní trajektorie
+                </p>
+                <p style={{
+                  fontSize: 13,
+                  color: 'rgba(255,255,255,0.4)',
+                  fontStyle: 'italic',
+                  lineHeight: 1.6,
+                  margin: 0,
+                  maxWidth: 280,
+                }}>
+                  &ldquo;Žiju v rytmu mezi módy světa — ráno krátký čas u laptopu, zbytek dne žiju dobrodružství.&rdquo;
+                </p>
+              </div>
+            </div>
+
+            {/* ── Timeline ── */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {LAYERS.map((layer, i) => (
+                <div key={layer.n} style={{ display: 'flex', gap: 0 }}>
+
+                  {/* Dot + line */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: 24,
+                    flexShrink: 0,
+                    paddingTop: 18,
+                  }}>
+                    <div style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: '#F59E0B',
+                      boxShadow: '0 0 8px rgba(245,158,11,0.5)',
+                      flexShrink: 0,
+                    }} />
+                    {i < LAYERS.length - 1 && (
+                      <div style={{
+                        flex: 1,
+                        width: 2,
+                        minHeight: 20,
+                        background: 'linear-gradient(to bottom, rgba(245,158,11,0.35), rgba(245,158,11,0.06))',
+                        marginTop: 5,
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Layer card */}
+                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < LAYERS.length - 1 ? 12 : 0 }}>
+                    <LayerCard layer={layer} />
+                  </div>
+
+                </div>
+              ))}
+            </div>
+
+            {/* ── Footer quote ── */}
+            <div style={{ textAlign: 'center', padding: '32px 24px 16px', opacity: 0.4 }}>
+              <p style={{ fontSize: 12, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
+                &ldquo;Dreams don&rsquo;t have expiration dates.&rdquo;
+              </p>
+              <p style={{ fontSize: 11, color: '#555', marginTop: 5 }}>— Monkey D. Luffy</p>
+            </div>
+
+          </div>{/* end real content */}
+        </div>{/* end relative wrapper */}
 
       </div>
     </div>
