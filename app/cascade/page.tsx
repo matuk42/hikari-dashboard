@@ -152,6 +152,7 @@ function ProgressBar({ value, height = 5 }: { value: number; height?: number }) 
 }
 
 function ChipDetail({ chip, onClose }: { chip: Chip; onClose: () => void }) {
+  const hasLinked = chip.linkedHabits && chip.linkedHabits.length > 0
   return (
     <div
       onClick={onClose}
@@ -180,13 +181,48 @@ function ChipDetail({ chip, onClose }: { chip: Chip; onClose: () => void }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: '#F59E0B', marginBottom: 10 }}>
           {chip.label}
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, margin: `0 0 ${hasLinked || chip.hikariNote ? 14 : 0}px` }}>
           {chip.detail}
         </p>
+
+        {hasLinked && (
+          <div style={{ marginBottom: chip.hikariNote ? 14 : 0 }}>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              Napojené habits
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip.linkedHabits!.map(h => (
+                <span key={h} style={{
+                  fontSize: 11, padding: '3px 9px', borderRadius: 20,
+                  background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+                  color: 'rgba(245,158,11,0.7)',
+                }}>
+                  {h}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {chip.hikariNote && (
+          <div style={{
+            background: 'rgba(245,158,11,0.05)',
+            border: '1px solid rgba(245,158,11,0.15)',
+            borderRadius: 10, padding: '10px 12px',
+            marginBottom: 14,
+          }}>
+            <div style={{ fontSize: 10, color: 'rgba(245,158,11,0.4)', marginBottom: 4, letterSpacing: '0.08em' }}>
+              HIKARI →
+            </div>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
+              {chip.hikariNote}
+            </p>
+          </div>
+        )}
+
         <button
           onClick={onClose}
           style={{
-            marginTop: 16,
             fontSize: 12,
             color: 'rgba(255,255,255,0.3)',
             background: 'transparent',
