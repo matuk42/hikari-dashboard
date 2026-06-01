@@ -548,17 +548,17 @@ export default function HabitsPage() {
     const dbId = habitIdMap[id]
     if (dbId) {
       const habit = ALL_HABITS.find(h => h.id === id)
-      supabase.from('habit_logs').upsert(
+      Promise.resolve(supabase.from('habit_logs').upsert(
         { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
         { onConflict: 'habit_id,date' }
-      ).then(({ error }) => {
+      )).then(({ error }) => {
         if (error) { console.error('[toggle] upsert error:', error); return }
         return rebuildStreak(dbId, habit?.mandatory ?? false)
       }).then(newStreak => {
         if (newStreak !== undefined) {
           setStreakMap(prev => ({ ...prev, [id]: newStreak }))
         }
-      }).catch(err => console.error('[toggle] streak error:', err))
+      }).catch((err: unknown) => console.error('[toggle] streak error:', err))
     }
   }
 
