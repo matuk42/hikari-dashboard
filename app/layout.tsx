@@ -2,12 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SwRegister from "./sw-register";
-import dynamic from "next/dynamic";
-
-const OnboardingModal = dynamic(
-  () => import("./components/OnboardingModal").then(m => ({ default: m.OnboardingModal })),
-  { ssr: false }
-);
+import { OnboardingWrapper } from "./components/OnboardingWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
