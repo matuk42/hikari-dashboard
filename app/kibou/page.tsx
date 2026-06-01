@@ -391,7 +391,7 @@ export default function KibouPage() {
 
           {/* Chart */}
           <div style={{ position: 'relative', zIndex: 1, width: '100%', height: 180 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            {!mounted ? <div style={{ height: 180 }} /> : <ResponsiveContainer width="100%" height="100%">
               <LineChart data={displayData} margin={{ top: 4, right: 14, left: -20, bottom: 0 }}>
                 <XAxis
                   dataKey="date"
