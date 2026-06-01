@@ -142,6 +142,26 @@ async function loadTodayLogs(idMap: Record<string, string>, date: string): Promi
   return new Set([...doneDbIds].map(dbId => reverse[dbId]).filter(Boolean))
 }
 
+// Load current streaks from streaks_cache
+async function loadStreaks(idMap: Record<string, string>): Promise<Record<string, number>> {
+  const dbIds = Object.values(idMap)
+  if (!dbIds.length) return {}
+  const { data } = await supabase
+    .from('streaks_cache')
+    .select('habit_id, current_streak')
+    .in('habit_id', dbIds)
+
+  const reverse: Record<string, string> = {}
+  for (const [local, db] of Object.entries(idMap)) reverse[db] = local
+
+  const result: Record<string, number> = {}
+  for (const row of data ?? []) {
+    const localId = reverse[row.habit_id]
+    if (localId) result[localId] = row.current_streak
+  }
+  return result
+}
+
 // ─── SVG: straw hat silhouette ────────────────────────────────────────────────
 
 function StrawHatFigure() {
