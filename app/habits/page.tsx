@@ -575,7 +575,7 @@ export default function HabitsPage() {
           {/* ── Streak hero ── */}
           <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
             <StrawHatFigure />
-            <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{MAX_STREAK}</div>
+            <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{streakMap['anki'] ?? MAX_STREAK}</div>
             <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
             {allDone && (
               <div style={{ marginTop: 20, padding: '0 24px' }}>
