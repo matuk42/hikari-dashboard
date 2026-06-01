@@ -211,13 +211,14 @@ export default function KibouPage() {
     // Generate placeholder data client-side only (Math.random() must not run during SSR)
     setChartData(generatePlaceholderData())
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      getProfileId(user).then(pid => {
-        if (!pid) return
+      if (!user) { setDataLoaded(true); return }
+      getProfileId(user).then(async pid => {
+        if (!pid) { setDataLoaded(true); return }
         setProfileId(pid)
-        loadData(pid)
+        await loadData(pid)
+        setDataLoaded(true)
       })
-    })
+    }).catch(() => setDataLoaded(true))
   }, [loadData])
 
   async function handleSave() {
