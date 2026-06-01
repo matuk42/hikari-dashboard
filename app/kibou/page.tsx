@@ -288,244 +288,258 @@ export default function KibouPage() {
           </div>
         </header>
 
-        {/* ── Sliders ── */}
-        <section style={{
-          background: '#0e0e0e',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14,
-          padding: '20px 18px 16px',
-          marginBottom: 16,
-        }}>
-          <SliderInput label="Mood" value={mood} onChange={setMood} emoji="😌" />
-          <SliderInput label="Energy" value={energy} onChange={setEnergy} emoji="⚡" />
-          <SliderInput label="Hope" value={hope} onChange={setHope} emoji="🌟" />
+        {/* Skeleton + real content */}
+        <div style={{ position: 'relative' }}>
 
-          <textarea
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Poznámka pro Hikari — co se dnes dělo? (volitelné)"
-            rows={2}
-            style={{
-              width: '100%',
-              background: '#141414',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 10,
-              color: 'rgba(255,255,255,0.65)',
-              fontSize: 12,
-              padding: '10px 12px',
-              resize: 'none',
-              outline: 'none',
-              fontFamily: 'inherit',
-              boxSizing: 'border-box',
-              marginBottom: 14,
-            }}
-          />
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              width: '100%',
-              background: saving ? 'rgba(245,158,11,0.3)' : '#F59E0B',
-              color: saving ? 'rgba(255,255,255,0.5)' : '#080808',
-              border: 'none',
-              borderRadius: 10,
-              padding: '12px 0',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              letterSpacing: '0.02em',
-              transition: 'background 0.15s',
-            }}
-          >
-            {saving ? 'Ukládám…' : 'Uložit dnes'}
-          </button>
-
-          {savedMsg && (
-            <p style={{
-              textAlign: 'center',
-              fontSize: 12,
-              marginTop: 10,
-              color: savedMsg.startsWith('Uloženo') ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)',
-            }}>
-              {savedMsg}
-            </p>
+          {!dataLoaded && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1, pointerEvents: 'none' }}>
+              <KibouSkeleton />
+            </div>
           )}
-        </section>
 
-        {/* ── Averages ── */}
-        <section style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 8,
-          marginBottom: 16,
-        }}>
-          {[
-            {
-              label: 'Tento týden',
-              mood: avg(weekData.map(d => d.mood)),
-              energy: avg(weekData.map(d => d.energy)),
-              hope: avg(weekData.map(d => d.hope)),
-            },
-            {
-              label: 'Tento měsíc',
-              mood: avg(monthData.map(d => d.mood)),
-              energy: avg(monthData.map(d => d.energy)),
-              hope: avg(monthData.map(d => d.hope)),
-            },
-            {
-              label: 'Celkový',
-              mood: avg(chartData.map(d => d.mood)),
-              energy: avg(chartData.map(d => d.energy)),
-              hope: avg(chartData.map(d => d.hope)),
-            },
-          ].map(stat => (
-            <div key={stat.label} style={{
+          <div style={{ opacity: dataLoaded ? 1 : 0, transition: 'opacity 0.35s ease' }}>
+
+            {/* ── Sliders ── */}
+            <section style={{
               background: '#0e0e0e',
               border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 12,
-              padding: '12px 10px',
-              textAlign: 'center',
+              borderRadius: 14,
+              padding: '20px 18px 16px',
+              marginBottom: 16,
             }}>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                {stat.label}
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B' }}>{stat.hope}</div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
-                😌{stat.mood} ⚡{stat.energy}
-              </div>
-            </div>
-          ))}
-        </section>
+              <SliderInput label="Mood" value={mood} onChange={setMood} emoji="😌" />
+              <SliderInput label="Energy" value={energy} onChange={setEnergy} emoji="⚡" />
+              <SliderInput label="Hope" value={hope} onChange={setHope} emoji="🌟" />
 
-        {/* ── Trend chart ── */}
-        <section style={{
-          position: 'relative',
-          background: '#0e0e0e',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14,
-          padding: '16px 4px 12px',
-          marginBottom: 16,
-          overflow: 'hidden',
-        }}>
-          {/* Luffy silhouette */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/luffy.jpg"
-            alt=""
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: -10,
-              transform: 'translateY(-50%)',
-              height: 180,
-              width: 'auto',
-              pointerEvents: 'none',
-              filter: 'invert(1) grayscale(1)',
-              mixBlendMode: 'screen',
-              opacity: 0.06,
-              zIndex: 0,
-            }}
-          />
+              <textarea
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="Poznámka pro Hikari — co se dnes dělo? (volitelné)"
+                rows={2}
+                style={{
+                  width: '100%',
+                  background: '#141414',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 10,
+                  color: 'rgba(255,255,255,0.65)',
+                  fontSize: 12,
+                  padding: '10px 12px',
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                  marginBottom: 14,
+                }}
+              />
 
-          {/* Toggle */}
-          <div style={{
-            position: 'relative',
-            zIndex: 1,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0 14px',
-            marginBottom: 12,
-          }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              Trend {isPlaceholder ? '· ukázková data' : ''}
-            </span>
-            <div style={{ display: 'flex', gap: 2, background: '#141414', borderRadius: 8, padding: 2 }}>
-              {(['30', 'all'] as const).map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  style={{
-                    fontSize: 11,
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: range === r ? '#F59E0B' : 'transparent',
-                    color: range === r ? '#080808' : 'rgba(255,255,255,0.3)',
-                    fontWeight: range === r ? 700 : 400,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {r === '30' ? '30 dní' : 'Vše'}
-                </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  width: '100%',
+                  background: saving ? 'rgba(245,158,11,0.3)' : '#F59E0B',
+                  color: saving ? 'rgba(255,255,255,0.5)' : '#080808',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '12px 0',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.02em',
+                  transition: 'background 0.15s',
+                }}
+              >
+                {saving ? 'Ukládám…' : 'Uložit dnes'}
+              </button>
+
+              {savedMsg && (
+                <p style={{
+                  textAlign: 'center',
+                  fontSize: 12,
+                  marginTop: 10,
+                  color: savedMsg.startsWith('Uloženo') ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)',
+                }}>
+                  {savedMsg}
+                </p>
+              )}
+            </section>
+
+            {/* ── Averages ── */}
+            <section style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: 8,
+              marginBottom: 16,
+            }}>
+              {[
+                {
+                  label: 'Tento týden',
+                  mood: avg(weekData.map(d => d.mood)),
+                  energy: avg(weekData.map(d => d.energy)),
+                  hope: avg(weekData.map(d => d.hope)),
+                },
+                {
+                  label: 'Tento měsíc',
+                  mood: avg(monthData.map(d => d.mood)),
+                  energy: avg(monthData.map(d => d.energy)),
+                  hope: avg(monthData.map(d => d.hope)),
+                },
+                {
+                  label: 'Celkový',
+                  mood: avg(chartData.map(d => d.mood)),
+                  energy: avg(chartData.map(d => d.energy)),
+                  hope: avg(chartData.map(d => d.hope)),
+                },
+              ].map(stat => (
+                <div key={stat.label} style={{
+                  background: '#0e0e0e',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 12,
+                  padding: '12px 10px',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                    {stat.label}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B' }}>{stat.hope}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
+                    😌{stat.mood} ⚡{stat.energy}
+                  </div>
+                </div>
               ))}
-            </div>
-          </div>
+            </section>
 
-          {/* Chart */}
-          <div style={{ position: 'relative', zIndex: 1, width: '100%', height: 180 }}>
-            {!mounted ? <div style={{ height: 180 }} /> : <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={displayData} margin={{ top: 4, right: 14, left: -20, bottom: 0 }}>
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={Math.floor(displayData.length / 5)}
-                />
-                <YAxis
-                  domain={[1, 10]}
-                  tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: '#111',
-                    border: '1px solid rgba(245,158,11,0.2)',
-                    borderRadius: 8,
-                    fontSize: 11,
-                    color: '#ededed',
-                  }}
-                  labelStyle={{ color: 'rgba(255,255,255,0.4)' }}
-                />
-                <Line type="monotone" dataKey="hope" stroke="#F59E0B" strokeWidth={2} dot={false} name="Hope" />
-                <Line type="monotone" dataKey="energy" stroke="rgba(245,158,11,0.4)" strokeWidth={1.5} dot={false} name="Energy" strokeDasharray="3 3" />
-                <Line type="monotone" dataKey="mood" stroke="rgba(245,158,11,0.25)" strokeWidth={1.5} dot={false} name="Mood" strokeDasharray="5 5" />
-              </LineChart>
-            </ResponsiveContainer>}
-          </div>
+            {/* ── Trend chart ── */}
+            <section style={{
+              position: 'relative',
+              background: '#0e0e0e',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14,
+              padding: '16px 4px 12px',
+              marginBottom: 16,
+              overflow: 'hidden',
+            }}>
+              {/* Luffy silhouette */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/luffy.jpg"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: -10,
+                  transform: 'translateY(-50%)',
+                  height: 180,
+                  width: 'auto',
+                  pointerEvents: 'none',
+                  filter: 'invert(1) grayscale(1)',
+                  mixBlendMode: 'screen',
+                  opacity: 0.06,
+                  zIndex: 0,
+                }}
+              />
 
-          {/* Legend */}
-          <div style={{
-            position: 'relative',
-            zIndex: 1,
-            display: 'flex',
-            gap: 14,
-            justifyContent: 'center',
-            padding: '0 14px',
-            marginTop: 6,
-          }}>
-            {[
-              { label: 'Hope', color: '#F59E0B', dash: false },
-              { label: 'Energy', color: 'rgba(245,158,11,0.4)', dash: true },
-              { label: 'Mood', color: 'rgba(245,158,11,0.25)', dash: true },
-            ].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{
-                  width: 18,
-                  height: 2,
-                  background: l.color,
-                  borderRadius: 1,
-                }} />
-                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{l.label}</span>
+              {/* Toggle */}
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0 14px',
+                marginBottom: 12,
+              }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Trend {isPlaceholder ? '· ukázková data' : ''}
+                </span>
+                <div style={{ display: 'flex', gap: 2, background: '#141414', borderRadius: 8, padding: 2 }}>
+                  {(['30', 'all'] as const).map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setRange(r)}
+                      style={{
+                        fontSize: 11,
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: range === r ? '#F59E0B' : 'transparent',
+                        color: range === r ? '#080808' : 'rgba(255,255,255,0.3)',
+                        fontWeight: range === r ? 700 : 400,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {r === '30' ? '30 dní' : 'Vše'}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
+
+              {/* Chart */}
+              <div style={{ position: 'relative', zIndex: 1, width: '100%', height: 180 }}>
+                {!mounted ? <div style={{ height: 180 }} /> : <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={displayData} margin={{ top: 4, right: 14, left: -20, bottom: 0 }}>
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
+                      axisLine={false}
+                      tickLine={false}
+                      interval={Math.floor(displayData.length / 5)}
+                    />
+                    <YAxis
+                      domain={[1, 10]}
+                      tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#111',
+                        border: '1px solid rgba(245,158,11,0.2)',
+                        borderRadius: 8,
+                        fontSize: 11,
+                        color: '#ededed',
+                      }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.4)' }}
+                    />
+                    <Line type="monotone" dataKey="hope" stroke="#F59E0B" strokeWidth={2} dot={false} name="Hope" />
+                    <Line type="monotone" dataKey="energy" stroke="rgba(245,158,11,0.4)" strokeWidth={1.5} dot={false} name="Energy" strokeDasharray="3 3" />
+                    <Line type="monotone" dataKey="mood" stroke="rgba(245,158,11,0.25)" strokeWidth={1.5} dot={false} name="Mood" strokeDasharray="5 5" />
+                  </LineChart>
+                </ResponsiveContainer>}
+              </div>
+
+              {/* Legend */}
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                display: 'flex',
+                gap: 14,
+                justifyContent: 'center',
+                padding: '0 14px',
+                marginTop: 6,
+              }}>
+                {[
+                  { label: 'Hope', color: '#F59E0B', dash: false },
+                  { label: 'Energy', color: 'rgba(245,158,11,0.4)', dash: true },
+                  { label: 'Mood', color: 'rgba(245,158,11,0.25)', dash: true },
+                ].map(l => (
+                  <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{
+                      width: 18,
+                      height: 2,
+                      background: l.color,
+                      borderRadius: 1,
+                    }} />
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{l.label}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+          </div>{/* end real content */}
+        </div>{/* end relative wrapper */}
 
       </div>
     </div>
