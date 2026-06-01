@@ -482,6 +482,7 @@ export default function HabitsPage() {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [habitIdMap, setHabitIdMap] = useState<Record<string, string>>({})
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
+  const lsInitDoneRef = useRef(false)
 
   // Load localStorage on mount
   useEffect(() => {
@@ -490,6 +491,12 @@ export default function HabitsPage() {
       try { setDone(new Set(JSON.parse(saved))) } catch { /* ignore */ }
     }
   }, [dateKey])
+
+  // Sync done → localStorage after any state change (skip first render to avoid empty-write)
+  useEffect(() => {
+    if (!lsInitDoneRef.current) { lsInitDoneRef.current = true; return }
+    localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...done]))
+  }, [done, dateKey])
 
   // Init DB: resolve profile → seed habits → load today's logs
   useEffect(() => {
