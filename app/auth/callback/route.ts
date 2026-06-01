@@ -6,9 +6,6 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
 
-  console.log('[auth/callback] url:', request.url)
-  console.log('[auth/callback] code present:', !!code)
-
   if (code) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -25,10 +22,33 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    console.log('[auth/callback] exchange result — user:', data?.user?.email ?? null, 'error:', error?.message ?? null)
-  } else {
-    console.log('[auth/callback] NO CODE — full URL:', request.url)
+
+    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
+      .then(r => r.data?.user ? r : supabase.auth.getUser().then(u => ({ data: u.data, error: u.error })))
+      .catch(() => ({ data: { user: null }, error: null }))
+
+    if (user) {
+      // Auto-create profile on first login
+      const { data: existing } = await supabase
+        .from('profiles').select('id').eq('auth_user_id', user.id).single()
+
+      if (!existing) {
+        const email = user.email ?? ''
+        const { data: byEmail } = await supabase
+          .from('profiles').select('id').eq('google_email', email).single()
+
+        if (byEmail) {
+          await supabase.from('profiles').update({ auth_user_id: user.id }).eq('id', byEmail.id)
+        } else {
+          const name = (user.user_metadata?.full_name as string | undefined) ?? email.split('@')[0]
+          await supabase.from('profiles').insert({
+            auth_user_id: user.id,
+            google_email: email,
+            display_name: name,
+          })
+        }
+      }
+    }
   }
 
   return NextResponse.redirect(`${origin}/`)
