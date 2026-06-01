@@ -402,9 +402,12 @@ export default function CascadePage() {
           }}>
             光 Hikari
           </Link>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
-            Cascade
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <OfflineBadge />
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
+              Cascade
+            </span>
+          </div>
         </header>
 
         {/* ── Hero (Luffy behind Layer 1) ── */}
