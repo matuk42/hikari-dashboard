@@ -573,7 +573,8 @@ export default function HabitsPage() {
         localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
         return merged
       })
-    }).catch(console.error)
+      setDataLoaded(true)
+    }).catch(err => { console.error(err); setDataLoaded(true) })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
