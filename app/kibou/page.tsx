@@ -41,7 +41,7 @@ function generatePlaceholderData(): HopeEntry[] {
   return entries
 }
 
-const PLACEHOLDER_DATA = generatePlaceholderData()
+// Not called at module level — generated in useEffect so Math.random() only runs on client
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
