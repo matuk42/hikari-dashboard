@@ -450,37 +450,49 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 
 ---
 
-## 10. MVP scope
+## 10. MVP scope + implementační pořadí (W23–W27)
 
-### ✅ MVP — musí být
-- [ ] Google login
-- [ ] Onboarding (jméno, škola, spánek)
-- [ ] Home screen — cascade snapshot + habits dnes + streak hero + časová osa (statická)
-- [ ] Habits tracker — skupiny, odškrtávání (online + offline), streak hero, grace day
-- [ ] Cascade — 5 vrstev, collapsible, chips s detailem
-- [ ] きぼう — 3 slidery + poznámka, uložení, 30-denní / celkový graf
-- [ ] Supabase: habits_logs + hope_logs + cascade_layers
+### ✅ MVP — musí být (W23–W27)
+- [ ] Supabase migrace 001_init.sql aplikovaná (všech 6 domén)
+- [ ] Google login (single-user, restricted email)
+- [ ] Habits tracker — `/habits` — list aktivních + odškrtávání + streak hero
+- [ ] きぼう — `/kibou` — 3 slidery + poznámka + 30-denní / celkový graf
+- [ ] Cascade — `/cascade` — 5 vrstev (UI), collapsible, chips s detailem
+- [ ] Vault sync (manuální tlačítko) — Git fetch + parser sen.md/prijem.md/habits.md/Memory.md/patterns-observed.md → Supabase
+- [ ] Hikari paměť bootstrap z vaultu
+- [ ] Home screen — cascade snapshot + habits dnes + streak hero (statická časová osa zatím)
+- [ ] Onboarding (jméno, škola, spánek) — naběhne až je co onboardovat
 - [ ] PWA (光 ikonka)
-- [ ] Sync tlačítko (manuální vault sync)
+
+**Týdenní pořadí:**
+
+| Týden | Datum | Cíl |
+|-------|-------|-----|
+| **W23** | 1.–7.6.  | Supabase projekt + 001_init.sql + Habits route s odškrtáváním (bez AI) |
+| **W24** | 8.–14.6. | HOPE tracker + streaks_cache logic + grace day |
+| **W25** | 15.–21.6. | Cascade UI + vault sync (manuál) + memory bootstrap |
+| **W26** | 22.–28.6. | AI brain v1 (cron 6:00 generuje brief) + konflikt workflow CLI ↔ Supabase |
+| **W27** | 29.6.–5.7. | Home screen + PWA polish + onboarding |
 
 ### 🔜 V2 — po MVP
-- [ ] AI návrh denních úkolů (Hikari brain)
-- [ ] HOPE korelace → živá časová osa energie
-- [ ] Správa habits z dashboardu (přidat/přesunout/archivovat/end_date)
-- [ ] Auto-sync z Obsidianu (cron neděle)
-- [ ] Auto-retire habits
-- [ ] Hodnotící zprávy balíčků
+- [ ] HOPE korelace → živá časová osa energie (UI nad existujícím `energy_blocks`)
+- [ ] Správa habits z dashboardu (formulář přidat/přesunout/archivovat/end_date)
+- [ ] Auto-sync z vaultu (Vercel cron Ne 22:00)
+- [ ] Auto-retire habits (denní cron checking end_date)
+- [ ] Hodnotící zprávy balíčků (30.6. Imunita, 3.7. Fyzička)
 - [ ] Historie kalendář (`/history`)
-- [ ] Cascade progress AI výpočet
+- [ ] Cascade progress AI výpočet (z habits + milníků)
 - [ ] ⚡ Hikari názor na změnu úkolu
 - [ ] Zlepšení za měsíc
+- [ ] Hikari memory schvalovací UI (proposed → active workflow)
 
 ### 🔮 V3 — budoucnost
-- [ ] Chat s Hikari v dashboardu
+- [ ] Chat s Hikari v dashboardu (lokální AI rozhraní místo Claude Code CLI pro běžné věci)
 - [ ] Daily Calculator (po 2 měs. dat)
 - [ ] PC web layout (jiný než mobil)
-- [ ] Business stats sekce
-- [ ] Hikari paměť (plná, dlouhodobá)
+- [ ] **Business modul Fáze 1** (kanban + hour tracker) — až začne stavba B1
+- [ ] **Business modul Fáze 2** (MRR/customers/churn) — až přijdou první Kč
+- [ ] **Business modul Fáze 3** (AI návrhy money mode) — po 6+ měsících dat
 
 ---
 
