@@ -156,6 +156,8 @@ export default function KibouPage() {
 
   useEffect(() => {
     setMounted(true)
+    // Generate placeholder data client-side only (Math.random() must not run during SSR)
+    setChartData(generatePlaceholderData())
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       getProfileId(user).then(pid => {
