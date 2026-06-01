@@ -186,6 +186,7 @@ export default function KibouPage() {
     }, { onConflict: 'profile_id,date' })
 
     if (error) {
+      console.error('hope_logs upsert error:', error)
       setSavedMsg('Chyba uložení: ' + error.message)
     } else {
       setSavedMsg('Uloženo ✓')
