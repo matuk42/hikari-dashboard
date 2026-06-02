@@ -594,7 +594,6 @@ export default function HabitsPage() {
       })
       setDataLoaded(true)
     }).catch(err => { console.error(err); setDataLoaded(true) })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
   // Idempotent pending-queue flush on reconnect
