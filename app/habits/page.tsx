@@ -6,6 +6,12 @@ import { supabase } from '@/lib/supabase'
 import { getProfileId } from '@/lib/profile'
 import { rebuildStreak } from '@/lib/streak'
 
+// ─── LocalStorage keys ───────────────────────────────────────────────────────
+
+const LS_PROFILE_ID = 'hikari_profile_id'
+const LS_HABIT_MAP  = 'hikari_habit_id_map'
+const LS_STREAK_MAP = 'hikari_streak_map'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Habit {
