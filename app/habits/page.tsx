@@ -105,7 +105,8 @@ function dbToHabits(rows: DbHabit[]): Habit[] {
       id: r.id,
       name: r.name,
       status: (r.category === 'active' || r.category === 'graduated' ? r.category : 'trial') as Habit['status'],
-      serves: (r.vault_serves ?? []).filter(Boolean).join(' · '),
+      // Strip Obsidian wikilinks so subtitles read "sen/japonština", not "[[sen]]/japonština"
+      serves: (r.vault_serves ?? []).filter(Boolean).map(s => s.replace(/\[\[([^\]|]+)\]\]/g, '$1')).join(' · '),
       frequency: r.frequency ?? '',
       streak: 0,
       endDate: r.end_date ? formatShortCz(r.end_date) : undefined,

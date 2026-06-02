@@ -83,10 +83,14 @@ console.log('label :', weekLabelFromFile(weekly))
 // ── Habits parse (pack / pack_code) ──
 const habits = read('wiki/cile/habits.md')
 function parseStreak(s) { if (!s || s.toLowerCase().includes('nový')) return null; const m = s.match(/(\d+)/); return m ? parseInt(m[1], 10) : null }
-console.log('\n=== Habits: Aktivní (with streak) ===')
+console.log('\n=== Habits: Aktivní (with streak + raw "Slouží dimenzi") ===')
+const stripWiki = s => s.replace(/\[\[([^\]|]+)\]\]/g, '$1')
 for (const r of mdTable(mdSection(habits, '## Aktivní (Active)'))) {
   const name = stripBold(r['Habit'] ?? ''); if (!name || name.startsWith('_')) continue
+  const serves = r['Slouží dimenzi'] ?? r['Slouží'] ?? ''
   console.log(`  ${name}  | streak=${parseStreak(r['Aktuální streak'] ?? '')}`)
+  console.log(`      serves raw : "${serves}"`)
+  console.log(`      serves strip: "${stripWiki(serves)}"`)
 }
 console.log('\n=== Habits: Balíček Imunita (pack_code A–J) ===')
 for (const r of mdTable(mdSection(habits, '### Balíček Imunita'))) {
