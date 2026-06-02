@@ -1,5 +1,5 @@
-const CACHE = 'hikari-v2'
-const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/login', '/manifest.webmanifest', '/icon-192.png', '/icon.png']
+const CACHE = 'hikari-v1'
+const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/login', '/icon-192.png', '/icon.png']
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()))
@@ -23,8 +23,11 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const clone = res.clone()
-        caches.open(CACHE).then(c => c.put(e.request, clone))
+        // Only cache cacheable responses (no-store responses will throw, catch silently)
+        if (res.ok) {
+          const clone = res.clone()
+          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {})
+        }
         return res
       })
       .catch(async () => {
@@ -34,7 +37,7 @@ self.addEventListener('fetch', e => {
           const shell = await caches.match('/', { ignoreVary: true })
           if (shell) return shell
         }
-        // Must always return a Response — never undefined
+        // Always return a valid Response — never undefined
         return new Response('', { status: 503, statusText: 'Offline' })
       })
   )
