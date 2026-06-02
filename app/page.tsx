@@ -5,6 +5,74 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { ReactNode, CSSProperties } from 'react'
 
+// ─── Vault Sync Button ────────────────────────────────────────────────────────
+
+function VaultSyncButton() {
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [msg, setMsg] = useState('')
+
+  async function handleSync() {
+    setState('loading')
+    setMsg('')
+    try {
+      const res = await fetch('/api/vault-sync', { method: 'POST' })
+      const data = await res.json() as { synced?: boolean; files?: string[]; errors?: string[]; error?: string }
+      if (data.synced) {
+        setState('ok')
+        setMsg(`${data.files?.length ?? 0} files synced ✓`)
+      } else {
+        setState('error')
+        setMsg(data.errors?.[0] ?? data.error ?? 'Chyba syncu')
+      }
+    } catch {
+      setState('error')
+      setMsg('Síťová chyba')
+    }
+  }
+
+  const borderColor =
+    state === 'ok'    ? 'rgba(34,197,94,0.4)' :
+    state === 'error' ? 'rgba(239,68,68,0.4)' :
+    'rgba(245,158,11,0.35)'
+
+  const textColor =
+    state === 'ok'    ? 'rgba(34,197,94,0.8)' :
+    state === 'error' ? 'rgba(239,68,68,0.75)' :
+    'rgba(245,158,11,0.65)'
+
+  const label =
+    state === 'loading' ? '↻ Syncing…' :
+    state === 'ok'      ? msg :
+    state === 'error'   ? `⚠ ${msg}` :
+    '↻ Sync s vaultem'
+
+  return (
+    <div style={{ textAlign: 'center', paddingBottom: 8 }}>
+      <button
+        onClick={handleSync}
+        disabled={state === 'loading'}
+        style={{
+          background: 'transparent',
+          border: `1px solid ${borderColor}`,
+          borderRadius: 10,
+          color: textColor,
+          fontSize: 11,
+          letterSpacing: '0.04em',
+          padding: '6px 16px',
+          cursor: state === 'loading' ? 'wait' : 'pointer',
+          transition: 'all 0.15s',
+          maxWidth: 260,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </button>
+    </div>
+  )
+}
+
 // ─── Static data (hardcoded until V2) ────────────────────────────────────────
 
 const ENERGY_BLOCKS = [
@@ -153,7 +221,8 @@ export default function HomePage() {
       const [habitsRes, hopeRes] = await Promise.all([
         supabase.from('habits').select('id, name, category').eq('profile_id', profileId),
         supabase.from('hope_logs').select('mood, energy, hope')
-          .eq('profile_id', profileId).eq('date', dateKey).single(),
+          .eq('profile_id', profileId).eq('date', dateKey)
+          .order('logged_at', { ascending: false }).limit(1).maybeSingle(),
       ])
 
       const allHabits = habitsRes.data ?? []
@@ -336,6 +405,9 @@ export default function HomePage() {
             </div>
           </Card>
         </section>
+
+        {/* ── Vault sync ── */}
+        <VaultSyncButton />
 
       </div>
     </div>

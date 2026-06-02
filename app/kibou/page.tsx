@@ -183,12 +183,18 @@ export default function KibouPage() {
   const loadData = useCallback(async (pid: string) => {
     const { data } = await supabase
       .from('hope_logs')
-      .select('date, mood, energy, hope')
+      .select('date, mood, energy, hope, logged_at')
       .eq('profile_id', pid)
-      .order('date', { ascending: true })
+      .order('logged_at', { ascending: true })
 
     if (data && data.length > 0) {
-      setChartData(data.map(r => ({
+      // Multiple logs per day are allowed — keep the latest per date for the chart
+      const byDate = new Map<string, { date: string; mood: number; energy: number; hope: number }>()
+      for (const row of data) {
+        byDate.set(row.date, { date: row.date, mood: row.mood, energy: row.energy, hope: row.hope })
+      }
+      const deduped = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+      setChartData(deduped.map(r => ({
         date: new Date(r.date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }),
         mood: r.mood,
         energy: r.energy,
@@ -197,12 +203,13 @@ export default function KibouPage() {
       setIsPlaceholder(false)
     }
 
-    // Pre-fill today's values if they exist
-    const todayEntry = data?.find(r => r.date === today)
-    if (todayEntry) {
-      setMood(todayEntry.mood)
-      setEnergy(todayEntry.energy)
-      setHope(todayEntry.hope)
+    // Pre-fill from the most recent log today (last in ascending logged_at order)
+    const todayLogs = (data ?? []).filter(r => r.date === today)
+    const latestToday = todayLogs[todayLogs.length - 1]
+    if (latestToday) {
+      setMood(latestToday.mood)
+      setEnergy(latestToday.energy)
+      setHope(latestToday.hope)
     }
   }, [today])
 
@@ -231,14 +238,14 @@ export default function KibouPage() {
       return
     }
 
-    const { error } = await supabase.from('hope_logs').upsert({
+    const { error } = await supabase.from('hope_logs').insert({
       profile_id: profileId,
       date: today,
       mood,
       energy,
       hope,
       note: note || null,
-    }, { onConflict: 'profile_id,date' })
+    })
 
     if (error) {
       console.error('hope_logs upsert error:', error)
