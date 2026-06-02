@@ -103,29 +103,27 @@ async function fetchHomeData(): Promise<HomeData> {
     const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
     const habitIds = allHabits.map(h => h.id)
     const habitNameById: Record<string, string> = Object.fromEntries(allHabits.map(h => [h.id, h.name]))
+    const ankiHabit = allHabits.find(h => h.name === 'Anki procvičování')
 
-    // Parallel: habit_logs count + streaks_cache top
-    const [logsCountRes, streakRes] = await Promise.all([
+    // Parallel: habit_logs count + Anki streak specifically
+    const [logsCountRes, ankiStreakRes] = await Promise.all([
       trackableIds.length > 0
         ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
             .in('habit_id', trackableIds).eq('date', today).eq('status', 'done')
         : Promise.resolve({ count: 0 }),
-      habitIds.length > 0
-        ? supabase.from('streaks_cache').select('habit_id, current_streak')
-            .in('habit_id', habitIds).order('current_streak', { ascending: false }).limit(1).single()
+      ankiHabit
+        ? supabase.from('streaks_cache').select('current_streak')
+            .eq('habit_id', ankiHabit.id).single()
         : Promise.resolve({ data: null }),
     ])
 
     const habitsDone = (logsCountRes as { count: number | null }).count ?? 0
     const habitsTotal = trackableIds.length
 
-    const streakRow = (streakRes as { data: { habit_id: string; current_streak: number } | null }).data
-    const streakValue = (streakRow && streakRow.current_streak > 0)
-      ? streakRow.current_streak
-      : fallback.streakValue
-    const streakHabit = (streakRow && streakRow.current_streak > 0)
-      ? (habitNameById[streakRow.habit_id] ?? fallback.streakHabit)
-      : fallback.streakHabit
+    const streakValue =
+      (ankiStreakRes as { data: { current_streak: number } | null }).data?.current_streak
+      ?? fallback.streakValue
+    const streakHabit = 'Anki'
 
     return {
       habitsDone,
