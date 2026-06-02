@@ -251,7 +251,7 @@ export default function HomePage() {
           : Promise.resolve({ data: null }),
         // Cascade layer 5 (current week) for tasks + cascade card
         supabase.from('cascade_layers')
-          .select('title, progress_pct, cascade_dimensions(name)')
+          .select('title, description, progress_pct, cascade_dimensions(name)')
           .eq('profile_id', profileId).eq('tree', 'sen').eq('layer', 5)
           .maybeSingle(),
       ])
@@ -261,8 +261,10 @@ export default function HomePage() {
         ? (allHabits.find(h => h.id === topStreak.habit_id)?.name ?? 'Anki')
         : 'Anki'
 
-      const weekLayer = (weekLayerRes as { data: { title: string; progress_pct: number | null; cascade_dimensions: Array<{ name: string }> } | null }).data
+      const weekLayer = (weekLayerRes as { data: { title: string; description: string | null; progress_pct: number | null; cascade_dimensions: Array<{ name: string }> } | null }).data
       const weekDims = weekLayer?.cascade_dimensions ?? []
+      // Week token like "W23" comes from the layer description ("W23 · 1.–7.6.")
+      const weekToken = weekLayer?.description?.match(/W\d+/)?.[0] ?? weekLayer?.title ?? 'W23'
 
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
@@ -270,10 +272,10 @@ export default function HomePage() {
         streakValue:  topStreak?.current_streak ?? FALLBACK_STREAK,
         streakHabit:  topHabitName,
         hopeToday:    hopeRes.data ?? null,
-        weekTitle:    weekLayer?.title ?? 'W23',
+        weekTitle:    weekToken,
         weekProgress: weekLayer?.progress_pct ?? 0,
         weekTasks:    weekDims.length > 0
-          ? weekDims.map(d => ({ label: d.name, tag: 'Cascade · ' + (weekLayer?.title ?? 'W23') }))
+          ? weekDims.map(d => ({ label: d.name, tag: 'Cascade · ' + weekToken }))
           : MAIN_TASKS,
       })
     }).catch(() => {})

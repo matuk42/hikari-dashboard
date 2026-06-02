@@ -30,6 +30,48 @@ function yearMonthStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+const CZ_MONTHS = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen',
+  'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec']
+
+/** Human month label, e.g. "Červen 2026" */
+function monthLabel(): string {
+  const d = new Date()
+  const m = CZ_MONTHS[d.getMonth()]
+  return `${m.charAt(0).toUpperCase()}${m.slice(1)} ${d.getFullYear()}`
+}
+
+/** ISO date for the last day of the current month */
+function endOfMonthISO(): string {
+  const d = new Date()
+  const e = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`
+}
+
+/** ISO date for Sunday (end) of the current ISO week */
+function endOfWeekISO(): string {
+  const d = new Date()
+  const dow = d.getDay() || 7
+  d.setDate(d.getDate() + (7 - dow))
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** First header line present from a priority list of prefixes, '' if none */
+function findHeaderLine(md: string, prefixes: string[]): string {
+  for (const p of prefixes) {
+    const line = md.split('\n').find(l => l.startsWith(p))
+    if (line) return line
+  }
+  return ''
+}
+
+/** Week label from the weekly file, e.g. "W23 · 1.–7.6.2026" (fallback "Týden") */
+function weekLabelFromFile(md: string): string {
+  const wk    = md.match(/^week:\s*\d{4}-(W\d+)/m)?.[1]
+  const range = md.match(/—\s*W\d+\s*\(([^)]+)\)/)?.[1]
+  if (wk && range) return `${wk} · ${range}`
+  return wk ?? 'Týden'
+}
+
 // Vault uses longer names; dashboard uses shorter canonical ones.
 // Without this map the sync would INSERT parallel duplicate habits instead of
 // updating existing rows (habits has UNIQUE profile_id,name).
@@ -429,23 +471,27 @@ export async function POST() {
         const monthlySec = mdSection(raw.monthly, '### SEN — ')
         const l4dims = numberedItems(monthlySec)
         const l4id = await upsertLayer(db, pid, {
-          tree: 'sen', layer: 4, title: 'Měsíc', description: 'Červen 2026',
-          deadline: '2026-06-30', sourceFile: FILES.monthly,
+          tree: 'sen', layer: 4, title: 'Měsíc', description: monthLabel(),
+          deadline: endOfMonthISO(), sourceFile: FILES.monthly,
         }, errors)
         if (l4id) await insertNewDimensions(db, l4id, l4dims)
       }
 
-      // Layer 5 — Týden — from weekly review
+      // Layer 5 — Týden — from weekly review.
+      // The weekly "plan" file (status: plan) holds priorities under
+      // "### 3 hlavní priority"; older review files used "## Priority na W??"
+      // or "## 3 priority…". Try them in order so the parser survives the format.
       if (raw.weekly) {
         const weeklyMd = raw.weekly
-        // Find "## Priority na W??" section
-        const prioLine = weeklyMd.split('\n').find(l => l.match(/^## Priority na W/)) ?? ''
-        const prioSec  = prioLine ? mdSection(weeklyMd, prioLine) : ''
-        const weekNum  = prioLine.match(/W(\d+)/)?.[1] ?? '23'
-        const l5dims   = numberedItems(prioSec)
+        const prioLine = findHeaderLine(weeklyMd, [
+          '### 3 hlavní priority',
+          '## Priority na W',
+          '## 3 priority',
+        ])
+        const l5dims = prioLine ? numberedItems(mdSection(weeklyMd, prioLine)) : []
         const l5id = await upsertLayer(db, pid, {
-          tree: 'sen', layer: 5, title: weekNum, description: 'Aktuální týden',
-          deadline: '2026-06-08', sourceFile: FILES.weekly,
+          tree: 'sen', layer: 5, title: 'Týden', description: weekLabelFromFile(weeklyMd),
+          deadline: endOfWeekISO(), sourceFile: FILES.weekly,
         }, errors)
         if (l5id) await insertNewDimensions(db, l5id, l5dims)
       }
