@@ -17,7 +17,7 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return
   const url = new URL(e.request.url)
   if (url.hostname.includes('supabase') || url.pathname.startsWith('/auth')) return
-  // RSC payloads change every request — skip caching, let them fail offline; client renders from JS
+  // RSC payloads change every request — skip; client renders from loaded JS
   if (url.searchParams.has('_rsc')) return
 
   e.respondWith(
@@ -27,9 +27,15 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, clone))
         return res
       })
-      .catch(() =>
-        caches.match(e.request, { ignoreSearch: true, ignoreVary: true })
-          .then(cached => cached ?? (e.request.mode === 'navigate' ? caches.match('/', { ignoreVary: true }) : undefined))
-      )
+      .catch(async () => {
+        const cached = await caches.match(e.request, { ignoreSearch: true, ignoreVary: true })
+        if (cached) return cached
+        if (e.request.mode === 'navigate') {
+          const shell = await caches.match('/', { ignoreVary: true })
+          if (shell) return shell
+        }
+        // Must always return a Response — never undefined
+        return new Response('', { status: 503, statusText: 'Offline' })
+      })
   )
 })
