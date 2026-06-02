@@ -645,8 +645,22 @@ export default function HabitsPage() {
       { onConflict: 'habit_id,date' }
     ).then(async ({ error }) => {
       if (error) { console.error('habit_logs upsert error:', error); return }
-      const real = await rebuildStreak(dbId, false)
-      setStreakMap(prev => ({ ...prev, [id]: real }))
+      // Read-modify-write on streaks_cache so vault-seeded baseline is preserved
+      const { data: cached } = await supabase
+        .from('streaks_cache')
+        .select('current_streak, best_streak')
+        .eq('habit_id', dbId)
+        .maybeSingle()
+      const newStreak = Math.max(0, (cached?.current_streak ?? 0) + (nowDone ? 1 : -1))
+      const newBest   = Math.max(newStreak, cached?.best_streak ?? 0)
+      await supabase.from('streaks_cache').upsert({
+        habit_id:       dbId,
+        current_streak: newStreak,
+        best_streak:    newBest,
+        ...(nowDone ? { last_completed_date: dateKey } : {}),
+        updated_at:     new Date().toISOString(),
+      }, { onConflict: 'habit_id' })
+      setStreakMap(prev => ({ ...prev, [id]: newStreak }))
     })
   }
 
