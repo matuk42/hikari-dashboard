@@ -1,4 +1,4 @@
-const CACHE = 'hikari-v1'
+const CACHE = 'hikari-v2'
 const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/login', '/manifest.webmanifest', '/icon-192.png', '/icon.png']
 
 self.addEventListener('install', e => {
@@ -16,8 +16,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return
   const url = new URL(e.request.url)
-  // Network-first for API/auth, cache-first for assets
-  if (url.pathname.startsWith('/auth') || url.hostname.includes('supabase')) return
+  if (url.hostname.includes('supabase') || url.pathname.startsWith('/auth')) return
+  // RSC payloads change every request — skip caching, let them fail offline; client renders from JS
+  if (url.searchParams.has('_rsc')) return
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
@@ -25,6 +27,9 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, clone))
         return res
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request, { ignoreSearch: true, ignoreVary: true })
+          .then(cached => cached ?? (e.request.mode === 'navigate' ? caches.match('/', { ignoreVary: true }) : undefined))
+      )
   )
 })
