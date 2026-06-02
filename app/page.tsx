@@ -101,8 +101,6 @@ async function fetchHomeData(): Promise<HomeData> {
 
     const allHabits = habitsRes.data ?? []
     const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
-    const habitIds = allHabits.map(h => h.id)
-    const habitNameById: Record<string, string> = Object.fromEntries(allHabits.map(h => [h.id, h.name]))
     const ankiHabit = allHabits.find(h => h.name === 'Anki procvičování')
 
     // Parallel: habit_logs count + Anki streak specifically
