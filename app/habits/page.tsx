@@ -653,7 +653,13 @@ export default function HabitsPage() {
   const doneCount = TRACKABLE.filter(h => done.has(h.id)).length
   const totalCount = TRACKABLE.length
   const allDone = doneCount === totalCount && totalCount > 0
-  const ankiStreak = streakMap['anki'] ?? ALL_HABITS.find(h => h.id === 'anki')?.streak ?? 0
+
+  // Hero: habit with the highest current streak (streaks_cache or fallback to hardcoded)
+  const heroHabit = ALL_HABITS.reduce((best, h) => {
+    const val = streakMap[h.id] ?? h.streak ?? 0
+    return val > (streakMap[best.id] ?? best.streak ?? 0) ? h : best
+  }, ALL_HABITS[0])
+  const heroStreak = streakMap[heroHabit.id] ?? heroHabit.streak ?? 0
 
   return (
     <div style={{ minHeight: '100vh', color: '#ededed', overflowX: 'hidden' }}>
@@ -699,8 +705,8 @@ export default function HabitsPage() {
             {/* Streak hero */}
             <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
               <StrawHatFigure />
-              <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{ankiStreak}</div>
-              <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · Anki</div>
+              <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{heroStreak}</div>
+              <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · {heroHabit.name}</div>
               {allDone && (
                 <div style={{ marginTop: 20, padding: '0 24px' }}>
                   <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />

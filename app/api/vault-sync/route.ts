@@ -111,6 +111,13 @@ function stripBold(s: string): string {
   return s.replace(/\*\*/g, '').trim()
 }
 
+/** Extract leading integer from streak strings like "45 dní s 5 skipped", "48 dní", "nový" → null */
+function parseStreak(s: string): number | null {
+  if (!s || s.toLowerCase().includes('nový')) return null
+  const m = s.match(/(\d+)/)
+  return m ? parseInt(m[1], 10) : null
+}
+
 function normalizeHabitName(raw: string): string {
   return HABIT_NAME_MAP[raw] ?? raw
 }
@@ -128,16 +135,17 @@ type HabitRow = {
   vault_serves: string[]
 }
 
-function parseHabits(md: string, profileId: string): HabitRow[] {
-  const out: HabitRow[] = []
+function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks: Map<string, number> } {
+  const rows: HabitRow[] = []
+  const streaks = new Map<string, number>()
 
-  function fromTable(sectionMd: string, cat: HabitRow['category'], overrides?: Partial<HabitRow>) {
+  function fromTable(sectionMd: string, cat: HabitRow['category'], parseStreakCol = false) {
     for (const row of mdTable(sectionMd)) {
       const raw = stripBold(row['Habit'] ?? '')
       if (!raw || raw.startsWith('_') || raw === '—') continue
       const name = normalizeHabitName(raw)
       const serves = row['Slouží dimenzi'] ?? row['Slouží'] ?? ''
-      out.push({
+      rows.push({
         profile_id: profileId,
         name,
         category: cat,
@@ -146,12 +154,15 @@ function parseHabits(md: string, profileId: string): HabitRow[] {
         end_date:  parseDate(row['End-date'] ?? row['end-date'] ?? ''),
         trial_end: parseDate(row['Trial-end'] ?? ''),
         vault_serves: serves ? [serves] : [],
-        ...overrides,
       })
+      if (parseStreakCol) {
+        const s = parseStreak(row['Aktuální streak'] ?? '')
+        if (s !== null) streaks.set(name, s)
+      }
     }
   }
 
-  fromTable(mdSection(md, '## Aktivní (Active)'), 'active')
+  fromTable(mdSection(md, '## Aktivní (Active)'), 'active', true)
   fromTable(mdSection(md, '### Solo trials'), 'trial')
 
   // Balíček Imunita — has "Kód" column instead of "Habit" as first col
@@ -159,7 +170,7 @@ function parseHabits(md: string, profileId: string): HabitRow[] {
     const raw = stripBold(row['Habit'] ?? '')
     if (!raw || raw.startsWith('_')) continue
     const name = normalizeHabitName(raw)
-    out.push({
+    rows.push({
       profile_id: profileId, name, category: 'trial',
       frequency: row['Frekvence'] ?? null, mandatory: false,
       end_date: '2026-06-30', trial_end: '2026-06-30',
@@ -172,7 +183,7 @@ function parseHabits(md: string, profileId: string): HabitRow[] {
     const raw = stripBold(row['Habit'] ?? '')
     if (!raw || raw.startsWith('_')) continue
     const name = normalizeHabitName(raw)
-    out.push({
+    rows.push({
       profile_id: profileId, name, category: 'trial',
       frequency: row['Frekvence'] ?? null, mandatory: false,
       end_date: null, trial_end: null,
@@ -182,7 +193,7 @@ function parseHabits(md: string, profileId: string): HabitRow[] {
 
   fromTable(mdSection(md, '## Zautomatizované (Graduated)'), 'graduated')
 
-  return out
+  return { rows, streaks }
 }
 
 /** Dimensions from H3 headers (life dream section or 5-year section). */
@@ -299,11 +310,38 @@ export async function POST() {
 
   if (raw.habits) {
     try {
-      const habits = parseHabits(raw.habits, pid)
+      const { rows: habits, streaks: habitStreaks } = parseHabits(raw.habits, pid)
+
       for (const h of habits) {
         const { error } = await db.from('habits')
           .upsert(h, { onConflict: 'profile_id,name' })
         if (error) errors.push(`habits "${h.name}": ${error.message}`)
+      }
+
+      // Upsert streak numbers from vault into streaks_cache
+      if (habitStreaks.size > 0) {
+        const names = [...habitStreaks.keys()]
+        const { data: dbHabits } = await db.from('habits')
+          .select('id, name').eq('profile_id', pid).in('name', names)
+
+        if (dbHabits) {
+          const nameToId: Record<string, string> = {}
+          for (const h of dbHabits) nameToId[h.name] = h.id
+
+          const today = new Date().toISOString().slice(0, 10)
+          for (const [name, streak] of habitStreaks) {
+            const habitId = nameToId[name]
+            if (!habitId) continue
+            const { error } = await db.from('streaks_cache').upsert({
+              habit_id:            habitId,
+              current_streak:      streak,
+              best_streak:         streak,
+              last_completed_date: today,
+              updated_at:          new Date().toISOString(),
+            }, { onConflict: 'habit_id' })
+            if (error) errors.push(`streaks_cache "${name}": ${error.message}`)
+          }
+        }
       }
     } catch (e) {
       errors.push(`Parse habits.md: ${e instanceof Error ? e.message : String(e)}`)
