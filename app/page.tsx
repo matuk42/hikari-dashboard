@@ -179,7 +179,6 @@ export default function HomePage() {
         hopeToday:   hopeRes.data ?? null,
       })
     }).catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
   const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday } = data
