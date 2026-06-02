@@ -281,7 +281,7 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekProgress, weekTasks } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekTasks } = data
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
@@ -334,13 +334,11 @@ export default function HomePage() {
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
                 Cascade
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
                 <span suppressHydrationWarning style={{ fontSize: 26, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{weekTitle}</span>
+                <span suppressHydrationWarning style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>· {weekTasks.length} priority</span>
               </div>
-              <div style={{ marginTop: 6, height: 4, background: '#1a1a1a', borderRadius: 2 }}>
-                <div style={{ height: '100%', width: `${weekProgress}%`, background: 'linear-gradient(to right, #d97706, #F59E0B)', borderRadius: 2 }} />
-              </div>
-              <div suppressHydrationWarning style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>{weekProgress}% · klepni →</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 8 }}>aktuální týden · klepni →</div>
             </Card>
           </Link>
         </div>

@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { OfflineBadge } from '@/app/components/OfflineBadge'
-import { supabase } from '@/lib/supabase'
-import { getProfileId } from '@/lib/profile'
 
 // ─── Vault data (baked from 2nd_brain/wiki/cile/cascade/sen.md + prijem.md) ──
 
@@ -421,61 +419,18 @@ function LayerCard({ layer }: { layer: Layer }) {
   )
 }
 
-// ─── DB → Layer mapper ───────────────────────────────────────────────────────
-
-type DbLayer = {
-  layer: number
-  title: string
-  description: string | null
-  deadline: string | null
-  progress_pct: number | null
-  cascade_dimensions: Array<{ name: string; progress_pct: number | null }>
-}
-
-function dbToLayers(rows: DbLayer[]): Layer[] {
-  return rows.map(dl => {
-    const dims = dl.cascade_dimensions ?? []
-    if (dl.layer === 1) {
-      return {
-        n: 1,
-        title: dl.title,
-        timeframe: dl.description ?? 'Věk 28+',
-        noProgressBar: true,
-        chips: dims.map(d => ({ label: d.name, detail: '' })),
-      }
-    }
-    return {
-      n: dl.layer,
-      title: dl.title,
-      timeframe: dl.description ?? '',
-      deadline: dl.deadline ? new Date(dl.deadline) : undefined,
-      progress: dl.progress_pct ?? 0,
-      dimensions: dims.map(d => ({ name: d.name, progress: d.progress_pct ?? 0 })),
-    }
-  })
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
+//
+// Cascade % is meant to be AI-computed (Hikari morning cron, PRD W26). Until
+// then the layer/dimension percentages below are hand-set ESTIMATES — shown
+// with an "odhad" label so they're never mistaken for live data. The vault sync
+// populates cascade_layers/dimensions in the DB silently so the data is ready
+// when the AI calc lands; this page intentionally renders the curated copy,
+// which carries richer chips (detail + Hikari note) than the DB can hold.
 
 export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
-  const [layers, setLayers] = useState<Layer[]>(LAYERS)  // hardcoded fallback until DB loads
-
-  useEffect(() => {
-    setMounted(true)
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const pid = await getProfileId(user).catch(() => null)
-      if (!pid) return
-      const { data } = await supabase
-        .from('cascade_layers')
-        .select('layer, title, description, deadline, progress_pct, cascade_dimensions(name, progress_pct)')
-        .eq('profile_id', pid)
-        .eq('tree', 'sen')
-        .order('layer', { ascending: true })
-      if (data && data.length > 0) setLayers(dbToLayers(data as DbLayer[]))
-    }).catch(() => {})
-  }, [])
+  useEffect(() => { setMounted(true) }, [])
 
   return (
     <div style={{
@@ -567,9 +522,22 @@ export default function CascadePage() {
               </div>
             </div>
 
+            {/* ── Estimate notice ── */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              marginBottom: 18, padding: '8px 12px',
+              background: 'rgba(245,158,11,0.05)',
+              border: '1px solid rgba(245,158,11,0.13)', borderRadius: 10,
+            }}>
+              <span style={{ fontSize: 13 }}>📊</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+                % jsou <span style={{ color: 'rgba(245,158,11,0.7)' }}>odhad</span> — Hikari spočítá přesně s AI cronem.
+              </span>
+            </div>
+
             {/* ── Timeline ── */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {layers.map((layer, i) => (
+              {LAYERS.map((layer, i) => (
                 <div key={layer.n} style={{ display: 'flex', gap: 0 }}>
 
                   {/* Dot + line */}
@@ -589,7 +557,7 @@ export default function CascadePage() {
                       boxShadow: '0 0 8px rgba(245,158,11,0.5)',
                       flexShrink: 0,
                     }} />
-                    {i < layers.length - 1 && (
+                    {i < LAYERS.length - 1 && (
                       <div style={{
                         flex: 1,
                         width: 2,
@@ -601,7 +569,7 @@ export default function CascadePage() {
                   </div>
 
                   {/* Layer card */}
-                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < layers.length - 1 ? 12 : 0 }}>
+                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < LAYERS.length - 1 ? 12 : 0 }}>
                     <LayerCard layer={layer} />
                   </div>
 
