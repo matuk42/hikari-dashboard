@@ -190,6 +190,8 @@ type HabitRow = {
   end_date: string | null
   trial_end: string | null
   vault_serves: string[]
+  pack: 'imunita' | 'fyzicka' | null
+  pack_code: string | null
 }
 
 function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks: Map<string, number> } {
@@ -211,6 +213,8 @@ function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks
         end_date:  parseDate(row['End-date'] ?? row['end-date'] ?? ''),
         trial_end: parseDate(row['Trial-end'] ?? ''),
         vault_serves: serves ? [serves] : [],
+        pack: null,
+        pack_code: null,
       })
       if (parseStreakCol) {
         const s = parseStreak(row['Aktuální streak'] ?? '')
@@ -222,16 +226,18 @@ function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks
   fromTable(mdSection(md, '## Aktivní (Active)'), 'active', true)
   fromTable(mdSection(md, '### Solo trials'), 'trial')
 
-  // Balíček Imunita — has "Kód" column instead of "Habit" as first col
+  // Balíček Imunita — first column is "Kód" (A–J), habit name in "Habit"
   for (const row of mdTable(mdSection(md, '### Balíček Imunita'))) {
     const raw = stripBold(row['Habit'] ?? '')
     if (!raw || raw.startsWith('_')) continue
     const name = normalizeHabitName(raw)
+    const code = (row['Kód'] ?? '').trim()
     rows.push({
       profile_id: profileId, name, category: 'trial',
       frequency: row['Frekvence'] ?? null, mandatory: false,
       end_date: '2026-06-30', trial_end: '2026-06-30',
       vault_serves: [row['Slouží'] ?? 'imunita'],
+      pack: 'imunita', pack_code: code || null,
     })
   }
 
@@ -245,6 +251,7 @@ function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks
       frequency: row['Frekvence'] ?? null, mandatory: false,
       end_date: null, trial_end: null,
       vault_serves: [row['Slouží'] ?? 'fyzička'],
+      pack: 'fyzicka', pack_code: null,
     })
   }
 

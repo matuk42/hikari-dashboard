@@ -1,15 +1,14 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getProfileId } from '@/lib/profile'
-import { rebuildStreak } from '@/lib/streak'
 
 // ─── LocalStorage keys ───────────────────────────────────────────────────────
 
 const LS_PROFILE_ID = 'hikari_profile_id'
-const LS_HABIT_MAP  = 'hikari_habit_id_map'
+const LS_HABIT_LIST = 'hikari_habit_list'
 const LS_STREAK_MAP = 'hikari_streak_map'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -57,13 +56,6 @@ const ALL_HABITS: Habit[] = [
   { id: 'denik',  name: 'Hlasový deník',   status: 'graduated', serves: 'vault · meta',     frequency: 'denně', streak: 45 },
 ]
 
-const ACTIVE     = ALL_HABITS.filter(h => h.status === 'active')
-const TRIAL_SOLO = ALL_HABITS.filter(h => h.status === 'trial' && !h.pack)
-const IMUNITA    = ALL_HABITS.filter(h => h.pack === 'imunita')
-const FYZICKA    = ALL_HABITS.filter(h => h.pack === 'fyzicka')
-const GRADUATED  = ALL_HABITS.filter(h => h.status === 'graduated')
-const TRACKABLE  = ALL_HABITS.filter(h => h.status !== 'graduated')
-
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
 function todayISO(): string {
@@ -92,73 +84,126 @@ function useOnlineStatus(): boolean {
   return online
 }
 
+// ─── DB → Habit mappers ───────────────────────────────────────────────────────
+
+type DbHabit = {
+  id: string; name: string; category: string; frequency: string | null
+  vault_serves: string[] | null; end_date: string | null; trial_end: string | null
+  pack: string | null; pack_code: string | null
+}
+
+/** "2026-06-30" → "30.6." (matches the short display style of the fallback list) */
+function formatShortCz(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return m ? `${Number(m[3])}.${Number(m[2])}.` : iso
+}
+
+function dbToHabits(rows: DbHabit[]): Habit[] {
+  return rows
+    .filter(r => r.category !== 'retired')
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      status: (r.category === 'active' || r.category === 'graduated' ? r.category : 'trial') as Habit['status'],
+      serves: (r.vault_serves ?? []).filter(Boolean).join(' · '),
+      frequency: r.frequency ?? '',
+      streak: 0,
+      endDate: r.end_date ? formatShortCz(r.end_date) : undefined,
+      trialEnd: r.trial_end ? formatShortCz(r.trial_end) : undefined,
+      pack: (r.pack === 'imunita' || r.pack === 'fyzicka') ? r.pack : undefined,
+      packCode: r.pack_code ?? undefined,
+    }))
+}
+
+function groupHabits(list: Habit[]) {
+  return {
+    active:    list.filter(h => h.status === 'active'),
+    trialSolo: list.filter(h => h.status === 'trial' && !h.pack),
+    imunita:   list.filter(h => h.pack === 'imunita'),
+    fyzicka:   list.filter(h => h.pack === 'fyzicka'),
+    graduated: list.filter(h => h.status === 'graduated'),
+    trackable: list.filter(h => h.status !== 'graduated'),
+  }
+}
+
 // ─── Habit DB helpers ─────────────────────────────────────────────────────────
 
-async function syncHabitsToDb(profileId: string): Promise<Record<string, string>> {
+/**
+ * Seed the DB with the fallback list on first login so habits can be logged
+ * before the first vault sync. Best-effort, full shape incl pack so this writer
+ * and vault-sync agree on the same rows. Retries without pack columns if
+ * migration 003 is not applied yet, so a forgotten migration can't brick logging.
+ */
+async function seedHabits(profileId: string): Promise<void> {
   const { data: existing } = await supabase
-    .from('habits').select('id, name').eq('profile_id', profileId)
-  const byName: Record<string, string> = {}
-  for (const h of existing ?? []) byName[h.name] = h.id
-
-  const toInsert = ALL_HABITS
-    .filter(h => !byName[h.name])
-    .map(h => ({
-      profile_id: profileId,
-      name: h.name,
-      category: h.status as string,
-      frequency: h.frequency,
-      vault_serves: [h.serves],
-    }))
-
-  if (toInsert.length > 0) {
-    const { data: inserted } = await supabase
-      .from('habits').insert(toInsert).select('id, name')
-    for (const h of inserted ?? []) byName[h.name] = h.id
-  }
-
-  const idMap: Record<string, string> = {}
-  for (const h of ALL_HABITS) {
-    if (byName[h.name]) idMap[h.id] = byName[h.name]
-  }
-  return idMap
+    .from('habits').select('name').eq('profile_id', profileId)
+  const have = new Set((existing ?? []).map(h => h.name))
+  const missing = ALL_HABITS.filter(h => !have.has(h.name))
+  if (!missing.length) return
+  const base = missing.map(h => ({
+    profile_id: profileId, name: h.name, category: h.status as string,
+    frequency: h.frequency, vault_serves: [h.serves],
+  }))
+  const { error } = await supabase.from('habits')
+    .insert(missing.map((h, i) => ({ ...base[i], pack: h.pack ?? null, pack_code: h.packCode ?? null })))
+  if (error) await supabase.from('habits').insert(base)   // pre-003 fallback
 }
 
-async function loadTodayLogs(idMap: Record<string, string>, date: string): Promise<Set<string>> {
-  const dbIds = Object.values(idMap)
-  if (!dbIds.length) return new Set()
-
-  const { data } = await supabase
-    .from('habit_logs')
-    .select('habit_id, status')
-    .in('habit_id', dbIds)
-    .eq('date', date)
-
-  const doneDbIds = new Set(
-    (data ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string)
-  )
-  const reverse: Record<string, string> = {}
-  for (const [local, db] of Object.entries(idMap)) reverse[db] = local
-
-  return new Set([...doneDbIds].map(dbId => reverse[dbId]).filter(Boolean))
+/**
+ * Live habit list from the DB (the source of truth once vault sync has run).
+ * Tolerates pack/pack_code being absent (migration 003 not applied) by retrying
+ * without them. Returns null on hard failure so the caller keeps the fallback.
+ */
+async function loadHabits(profileId: string): Promise<Habit[] | null> {
+  type Res = { data: unknown[] | null; error: unknown }
+  let res = await supabase.from('habits')
+    .select('id, name, category, frequency, vault_serves, end_date, trial_end, pack, pack_code')
+    .eq('profile_id', profileId) as Res
+  if (res.error) {
+    res = await supabase.from('habits')
+      .select('id, name, category, frequency, vault_serves, end_date, trial_end')
+      .eq('profile_id', profileId) as Res
+  }
+  if (res.error || !res.data) return null
+  const rows = (res.data as Partial<DbHabit>[]).map(r => ({
+    id: r.id!, name: r.name!, category: r.category!, frequency: r.frequency ?? null,
+    vault_serves: r.vault_serves ?? null, end_date: r.end_date ?? null,
+    trial_end: r.trial_end ?? null, pack: r.pack ?? null, pack_code: r.pack_code ?? null,
+  }))
+  return dbToHabits(rows)
 }
 
-async function loadStreaks(idMap: Record<string, string>): Promise<Record<string, number>> {
-  const dbIds = Object.values(idMap)
-  if (!dbIds.length) return {}
-  const { data } = await supabase
-    .from('streaks_cache')
-    .select('habit_id, current_streak')
-    .in('habit_id', dbIds)
+async function loadTodayDone(ids: string[], date: string): Promise<Set<string>> {
+  if (!ids.length) return new Set()
+  const { data } = await supabase.from('habit_logs')
+    .select('habit_id, status').in('habit_id', ids).eq('date', date)
+  return new Set((data ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string))
+}
 
-  const reverse: Record<string, string> = {}
-  for (const [local, db] of Object.entries(idMap)) reverse[db] = local
+async function loadStreaksByIds(ids: string[]): Promise<Record<string, number>> {
+  if (!ids.length) return {}
+  const { data } = await supabase.from('streaks_cache')
+    .select('habit_id, current_streak').in('habit_id', ids)
+  const out: Record<string, number> = {}
+  for (const row of data ?? []) out[row.habit_id as string] = row.current_streak as number
+  return out
+}
 
-  const result: Record<string, number> = {}
-  for (const row of data ?? []) {
-    const localId = reverse[row.habit_id]
-    if (localId) result[localId] = row.current_streak
-  }
-  return result
+/**
+ * Apply a single ±1 streak change while preserving the vault-seeded baseline and
+ * the all-time best. Shared by the optimistic toggle and the offline flush so
+ * both paths keep the same semantics.
+ */
+async function bumpStreak(habitId: string, nowDone: boolean, date: string): Promise<number> {
+  const { data: cached } = await supabase.from('streaks_cache')
+    .select('current_streak, best_streak').eq('habit_id', habitId).maybeSingle()
+  const newStreak = Math.max(0, (cached?.current_streak ?? 0) + (nowDone ? 1 : -1))
+  const newBest = Math.max(newStreak, cached?.best_streak ?? 0)
+  await supabase.from('streaks_cache').upsert({
+    habit_id: habitId, current_streak: newStreak, best_streak: newBest,
+    ...(nowDone ? { last_completed_date: date } : {}), updated_at: new Date().toISOString(),
+  }, { onConflict: 'habit_id' })
+  return newStreak
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -543,41 +588,49 @@ export default function HabitsPage() {
   const dateKey = todayISO()
   const isOnline = useOnlineStatus()
 
+  const [habits, setHabits] = useState<Habit[]>(ALL_HABITS)
+  const [habitsFromDb, setHabitsFromDb] = useState(false)
   const [done, setDone] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
-  const [habitIdMap, setHabitIdMap] = useState<Record<string, string>>({})
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
   const [dataLoaded, setDataLoaded] = useState(false)
 
+  const groups = useMemo(() => groupHabits(habits), [habits])
+
   // LS fast-path + async DB load
   useEffect(() => {
-    const lsDone  = localStorage.getItem(`hikari_habits_${dateKey}`)
-    const lsPid   = localStorage.getItem(LS_PROFILE_ID)
-    const lsMap   = localStorage.getItem(LS_HABIT_MAP)
-    const lsSmap  = localStorage.getItem(LS_STREAK_MAP)
+    const lsList = localStorage.getItem(LS_HABIT_LIST)
+    const lsDone = localStorage.getItem(`hikari_habits_${dateKey}`)
+    const lsPid  = localStorage.getItem(LS_PROFILE_ID)
+    const lsSmap = localStorage.getItem(LS_STREAK_MAP)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (lsDone)  { try { setDone(new Set(JSON.parse(lsDone))) }  catch {} }
-    if (lsPid)   { setProfileId(lsPid) }
-    if (lsMap)   { try { setHabitIdMap(JSON.parse(lsMap)) }      catch {} }
-    if (lsSmap)  { try { setStreakMap(JSON.parse(lsSmap)) }       catch {} }
-    if (lsMap)   { setDataLoaded(true) }
+    if (lsList) { try { const l = JSON.parse(lsList) as Habit[]; if (l.length) { setHabits(l); setHabitsFromDb(true) } } catch {} }
+    if (lsDone) { try { setDone(new Set(JSON.parse(lsDone))) } catch {} }
+    if (lsPid)  { setProfileId(lsPid) }
+    if (lsSmap) { try { setStreakMap(JSON.parse(lsSmap)) } catch {} }
+    if (lsList) { setDataLoaded(true) }
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user
       if (!user) { setDataLoaded(true); return }
 
       const pid = await getProfileId(user).catch(() => null)
-      if (pid) { setProfileId(pid); localStorage.setItem(LS_PROFILE_ID, pid) }
       if (!pid) { setDataLoaded(true); return }
+      setProfileId(pid)
+      localStorage.setItem(LS_PROFILE_ID, pid)
 
-      const idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
-      const hasMap = Object.keys(idMap).length > 0
-      if (hasMap) { setHabitIdMap(idMap); localStorage.setItem(LS_HABIT_MAP, JSON.stringify(idMap)) }
-      if (!hasMap) { setDataLoaded(true); return }
+      await seedHabits(pid).catch(() => {})
+      const dbHabits = await loadHabits(pid).catch(() => null)
+      if (dbHabits && dbHabits.length) {
+        setHabits(dbHabits)
+        setHabitsFromDb(true)
+        localStorage.setItem(LS_HABIT_LIST, JSON.stringify(dbHabits))
+      }
 
+      const ids = (dbHabits ?? []).map(h => h.id)
       const [dbDone, dbStreaks] = await Promise.all([
-        loadTodayLogs(idMap, dateKey).catch(() => new Set<string>()),
-        loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
+        loadTodayDone(ids, dateKey).catch(() => new Set<string>()),
+        loadStreaksByIds(ids).catch(() => ({} as Record<string, number>)),
       ])
 
       if (Object.keys(dbStreaks).length > 0) {
@@ -593,9 +646,9 @@ export default function HabitsPage() {
     }).catch(err => { console.error(err); setDataLoaded(true) })
   }, [dateKey])
 
-  // Idempotent pending-queue flush on reconnect
+  // Idempotent pending-queue flush on reconnect (ids are DB UUIDs)
   useEffect(() => {
-    if (!isOnline || !profileId || !Object.keys(habitIdMap).length) return
+    if (!isOnline || !profileId || !habitsFromDb) return
     const pendingKey = `hikari_habits_pending_${dateKey}`
     const raw = localStorage.getItem(pendingKey)
     if (!raw) return
@@ -604,25 +657,23 @@ export default function HabitsPage() {
     if (!entries.length) return
 
     Promise.all(
-      entries.map(([localId, status]) => {
-        const dbId = habitIdMap[localId]
-        if (!dbId) return Promise.resolve()
-        return supabase.from('habit_logs')
-          .upsert({ habit_id: dbId, date: dateKey, status, source: 'dashboard' }, { onConflict: 'habit_id,date' })
+      entries.map(([id, status]) =>
+        supabase.from('habit_logs')
+          .upsert({ habit_id: id, date: dateKey, status, source: 'dashboard' }, { onConflict: 'habit_id,date' })
           .then(async ({ error }) => {
             if (error) return
-            const real = await rebuildStreak(dbId, false)
-            setStreakMap(prev => ({ ...prev, [localId]: real }))
+            const real = await bumpStreak(id, status === 'done', dateKey)
+            setStreakMap(prev => ({ ...prev, [id]: real }))
           })
-      })
+      )
     ).then(() => localStorage.removeItem(pendingKey))
-  }, [isOnline, profileId, habitIdMap, dateKey])
+  }, [isOnline, profileId, habitsFromDb, dateKey])
 
   // Optimistic toggle + offline queue
   const toggle = (id: string) => {
     const nowDone = !done.has(id)
     const next = new Set(done)
-    nowDone ? next.add(id) : next.delete(id)
+    if (nowDone) next.add(id); else next.delete(id)
     setDone(next)
     localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
 
@@ -631,8 +682,8 @@ export default function HabitsPage() {
       [id]: Math.max(0, (prev[id] ?? 0) + (nowDone ? 1 : -1)),
     }))
 
-    const dbId = habitIdMap[id]
-    if (!dbId || !isOnline) {
+    // No DB habit row yet (offline, logged out, or pre-sync fallback) → queue
+    if (!profileId || !habitsFromDb || !isOnline) {
       const pendingKey = `hikari_habits_pending_${dateKey}`
       const pending = JSON.parse(localStorage.getItem(pendingKey) ?? '{}') as Record<string, 'done' | 'fail'>
       pending[id] = nowDone ? 'done' : 'fail'
@@ -641,39 +692,25 @@ export default function HabitsPage() {
     }
 
     supabase.from('habit_logs').upsert(
-      { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
+      { habit_id: id, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
       { onConflict: 'habit_id,date' }
     ).then(async ({ error }) => {
       if (error) { console.error('habit_logs upsert error:', error); return }
-      // Read-modify-write on streaks_cache so vault-seeded baseline is preserved
-      const { data: cached } = await supabase
-        .from('streaks_cache')
-        .select('current_streak, best_streak')
-        .eq('habit_id', dbId)
-        .maybeSingle()
-      const newStreak = Math.max(0, (cached?.current_streak ?? 0) + (nowDone ? 1 : -1))
-      const newBest   = Math.max(newStreak, cached?.best_streak ?? 0)
-      await supabase.from('streaks_cache').upsert({
-        habit_id:       dbId,
-        current_streak: newStreak,
-        best_streak:    newBest,
-        ...(nowDone ? { last_completed_date: dateKey } : {}),
-        updated_at:     new Date().toISOString(),
-      }, { onConflict: 'habit_id' })
+      const newStreak = await bumpStreak(id, nowDone, dateKey)
       setStreakMap(prev => ({ ...prev, [id]: newStreak }))
     })
   }
 
-  const doneCount = TRACKABLE.filter(h => done.has(h.id)).length
-  const totalCount = TRACKABLE.length
+  const doneCount = groups.trackable.filter(h => done.has(h.id)).length
+  const totalCount = groups.trackable.length
   const allDone = doneCount === totalCount && totalCount > 0
 
-  // Hero: habit with the highest current streak (streaks_cache or fallback to hardcoded)
-  const heroHabit = ALL_HABITS.reduce((best, h) => {
+  // Hero: habit with the highest current streak (streaks_cache, else baseline)
+  const heroHabit = habits.reduce((best, h) => {
     const val = streakMap[h.id] ?? h.streak ?? 0
     return val > (streakMap[best.id] ?? best.streak ?? 0) ? h : best
-  }, ALL_HABITS[0])
-  const heroStreak = streakMap[heroHabit.id] ?? heroHabit.streak ?? 0
+  }, habits[0] ?? ALL_HABITS[0])
+  const heroStreak = streakMap[heroHabit?.id] ?? heroHabit?.streak ?? 0
 
   return (
     <div style={{ minHeight: '100vh', color: '#ededed', overflowX: 'hidden' }}>
@@ -742,7 +779,7 @@ export default function HabitsPage() {
             <section style={{ marginBottom: 20 }}>
               <SectionLabel>Aktivní</SectionLabel>
               <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-                {ACTIVE.map(h => (
+                {groups.active.map(h => (
                   <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
                 ))}
               </div>
@@ -752,7 +789,7 @@ export default function HabitsPage() {
             <section style={{ marginBottom: 20 }}>
               <SectionLabel>Testovací</SectionLabel>
               <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-                {TRIAL_SOLO.map(h => (
+                {groups.trialSolo.map(h => (
                   <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
                 ))}
               </div>
@@ -762,8 +799,8 @@ export default function HabitsPage() {
             <section style={{ marginBottom: 20 }}>
               <SectionLabel>Balíčky</SectionLabel>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={IMUNITA} done={done} onToggle={toggle} streakMap={streakMap} />
-                <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={FYZICKA} done={done} onToggle={toggle} streakMap={streakMap} />
+                <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={groups.imunita} done={done} onToggle={toggle} streakMap={streakMap} />
+                <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} onToggle={toggle} streakMap={streakMap} />
               </div>
             </section>
 
@@ -771,7 +808,7 @@ export default function HabitsPage() {
             <section>
               <SectionLabel>Zautomatizováno</SectionLabel>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {GRADUATED.map(h => (
+                {groups.graduated.map(h => (
                   <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>

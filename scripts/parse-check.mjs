@@ -79,4 +79,23 @@ function weekLabelFromFile(md) {
   return wk && range ? `${wk} · ${range}` : (wk ?? 'Týden')
 }
 console.log('label :', weekLabelFromFile(weekly))
+
+// ── Habits parse (pack / pack_code) ──
+const habits = read('wiki/cile/habits.md')
+function parseStreak(s) { if (!s || s.toLowerCase().includes('nový')) return null; const m = s.match(/(\d+)/); return m ? parseInt(m[1], 10) : null }
+console.log('\n=== Habits: Aktivní (with streak) ===')
+for (const r of mdTable(mdSection(habits, '## Aktivní (Active)'))) {
+  const name = stripBold(r['Habit'] ?? ''); if (!name || name.startsWith('_')) continue
+  console.log(`  ${name}  | streak=${parseStreak(r['Aktuální streak'] ?? '')}`)
+}
+console.log('\n=== Habits: Balíček Imunita (pack_code A–J) ===')
+for (const r of mdTable(mdSection(habits, '### Balíček Imunita'))) {
+  const name = stripBold(r['Habit'] ?? ''); if (!name || name.startsWith('_')) continue
+  console.log(`  [${(r['Kód'] ?? '').trim() || '?'}] ${name}`)
+}
+console.log('\n=== Habits: Balíček Fyzička ===')
+for (const r of mdTable(mdSection(habits, '### Balíček Fyzička'))) {
+  const name = stripBold(r['Habit'] ?? ''); if (!name || name.startsWith('_')) continue
+  console.log(`  ${name}`)
+}
 console.log()
