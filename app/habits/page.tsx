@@ -24,6 +24,7 @@ interface Habit {
   trialEnd?: string
   pack?: 'imunita' | 'fyzicka'
   packCode?: string
+  mandatory?: boolean   // no grace day (autoškola) — streak breaks on a single miss
 }
 
 // ─── Data z vaultu (habits.md) ───────────────────────────────────────────────
@@ -31,7 +32,7 @@ interface Habit {
 const ALL_HABITS: Habit[] = [
   // Active
   { id: 'anki',       name: 'Anki procvičování',    status: 'active',    serves: 'japonština · sen',          frequency: '25+ karet denně', streak: 45 },
-  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.' },
+  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.', mandatory: true },
   // Trial solo
   { id: 'mining',     name: 'Anki tvorba',          status: 'trial',     serves: 'japonština · sen',          frequency: '200 karet / týden', streak: 0, trialEnd: '30.6.' },
   { id: 'kytara',     name: 'Kytara',               status: 'trial',     serves: 'DofE talent',               frequency: '3× týdně · 20 min', streak: 1, trialEnd: '30.6.' },
@@ -89,7 +90,7 @@ function useOnlineStatus(): boolean {
 type DbHabit = {
   id: string; name: string; category: string; frequency: string | null
   vault_serves: string[] | null; end_date: string | null; trial_end: string | null
-  pack: string | null; pack_code: string | null
+  pack: string | null; pack_code: string | null; mandatory: boolean | null
 }
 
 /** "2026-06-30" → "30.6." (matches the short display style of the fallback list) */
@@ -113,6 +114,7 @@ function dbToHabits(rows: DbHabit[]): Habit[] {
       trialEnd: r.trial_end ? formatShortCz(r.trial_end) : undefined,
       pack: (r.pack === 'imunita' || r.pack === 'fyzicka') ? r.pack : undefined,
       packCode: r.pack_code ?? undefined,
+      mandatory: !!r.mandatory,
     }))
 }
 
@@ -143,7 +145,7 @@ async function seedHabits(profileId: string): Promise<void> {
   if (!missing.length) return
   const base = missing.map(h => ({
     profile_id: profileId, name: h.name, category: h.status as string,
-    frequency: h.frequency, vault_serves: [h.serves],
+    frequency: h.frequency, vault_serves: [h.serves], mandatory: h.mandatory ?? false,
   }))
   const { error } = await supabase.from('habits')
     .insert(missing.map((h, i) => ({ ...base[i], pack: h.pack ?? null, pack_code: h.packCode ?? null })))
@@ -158,11 +160,11 @@ async function seedHabits(profileId: string): Promise<void> {
 async function loadHabits(profileId: string): Promise<Habit[] | null> {
   type Res = { data: unknown[] | null; error: unknown }
   let res = await supabase.from('habits')
-    .select('id, name, category, frequency, vault_serves, end_date, trial_end, pack, pack_code')
+    .select('id, name, category, frequency, vault_serves, end_date, trial_end, mandatory, pack, pack_code')
     .eq('profile_id', profileId) as Res
   if (res.error) {
     res = await supabase.from('habits')
-      .select('id, name, category, frequency, vault_serves, end_date, trial_end')
+      .select('id, name, category, frequency, vault_serves, end_date, trial_end, mandatory')
       .eq('profile_id', profileId) as Res
   }
   if (res.error || !res.data) return null
@@ -170,6 +172,7 @@ async function loadHabits(profileId: string): Promise<Habit[] | null> {
     id: r.id!, name: r.name!, category: r.category!, frequency: r.frequency ?? null,
     vault_serves: r.vault_serves ?? null, end_date: r.end_date ?? null,
     trial_end: r.trial_end ?? null, pack: r.pack ?? null, pack_code: r.pack_code ?? null,
+    mandatory: r.mandatory ?? null,
   }))
   return dbToHabits(rows)
 }
@@ -181,12 +184,50 @@ async function loadTodayDone(ids: string[], date: string): Promise<Set<string>> 
   return new Set((data ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string))
 }
 
-async function loadStreaksByIds(ids: string[]): Promise<Record<string, number>> {
+/** Whole calendar days between two YYYY-MM-DD strings (b − a). */
+function daysBetween(a: string, b: string): number {
+  const da = Date.parse(`${a}T00:00:00Z`)
+  const db = Date.parse(`${b}T00:00:00Z`)
+  if (Number.isNaN(da) || Number.isNaN(db)) return 0
+  return Math.round((db - da) / 86_400_000)
+}
+
+/**
+ * Lazy daily streak recompute (the morning cron's job until it exists, PRD W26).
+ * Runs on load: if a streak's last completion is too far back, the streak is
+ * broken and reset to 0. Rules per PRD:
+ *   - mandatory (autoškola): no grace — break after 1 missed day (gap ≥ 2)
+ *   - others: 1 rest day forgiven — break after 2+ missed days (gap ≥ 3)
+ * gap = days since last completion; gap 0 (done today) / 1 (done yesterday,
+ * today still open) never break. The vault-seeded baseline is preserved until
+ * an actual miss; best_streak is untouched. Returns the corrected streak map.
+ */
+async function reconcileStreaks(habits: Habit[], today: string): Promise<Record<string, number>> {
+  const ids = habits.map(h => h.id)
   if (!ids.length) return {}
+  const mandatoryById: Record<string, boolean> = {}
+  for (const h of habits) mandatoryById[h.id] = !!h.mandatory
+
   const { data } = await supabase.from('streaks_cache')
-    .select('habit_id, current_streak').in('habit_id', ids)
+    .select('habit_id, current_streak, last_completed_date').in('habit_id', ids)
+
   const out: Record<string, number> = {}
-  for (const row of data ?? []) out[row.habit_id as string] = row.current_streak as number
+  for (const row of data ?? []) {
+    const id = row.habit_id as string
+    let streak = (row.current_streak as number) ?? 0
+    const last = row.last_completed_date as string | null
+    if (streak > 0 && last) {
+      const gap = daysBetween(last, today)
+      const broke = mandatoryById[id] ? gap >= 2 : gap >= 3
+      if (broke) {
+        streak = 0
+        await supabase.from('streaks_cache')
+          .update({ current_streak: 0, updated_at: new Date().toISOString() })
+          .eq('habit_id', id)
+      }
+    }
+    out[id] = streak
+  }
   return out
 }
 
@@ -631,7 +672,8 @@ export default function HabitsPage() {
       const ids = (dbHabits ?? []).map(h => h.id)
       const [dbDone, dbStreaks] = await Promise.all([
         loadTodayDone(ids, dateKey).catch(() => new Set<string>()),
-        loadStreaksByIds(ids).catch(() => ({} as Record<string, number>)),
+        // Recompute streaks (break the ones with a missed day) before showing them
+        reconcileStreaks(dbHabits ?? [], dateKey).catch(() => ({} as Record<string, number>)),
       ])
 
       if (Object.keys(dbStreaks).length > 0) {
