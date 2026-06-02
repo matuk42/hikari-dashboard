@@ -1,4 +1,4 @@
-const CACHE = 'hikari-v1'
+const CACHE = 'hikari-v3'
 const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/login', '/icon-192.png', '/icon.png']
 
 self.addEventListener('install', e => {

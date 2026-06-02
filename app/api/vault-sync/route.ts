@@ -387,9 +387,20 @@ export async function POST() {
     try {
       const { rows: habits, streaks: habitStreaks } = parseHabits(raw.habits, pid)
 
+      // Strip pack columns for a retry if migration 003 isn't applied yet, so a
+      // forgotten migration degrades (habits sync without grouping) instead of
+      // failing every upsert wholesale.
+      const withoutPack = (h: HabitRow) => {
+        const r: Partial<HabitRow> = { ...h }
+        delete r.pack; delete r.pack_code
+        return r
+      }
+
       for (const h of habits) {
-        const { error } = await db.from('habits')
-          .upsert(h, { onConflict: 'profile_id,name' })
+        let { error } = await db.from('habits').upsert(h, { onConflict: 'profile_id,name' })
+        if (error) {
+          ({ error } = await db.from('habits').upsert(withoutPack(h), { onConflict: 'profile_id,name' }))
+        }
         if (error) errors.push(`habits "${h.name}": ${error.message}`)
       }
 
