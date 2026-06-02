@@ -7,13 +7,28 @@ import { NextResponse } from 'next/server'
 const REPO   = 'matuk42/2nd-brain'
 const BRANCH = 'master'
 
-const FILES = {
-  sen:     'wiki/cile/cascade/sen.md',
-  prijem:  'wiki/cile/cascade/prijem.md',
-  habits:  'wiki/cile/habits.md',
-  weekly:  'wiki/reviews/weekly/2026-W22.md',
-  monthly: 'wiki/reviews/monthly/2026-06.md',
+const STATIC_PATHS = {
+  sen:    'wiki/cile/cascade/sen.md',
+  prijem: 'wiki/cile/cascade/prijem.md',
+  habits: 'wiki/cile/habits.md',
 } as const
+
+/** ISO 8601 week string, e.g. "2026-W23" */
+function isoWeekStr(): string {
+  const d = new Date()
+  const dow = d.getDay() || 7           // Sun→7, Mon→1 … Sat→6
+  d.setDate(d.getDate() + 4 - dow)     // advance to Thursday of current week
+  const y = d.getFullYear()
+  const yearStart = new Date(y, 0, 1)
+  const wn = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+  return `${y}-W${String(wn).padStart(2, '0')}`
+}
+
+/** Current year-month string, e.g. "2026-06" */
+function yearMonthStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
 
 // Vault uses longer names; dashboard uses shorter canonical ones.
 // Without this map the sync would INSERT parallel duplicate habits instead of
@@ -224,7 +239,8 @@ type SupaClient = ReturnType<typeof createServerClient<any>>
 async function upsertLayer(
   db: SupaClient,
   profileId: string,
-  params: { tree: string; layer: number; title: string; description: string; deadline: string | null; sourceFile: string }
+  params: { tree: string; layer: number; title: string; description: string; deadline: string | null; sourceFile: string },
+  errors: string[]
 ): Promise<string | null> {
   const { error } = await db.from('cascade_layers').upsert({
     profile_id:    profileId,
@@ -237,7 +253,10 @@ async function upsertLayer(
     last_synced_at: new Date().toISOString(),
   }, { onConflict: 'profile_id,tree,layer' })
 
-  if (error) return null
+  if (error) {
+    errors.push(`cascade L${params.layer} (${params.tree}): ${error.message}`)
+    return null
+  }
 
   const { data } = await db.from('cascade_layers')
     .select('id')
@@ -268,6 +287,13 @@ export async function POST() {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     return NextResponse.json({ error: 'GITHUB_TOKEN not set' }, { status: 500 })
+  }
+
+  // Dynamic file paths — computed at request time so sync always reads the current week/month
+  const FILES = {
+    ...STATIC_PATHS,
+    weekly:  `wiki/reviews/weekly/${isoWeekStr()}.md`,
+    monthly: `wiki/reviews/monthly/${yearMonthStr()}.md`,
   }
 
   const cookieStore = await cookies()
@@ -332,10 +358,14 @@ export async function POST() {
           for (const [name, streak] of habitStreaks) {
             const habitId = nameToId[name]
             if (!habitId) continue
+            // Preserve historical best: read existing before overwriting
+            const { data: existing } = await db.from('streaks_cache')
+              .select('best_streak').eq('habit_id', habitId).maybeSingle()
+            const bestStreak = Math.max(streak, existing?.best_streak ?? 0)
             const { error } = await db.from('streaks_cache').upsert({
               habit_id:            habitId,
               current_streak:      streak,
-              best_streak:         streak,
+              best_streak:         bestStreak,
               last_completed_date: today,
               updated_at:          new Date().toISOString(),
             }, { onConflict: 'habit_id' })
@@ -360,7 +390,7 @@ export async function POST() {
       const l1id   = await upsertLayer(db, pid, {
         tree: 'sen', layer: 1, title: 'Životní sen', description: 'Věk 28+',
         deadline: null, sourceFile: FILES.sen,
-      })
+      }, errors)
       if (l1id) await insertNewDimensions(db, l1id, l1dims)
 
       // Layer 2 — 5 let — H3 under "## 5letý cíl"
@@ -375,7 +405,7 @@ export async function POST() {
       const l2id = await upsertLayer(db, pid, {
         tree: 'sen', layer: 2, title: '5 let', description: 'Věk 21 · 2031',
         deadline: '2031-01-01', sourceFile: FILES.sen,
-      })
+      }, errors)
       if (l2id) await insertNewDimensions(db, l2id, l2dims)
 
       // Layer 3 — Rok — table in "## Roční cíl"
@@ -391,7 +421,7 @@ export async function POST() {
       const l3id = await upsertLayer(db, pid, {
         tree: 'sen', layer: 3, title: 'Rok', description: '1. 9. 2027',
         deadline: '2027-09-01', sourceFile: FILES.sen,
-      })
+      }, errors)
       if (l3id) await insertNewDimensions(db, l3id, l3dims)
 
       // Layer 4 — Měsíc — from monthly review (skip if not fetched)
@@ -401,7 +431,7 @@ export async function POST() {
         const l4id = await upsertLayer(db, pid, {
           tree: 'sen', layer: 4, title: 'Měsíc', description: 'Červen 2026',
           deadline: '2026-06-30', sourceFile: FILES.monthly,
-        })
+        }, errors)
         if (l4id) await insertNewDimensions(db, l4id, l4dims)
       }
 
@@ -411,12 +441,12 @@ export async function POST() {
         // Find "## Priority na W??" section
         const prioLine = weeklyMd.split('\n').find(l => l.match(/^## Priority na W/)) ?? ''
         const prioSec  = prioLine ? mdSection(weeklyMd, prioLine) : ''
-        const weekNum  = prioLine.match(/W(\d+)/)?.[0] ?? 'W23'
+        const weekNum  = prioLine.match(/W(\d+)/)?.[1] ?? '23'
         const l5dims   = numberedItems(prioSec)
         const l5id = await upsertLayer(db, pid, {
           tree: 'sen', layer: 5, title: weekNum, description: 'Aktuální týden',
           deadline: '2026-06-08', sourceFile: FILES.weekly,
-        })
+        }, errors)
         if (l5id) await insertNewDimensions(db, l5id, l5dims)
       }
 
