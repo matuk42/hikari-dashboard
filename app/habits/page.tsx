@@ -557,11 +557,8 @@ export default function HabitsPage() {
     const lsSmap  = localStorage.getItem(LS_STREAK_MAP)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lsDone)  { try { setDone(new Set(JSON.parse(lsDone))) }  catch {} }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lsPid)   { setProfileId(lsPid) }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lsMap)   { try { setHabitIdMap(JSON.parse(lsMap)) }      catch {} }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lsSmap)  { try { setStreakMap(JSON.parse(lsSmap)) }       catch {} }
     if (lsMap)   { setDataLoaded(true) }
 
