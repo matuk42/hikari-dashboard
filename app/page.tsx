@@ -131,6 +131,7 @@ export default function HomePage() {
     const lsStreak      = lsStreaks ? ((JSON.parse(lsStreaks) as Record<string, number>)['anki'] ?? null) : null
 
     if (lsHabitsDone !== null || lsHabitsTotal !== null || lsStreak !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(prev => ({
         ...prev,
         habitsDone:  lsHabitsDone  ?? prev.habitsDone,
