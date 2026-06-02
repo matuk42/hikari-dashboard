@@ -1,6 +1,8 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { supabase } from '@/lib/supabase'
 import type { ReactNode, CSSProperties } from 'react'
 
 // ─── Static data (hardcoded until V2) ────────────────────────────────────────
@@ -35,104 +37,17 @@ const SIDE_TASKS = [
 
 const BONUS_TASK = { label: '30 min One Piece — pasivní imerze', tag: 'Japonština' }
 
+// ─── LS keys (shared with habits page) ───────────────────────────────────────
+
+const LS_STREAK_MAP = 'hikari_streak_map'
+const LS_HABIT_MAP  = 'hikari_habit_id_map'
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatCzechDate(d: Date): string {
   const dny = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota']
   const mesice = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince']
   return `${dny[d.getDay()]} ${d.getDate()}. ${mesice[d.getMonth()]}`
-}
-
-// ─── Data fetching ────────────────────────────────────────────────────────────
-
-interface HomeData {
-  habitsDone: number
-  habitsTotal: number
-  streakValue: number
-  streakHabit: string
-  hopeToday: { mood: number; energy: number; hope: number } | null
-}
-
-async function fetchHomeData(): Promise<HomeData> {
-  const fallback: HomeData = {
-    habitsDone: 0,
-    habitsTotal: 0,
-    streakValue: 45,
-    streakHabit: 'Anki',
-    hopeToday: null,
-  }
-
-  try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-      {
-        cookies: {
-          getAll() { return cookieStore.getAll() },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch { /* read-only in RSC, ignore */ }
-          },
-        },
-      }
-    )
-
-    const today = new Date().toISOString().slice(0, 10)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return fallback
-
-    // Profile
-    const { data: profile } = await supabase
-      .from('profiles').select('id').eq('auth_user_id', user.id).single()
-    if (!profile) return fallback
-    const profileId = profile.id
-
-    // Parallel: habits list + hope today
-    const [habitsRes, hopeRes] = await Promise.all([
-      supabase.from('habits').select('id, name, category').eq('profile_id', profileId),
-      supabase.from('hope_logs').select('mood, energy, hope')
-        .eq('profile_id', profileId).eq('date', today).single(),
-    ])
-
-    const allHabits = habitsRes.data ?? []
-    const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
-    const ankiHabit = allHabits.find(h => h.name === 'Anki procvičování')
-
-    // Parallel: habit_logs count + Anki streak specifically
-    const [logsCountRes, ankiStreakRes] = await Promise.all([
-      trackableIds.length > 0
-        ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
-            .in('habit_id', trackableIds).eq('date', today).eq('status', 'done')
-        : Promise.resolve({ count: 0 }),
-      ankiHabit
-        ? supabase.from('streaks_cache').select('current_streak')
-            .eq('habit_id', ankiHabit.id).single()
-        : Promise.resolve({ data: null }),
-    ])
-
-    const habitsDone = (logsCountRes as { count: number | null }).count ?? 0
-    const habitsTotal = trackableIds.length
-
-    const streakValue =
-      (ankiStreakRes as { data: { current_streak: number } | null }).data?.current_streak
-      ?? fallback.streakValue
-    const streakHabit = 'Anki'
-
-    return {
-      habitsDone,
-      habitsTotal,
-      streakValue,
-      streakHabit,
-      hopeToday: hopeRes.data ?? null,
-    }
-  } catch {
-    return fallback
-  }
 }
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -183,9 +98,90 @@ function Card({ children, style }: { children: ReactNode; style?: CSSProperties 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function HomePage() {
+interface HomeData {
+  habitsDone: number
+  habitsTotal: number
+  streakValue: number
+  streakHabit: string
+  hopeToday: { mood: number; energy: number; hope: number } | null
+}
+
+const FALLBACK_STREAK = 45
+
+export default function HomePage() {
   const today = new Date()
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday } = await fetchHomeData()
+  const dateKey = today.toISOString().slice(0, 10)
+
+  const [data, setData] = useState<HomeData>({
+    habitsDone: 0,
+    habitsTotal: 0,
+    streakValue: FALLBACK_STREAK,
+    streakHabit: 'Anki',
+    hopeToday: null,
+  })
+
+  useEffect(() => {
+    // LS fast path — synchronous, before first async tick
+    const lsDone    = localStorage.getItem(`hikari_habits_${dateKey}`)
+    const lsStreaks = localStorage.getItem(LS_STREAK_MAP)
+    const lsMap     = localStorage.getItem(LS_HABIT_MAP)
+
+    const lsHabitsDone  = lsDone    ? (JSON.parse(lsDone) as string[]).length   : null
+    const lsHabitsTotal = lsMap     ? Object.keys(JSON.parse(lsMap) as object).length : null
+    const lsStreak      = lsStreaks ? ((JSON.parse(lsStreaks) as Record<string, number>)['anki'] ?? null) : null
+
+    if (lsHabitsDone !== null || lsHabitsTotal !== null || lsStreak !== null) {
+      setData(prev => ({
+        ...prev,
+        habitsDone:  lsHabitsDone  ?? prev.habitsDone,
+        habitsTotal: lsHabitsTotal ?? prev.habitsTotal,
+        streakValue: lsStreak      ?? prev.streakValue,
+      }))
+    }
+
+    // Async Supabase fetch (online only — errors silently)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const user = session?.user
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles').select('id').eq('auth_user_id', user.id).single()
+      if (!profile) return
+      const profileId = profile.id
+
+      const [habitsRes, hopeRes] = await Promise.all([
+        supabase.from('habits').select('id, name, category').eq('profile_id', profileId),
+        supabase.from('hope_logs').select('mood, energy, hope')
+          .eq('profile_id', profileId).eq('date', dateKey).single(),
+      ])
+
+      const allHabits = habitsRes.data ?? []
+      const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
+      const ankiHabit = allHabits.find(h => h.name === 'Anki procvičování')
+
+      const [logsRes, ankiStreakRes] = await Promise.all([
+        trackableIds.length > 0
+          ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
+              .in('habit_id', trackableIds).eq('date', dateKey).eq('status', 'done')
+          : Promise.resolve({ count: 0 }),
+        ankiHabit
+          ? supabase.from('streaks_cache').select('current_streak')
+              .eq('habit_id', ankiHabit.id).single()
+          : Promise.resolve({ data: null }),
+      ])
+
+      setData({
+        habitsDone:  (logsRes as { count: number | null }).count ?? 0,
+        habitsTotal: trackableIds.length,
+        streakValue: (ankiStreakRes as { data: { current_streak: number } | null }).data?.current_streak ?? FALLBACK_STREAK,
+        streakHabit: 'Anki',
+        hopeToday:   hopeRes.data ?? null,
+      })
+    }).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateKey])
+
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday } = data
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
@@ -194,7 +190,7 @@ export default async function HomePage() {
         {/* ── Header ── */}
         <header style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', paddingTop: 14, paddingBottom: 24 }}>
           <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.02em', color: '#F59E0B' }}>光 Hikari</span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
+          <span suppressHydrationWarning style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'capitalize', whiteSpace: 'nowrap', textAlign: 'center' }}>
             {formatCzechDate(today)}
           </span>
           <div />
@@ -203,7 +199,7 @@ export default async function HomePage() {
         {/* ── Streak hero ── */}
         <div style={{ position: 'relative', textAlign: 'center', marginBottom: 28, padding: '4px 0 12px' }}>
           <LuffySilhouette opacity={0.06} />
-          <div style={{ position: 'relative', zIndex: 1, fontSize: 72, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.03em' }}>
+          <div suppressHydrationWarning style={{ position: 'relative', zIndex: 1, fontSize: 72, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.03em' }}>
             {streakValue}
           </div>
           <div style={{ position: 'relative', zIndex: 1, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 6, letterSpacing: '0.06em' }}>
@@ -220,10 +216,10 @@ export default async function HomePage() {
                 Habits dnes
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                <span style={{ fontSize: 26, fontWeight: 800, color: habitsDone > 0 ? '#F59E0B' : 'rgba(255,255,255,0.3)', lineHeight: 1 }}>
+                <span suppressHydrationWarning style={{ fontSize: 26, fontWeight: 800, color: habitsDone > 0 ? '#F59E0B' : 'rgba(255,255,255,0.3)', lineHeight: 1 }}>
                   {habitsDone}
                 </span>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)' }}>
+                <span suppressHydrationWarning style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)' }}>
                   /{habitsTotal > 0 ? habitsTotal : '—'}
                 </span>
               </div>
