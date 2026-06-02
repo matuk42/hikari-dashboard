@@ -549,32 +549,40 @@ export default function HabitsPage() {
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
   const [dataLoaded, setDataLoaded] = useState(false)
 
-  // Instant feedback from localStorage while DB loads
+  // LS fast-path + async DB load
   useEffect(() => {
-    const saved = localStorage.getItem(`hikari_habits_${dateKey}`)
-    if (saved) {
-      try { setDone(new Set(JSON.parse(saved))) } catch { /* ignore */ }
-    }
-  }, [dateKey])
+    const lsDone  = localStorage.getItem(`hikari_habits_${dateKey}`)
+    const lsPid   = localStorage.getItem(LS_PROFILE_ID)
+    const lsMap   = localStorage.getItem(LS_HABIT_MAP)
+    const lsSmap  = localStorage.getItem(LS_STREAK_MAP)
+    if (lsDone)  { try { setDone(new Set(JSON.parse(lsDone))) }  catch {} }
+    if (lsPid)   { setProfileId(lsPid) }
+    if (lsMap)   { try { setHabitIdMap(JSON.parse(lsMap)) }      catch {} }
+    if (lsSmap)  { try { setStreakMap(JSON.parse(lsSmap)) }       catch {} }
+    if (lsMap)   { setDataLoaded(true) }
 
-  // Load from DB on mount: seed habits, fetch today's logs + streaks
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const pid = await getProfileId(user)
-      if (!pid) return
-      setProfileId(pid)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const user = session?.user
+      if (!user) { setDataLoaded(true); return }
+
+      const pid = await getProfileId(user).catch(() => null)
+      if (pid) { setProfileId(pid); localStorage.setItem(LS_PROFILE_ID, pid) }
+      if (!pid) { setDataLoaded(true); return }
 
       const idMap = await syncHabitsToDb(pid).catch(() => ({} as Record<string, string>))
-      if (Object.keys(idMap).length === 0) return
-      setHabitIdMap(idMap)
+      const hasMap = Object.keys(idMap).length > 0
+      if (hasMap) { setHabitIdMap(idMap); localStorage.setItem(LS_HABIT_MAP, JSON.stringify(idMap)) }
+      if (!hasMap) { setDataLoaded(true); return }
 
       const [dbDone, dbStreaks] = await Promise.all([
         loadTodayLogs(idMap, dateKey).catch(() => new Set<string>()),
         loadStreaks(idMap).catch(() => ({} as Record<string, number>)),
       ])
 
-      setStreakMap(dbStreaks)
+      if (Object.keys(dbStreaks).length > 0) {
+        setStreakMap(dbStreaks)
+        localStorage.setItem(LS_STREAK_MAP, JSON.stringify(dbStreaks))
+      }
       setDone(prev => {
         const merged = new Set([...prev, ...dbDone])
         localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
@@ -585,7 +593,32 @@ export default function HabitsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey])
 
-  // Optimistic toggle + background upsert + streak rebuild
+  // Idempotent pending-queue flush on reconnect
+  useEffect(() => {
+    if (!isOnline || !profileId || !Object.keys(habitIdMap).length) return
+    const pendingKey = `hikari_habits_pending_${dateKey}`
+    const raw = localStorage.getItem(pendingKey)
+    if (!raw) return
+    const pending = JSON.parse(raw) as Record<string, 'done' | 'fail'>
+    const entries = Object.entries(pending)
+    if (!entries.length) return
+
+    Promise.all(
+      entries.map(([localId, status]) => {
+        const dbId = habitIdMap[localId]
+        if (!dbId) return Promise.resolve()
+        return supabase.from('habit_logs')
+          .upsert({ habit_id: dbId, date: dateKey, status, source: 'dashboard' }, { onConflict: 'habit_id,date' })
+          .then(async ({ error }) => {
+            if (error) return
+            const real = await rebuildStreak(dbId, false)
+            setStreakMap(prev => ({ ...prev, [localId]: real }))
+          })
+      })
+    ).then(() => localStorage.removeItem(pendingKey))
+  }, [isOnline, profileId, habitIdMap, dateKey])
+
+  // Optimistic toggle + offline queue
   const toggle = (id: string) => {
     const nowDone = !done.has(id)
     const next = new Set(done)
@@ -593,14 +626,19 @@ export default function HabitsPage() {
     setDone(next)
     localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
 
-    // Instant streak feedback
     setStreakMap(prev => ({
       ...prev,
       [id]: Math.max(0, (prev[id] ?? 0) + (nowDone ? 1 : -1)),
     }))
 
     const dbId = habitIdMap[id]
-    if (!dbId) return
+    if (!dbId || !isOnline) {
+      const pendingKey = `hikari_habits_pending_${dateKey}`
+      const pending = JSON.parse(localStorage.getItem(pendingKey) ?? '{}') as Record<string, 'done' | 'fail'>
+      pending[id] = nowDone ? 'done' : 'fail'
+      localStorage.setItem(pendingKey, JSON.stringify(pending))
+      return
+    }
 
     supabase.from('habit_logs').upsert(
       { habit_id: dbId, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
