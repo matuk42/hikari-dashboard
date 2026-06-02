@@ -172,6 +172,9 @@ interface HomeData {
   streakValue: number
   streakHabit: string
   hopeToday: { mood: number; energy: number; hope: number } | null
+  weekTitle: string
+  weekProgress: number
+  weekTasks: Array<{ label: string; tag: string }>
 }
 
 const FALLBACK_STREAK = 45
@@ -186,6 +189,9 @@ export default function HomePage() {
     streakValue: FALLBACK_STREAK,
     streakHabit: 'Anki',
     hopeToday: null,
+    weekTitle: 'W23',
+    weekProgress: 0,
+    weekTasks: MAIN_TASKS,
   })
 
   useEffect(() => {
@@ -196,7 +202,9 @@ export default function HomePage() {
 
     const lsHabitsDone  = lsDone    ? (JSON.parse(lsDone) as string[]).length   : null
     const lsHabitsTotal = lsMap     ? Object.keys(JSON.parse(lsMap) as object).length : null
-    const lsStreak      = lsStreaks ? ((JSON.parse(lsStreaks) as Record<string, number>)['anki'] ?? null) : null
+    const lsStreak      = lsStreaks
+      ? Math.max(0, ...Object.values(JSON.parse(lsStreaks) as Record<string, number>))
+      : null
 
     if (lsHabitsDone !== null || lsHabitsTotal !== null || lsStreak !== null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -226,31 +234,52 @@ export default function HomePage() {
       ])
 
       const allHabits = habitsRes.data ?? []
+      const allHabitIds = allHabits.map(h => h.id)
       const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
-      const ankiHabit = allHabits.find(h => h.name === 'Anki procvičování')
 
-      const [logsRes, ankiStreakRes] = await Promise.all([
+      const [logsRes, maxStreakRes, weekLayerRes] = await Promise.all([
         trackableIds.length > 0
           ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
               .in('habit_id', trackableIds).eq('date', dateKey).eq('status', 'done')
           : Promise.resolve({ count: 0 }),
-        ankiHabit
-          ? supabase.from('streaks_cache').select('current_streak')
-              .eq('habit_id', ankiHabit.id).single()
+        // MAX streak across all habits (not just Anki)
+        allHabitIds.length > 0
+          ? supabase.from('streaks_cache').select('habit_id, current_streak')
+              .in('habit_id', allHabitIds)
+              .order('current_streak', { ascending: false })
+              .limit(1).maybeSingle()
           : Promise.resolve({ data: null }),
+        // Cascade layer 5 (current week) for tasks + cascade card
+        supabase.from('cascade_layers')
+          .select('title, progress_pct, cascade_dimensions(name)')
+          .eq('profile_id', profileId).eq('tree', 'sen').eq('layer', 5)
+          .maybeSingle(),
       ])
 
+      const topStreak = (maxStreakRes as { data: { habit_id: string; current_streak: number } | null }).data
+      const topHabitName = topStreak
+        ? (allHabits.find(h => h.id === topStreak.habit_id)?.name ?? 'Anki')
+        : 'Anki'
+
+      const weekLayer = (weekLayerRes as { data: { title: string; progress_pct: number | null; cascade_dimensions: Array<{ name: string }> } | null }).data
+      const weekDims = weekLayer?.cascade_dimensions ?? []
+
       setData({
-        habitsDone:  (logsRes as { count: number | null }).count ?? 0,
-        habitsTotal: trackableIds.length,
-        streakValue: (ankiStreakRes as { data: { current_streak: number } | null }).data?.current_streak ?? FALLBACK_STREAK,
-        streakHabit: 'Anki',
-        hopeToday:   hopeRes.data ?? null,
+        habitsDone:   (logsRes as { count: number | null }).count ?? 0,
+        habitsTotal:  trackableIds.length,
+        streakValue:  topStreak?.current_streak ?? FALLBACK_STREAK,
+        streakHabit:  topHabitName,
+        hopeToday:    hopeRes.data ?? null,
+        weekTitle:    weekLayer?.title ?? 'W23',
+        weekProgress: weekLayer?.progress_pct ?? 0,
+        weekTasks:    weekDims.length > 0
+          ? weekDims.map(d => ({ label: d.name, tag: 'Cascade · ' + (weekLayer?.title ?? 'W23') }))
+          : MAIN_TASKS,
       })
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekProgress, weekTasks } = data
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
@@ -304,12 +333,12 @@ export default function HomePage() {
                 Cascade
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                <span style={{ fontSize: 26, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>W23</span>
+                <span suppressHydrationWarning style={{ fontSize: 26, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{weekTitle}</span>
               </div>
               <div style={{ marginTop: 6, height: 4, background: '#1a1a1a', borderRadius: 2 }}>
-                <div style={{ height: '100%', width: '67%', background: 'linear-gradient(to right, #d97706, #F59E0B)', borderRadius: 2 }} />
+                <div style={{ height: '100%', width: `${weekProgress}%`, background: 'linear-gradient(to right, #d97706, #F59E0B)', borderRadius: 2 }} />
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>67% · klepni →</div>
+              <div suppressHydrationWarning style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>{weekProgress}% · klepni →</div>
             </Card>
           </Link>
         </div>
@@ -368,8 +397,8 @@ export default function HomePage() {
         <section style={{ marginBottom: 20 }}>
           <SectionLabel>Hlavní úkoly</SectionLabel>
           <Card>
-            {MAIN_TASKS.map((t, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < MAIN_TASKS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+            {weekTasks.map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < weekTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,158,11,0.6)', minWidth: 16, paddingTop: 1 }}>{i + 1}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.4 }}>{t.label}</div>
