@@ -155,8 +155,8 @@ function SliderInput({
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <KibouIcon kind={iconKind} size={20} />
+        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <KibouIcon kind={iconKind} size={30} />
           {label}
         </span>
         <span style={{
