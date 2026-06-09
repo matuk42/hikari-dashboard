@@ -17,7 +17,7 @@ Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat 
 - **Home** — streak hero (max), habity X/Y, HOPE dnes, **3 sekce úkolů reálně z vaultu** (Hlavní + Vedlejší + Bonus, každý s detailem za pomlčkou).
 - **kibou** — slidery mood/energy/hope s vlastními PNG ikonkami (mood=kameny, energy=blesk, hope=All Might; všechny čtvercově paddované, transparentní pozadí). Multi-save během dne ✓ (UPSERT, ne INSERT). 30d graf.
 - **Cascade** — kurátované vrstvy + chipy s detailem, štítek „odhad" (viz rozhodnutí níže).
-- **Vault sync** — tlačítko na home, dynamické cesty (aktuální týden/měsíc), parsuje habity+pack, cascade L1-L5 (L5 = full replace, ne accumulate), priority (Hlavní/Vedlejší/Bonus se sub-sekcemi a `**Name** — detail` formátem), Memory.md bootstrap (16 H2 sekcí → hikari_memory).
+- **Vault sync** — tlačítko na home, dynamické cesty (aktuální týden/měsíc), parsuje habity+pack, cascade L1-L5 (L5 = full replace, ne accumulate), priority (Hlavní/Vedlejší/Bonus se sub-sekcemi a `**Name** — detail` formátem), Memory.md bootstrap (16 H2 sekcí → hikari_memory). **Weekly rollover ✓** — když current ISO week soubor chybí (typicky UTC server vs CEST autor = Vercel myslí W25 zatímco vault má jen W24), padá na W-1, W-2, …, až 6 týdnů zpět. Response v sync errors[] obsahuje `ℹ️ Rollover: použit ...` info zprávu.
 - Google login, onboarding, PWA, CSP.
 
 ## 🧭 Co dál (priorita shora)
