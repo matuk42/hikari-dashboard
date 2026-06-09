@@ -186,11 +186,21 @@ function stripBold(s: string): string {
   return s.replace(/\*\*/g, '').trim()
 }
 
-/** Extract leading integer from streak strings like "45 dní s 5 skipped", "48 dní", "nový" → null */
-function parseStreak(s: string): number | null {
+/**
+ * Parse the "Aktuální streak" cell.
+ * - "45 dní s 5 skipped" / "48 dní" → numeric streak
+ * - "nový" / empty → null (don't touch DB)
+ * - "restart"/"obnoven"/"přerušen" marker without leading "N dní" → 'reset' (streak=0)
+ * The old regex `/(\d+)/` matched the day in dates like "8.6." inside restart notes
+ * ("✅ rytmus obnoven 8.6. — 209 (7.6.) + 390 (8.6.) karet"), which spuriously set
+ * Anki streak to 8 — hence the strict "leading N dní" requirement here.
+ */
+function parseStreak(s: string): number | 'reset' | null {
   if (!s || s.toLowerCase().includes('nový')) return null
-  const m = s.match(/(\d+)/)
-  return m ? parseInt(m[1], 10) : null
+  const m = s.match(/^\s*(\d+)\s*dní/i)
+  if (m) return parseInt(m[1], 10)
+  if (/restart|obnoven|přerušen/i.test(s)) return 'reset'
+  return null
 }
 
 function normalizeHabitName(raw: string): string {
