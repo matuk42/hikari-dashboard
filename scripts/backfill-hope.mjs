@@ -47,7 +47,7 @@ const sql = [
   `-- Zdroj: ${rows.length} dní (${rows[0]?.date} → ${rows.at(-1)?.date})`,
   '',
   'WITH p AS (SELECT id FROM profiles LIMIT 1)',
-  'INSERT INTO hope_logs (profile_id, date, mood, energy, hope, source)',
+  'INSERT INTO hope_logs (profile_id, date, mood, energy, hope, note)',
   'SELECT p.id, v.date::date, v.mood, v.energy, v.hope, \'vault-backfill\'',
   'FROM p, (VALUES',
   rows.map((r, i) => `  ('${r.date}', ${r.mood}, ${r.energy}, ${r.hope})${i === rows.length - 1 ? '' : ','}`).join('\n'),
