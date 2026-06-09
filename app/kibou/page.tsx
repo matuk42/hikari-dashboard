@@ -449,7 +449,7 @@ export default function KibouPage() {
                       {stat.mood}
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <KibouIcon kind="energy" size={10} />
+                      <KibouIcon kind="energy" size={8} />
                       {stat.energy}
                     </span>
                   </div>
