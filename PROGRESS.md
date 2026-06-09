@@ -34,7 +34,7 @@ Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat 
 ## ⚠️ Háčky / co vědět
 - **Migrace 003 + 004 aplikované**. 004 = `kind`/`detail`/`sort_order` na `cascade_dimensions`. Bez ní sync běží přes fallback (insert bez nových sloupců) ale home pak nezobrazí Vedlejší/Bonus. Další migrace → říct Matyášovi ať spustí SQL v Supabase před deployem.
 - **CSP je jen v kódu** (`next.config.ts`). Nesmí být druhá ve Vercel dashboardu (kombinovaly by se restriktivně).
-- **Týdenní priority se aktualizují jen když existuje soubor daného týdne** (`wiki/reviews/weekly/2026-W##.md`) s hlavičkou `### 3 hlavní priority`. Chybí → sync hodí „Not found" a home drží minulý týden.
+- **Týdenní priority** — Vercel server běží UTC, kolem půlnoci CEST se může lišit ISO týden o 1 oproti autorovi. Proto **rollover** zkouší 6 týdnů zpět — sync nepadne když ti chybí soubor aktuálního týdne, použije poslední existující. Layer 5 description (`weekLabelFromFile`) odráží skutečně načtený týden.
 - **Streak přepočet je client-side líný** (běží při otevření appky), dokud nebude ranní cron.
 - **Dashboard → vault zpětný zápis NENÍ a nemá být** v dashboardu — dělá ho Hikari přes Claude Code CLI při hlasovém deníku (Supabase = mozek, vault = archiv).
 - **Pre-push hook** pouští `npm run build` — push se zablokuje když build spadne.
