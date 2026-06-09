@@ -424,6 +424,43 @@ async function insertNewDimensions(db: SupaClient, layerId: string, names: strin
   }
 }
 
+/**
+ * Replace ALL dimensions for a layer with the given priorities (full refresh).
+ * Used for weekly layer 5 — without this, dims from previous weeks accumulate.
+ * Falls back to a plain insert without kind/detail/sort_order if migration 004
+ * hasn't been applied yet, so a forgotten migration degrades gracefully.
+ */
+async function replaceWeeklyDimensions(
+  db: SupaClient,
+  layerId: string,
+  items: PriorityItem[],
+  errors: string[]
+): Promise<void> {
+  const { error: delErr } = await db.from('cascade_dimensions').delete().eq('layer_id', layerId)
+  if (delErr) {
+    errors.push(`cascade_dimensions delete L5: ${delErr.message}`)
+    return
+  }
+  if (!items.length) return
+
+  const full = items.map((p, i) => ({
+    layer_id:     layerId,
+    name:         p.name,
+    detail:       p.detail || null,
+    kind:         p.kind,
+    sort_order:   i,
+    progress_pct: 0,
+  }))
+
+  let { error } = await db.from('cascade_dimensions').insert(full)
+  if (error) {
+    // Migration 004 not applied → retry without new columns
+    const basic = items.map(p => ({ layer_id: layerId, name: p.name, progress_pct: 0 }))
+    ;({ error } = await db.from('cascade_dimensions').insert(basic))
+  }
+  if (error) errors.push(`cascade_dimensions insert L5: ${error.message}`)
+}
+
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST() {
