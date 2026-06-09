@@ -127,17 +127,27 @@ const ICON_FALLBACK: Record<KibouIconKey, string> = {
 
 function KibouIcon({ kind, size = 18 }: { kind: KibouIconKey; size?: number }) {
   const src = ICON_SRC[kind]
+  // Fixed square box so the three icons share width — without it, contain-fit on
+  // different aspect ratios (mood ≈ square, bolt = thin, All Might = tall)
+  // shifts the labels by several pixels per row and breaks visual rhythm.
+  const box: React.CSSProperties = {
+    width: size, height: size, flexShrink: 0,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    verticalAlign: 'middle',
+  }
   if (!src) {
-    return <span style={{ fontSize: size, lineHeight: 1 }}>{ICON_FALLBACK[kind]}</span>
+    return <span style={{ ...box, fontSize: size, lineHeight: 1 }}>{ICON_FALLBACK[kind]}</span>
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt=""
-      aria-hidden="true"
-      style={{ width: size, height: size, objectFit: 'contain', verticalAlign: 'middle', display: 'inline-block' }}
-    />
+    <span style={box}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+      />
+    </span>
   )
 }
 
