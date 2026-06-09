@@ -626,23 +626,17 @@ export async function POST() {
         if (l4id) await insertNewDimensions(db, l4id, l4dims)
       }
 
-      // Layer 5 — Týden — from weekly review.
-      // The weekly "plan" file (status: plan) holds priorities under
-      // "### 3 hlavní priority"; older review files used "## Priority na W??"
-      // or "## 3 priority…". Try them in order so the parser survives the format.
+      // Layer 5 — Týden — priorities (Hlavní + Vedlejší + Bonus) from weekly file.
+      // Full refresh: previous week's dimensions are deleted, current week's
+      // inserted. Without this, every sync grew the list (W23 + W24 + …).
       if (raw.weekly) {
         const weeklyMd = raw.weekly
-        const prioLine = findHeaderLine(weeklyMd, [
-          '### 3 hlavní priority',
-          '## Priority na W',
-          '## 3 priority',
-        ])
-        const l5dims = prioLine ? numberedItems(mdSection(weeklyMd, prioLine)) : []
+        const l5items  = parseWeeklyPriorities(weeklyMd)
         const l5id = await upsertLayer(db, pid, {
           tree: 'sen', layer: 5, title: 'Týden', description: weekLabelFromFile(weeklyMd),
           deadline: endOfWeekISO(), sourceFile: FILES.weekly,
         }, errors)
-        if (l5id) await insertNewDimensions(db, l5id, l5dims)
+        if (l5id) await replaceWeeklyDimensions(db, l5id, l5items, errors)
       }
 
     } catch (e) {
