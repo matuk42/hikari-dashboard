@@ -11,6 +11,7 @@ const STATIC_PATHS = {
   sen:    'wiki/cile/cascade/sen.md',
   prijem: 'wiki/cile/cascade/prijem.md',
   habits: 'wiki/cile/habits.md',
+  memory: 'Memory.md',
 } as const
 
 /** ISO 8601 week string, e.g. "2026-W23" */
