@@ -279,14 +279,18 @@ export default function KibouPage() {
       return
     }
 
-    const { error } = await supabase.from('hope_logs').insert({
+    // Upsert — re-saving the same day overwrites instead of failing on the
+    // UNIQUE(profile_id, date) constraint. Bumping logged_at lets chart/pre-fill
+    // pick the most recent edit if Supabase realtime ever pushes mid-day.
+    const { error } = await supabase.from('hope_logs').upsert({
       profile_id: profileId,
       date: today,
       mood,
       energy,
       hope,
       note: note || null,
-    })
+      logged_at: new Date().toISOString(),
+    }, { onConflict: 'profile_id,date' })
 
     if (error) {
       console.error('hope_logs upsert error:', error)
