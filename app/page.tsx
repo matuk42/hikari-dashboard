@@ -168,6 +168,9 @@ function Card({ children, style }: { children: ReactNode; style?: CSSProperties 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type PriorityKind = 'main' | 'side' | 'bonus'
+type PriorityItem = { name: string; detail: string; kind: PriorityKind }
+
 interface HomeData {
   habitsDone: number
   habitsTotal: number
@@ -176,7 +179,9 @@ interface HomeData {
   hopeToday: { mood: number; energy: number; hope: number } | null
   weekTitle: string
   weekProgress: number
-  weekTasks: Array<{ label: string; tag: string }>
+  mainTasks: PriorityItem[]
+  sideTasks: PriorityItem[]
+  bonusTasks: PriorityItem[]
 }
 
 const FALLBACK_STREAK = 45
