@@ -322,6 +322,40 @@ function h3Block(content: string, headingPrefix: string): string {
   return lines.slice(start + 1, end).join('\n')
 }
 
+// ─── Memory.md sections (hikari_memory bootstrap) ────────────────────────────
+
+type MemorySection = { name: string; content: string }
+
+/**
+ * Split Memory.md into H2 sections. Returns one entry per `## Heading` with the
+ * body trimmed of horizontal rules (`---`) and empty lines.
+ * Skips the H1 "# Memory.md — Matyáš" preamble (it's a doc title, not content).
+ */
+function parseMemorySections(md: string): MemorySection[] {
+  const lines = md.split('\n')
+  const sections: MemorySection[] = []
+
+  const h2Indices: number[] = []
+  for (let i = 0; i < lines.length; i++) {
+    if (/^## /.test(lines[i])) h2Indices.push(i)
+  }
+  h2Indices.push(lines.length) // sentinel
+
+  for (let k = 0; k < h2Indices.length - 1; k++) {
+    const headIdx = h2Indices[k]
+    const endIdx  = h2Indices[k + 1]
+    const name    = lines[headIdx].replace(/^##\s+/, '').trim()
+    if (!name) continue
+    const body = lines.slice(headIdx + 1, endIdx)
+      .filter(l => l.trim() !== '---')
+      .join('\n')
+      .trim()
+    if (!body) continue
+    sections.push({ name, content: body })
+  }
+  return sections
+}
+
 /** Collect all item lines (numbered + bullet) inside a block. */
 function itemLines(block: string): string[] {
   return block.split('\n').filter(l => /^\s*(?:\d+\.|[-•*])\s+/.test(l))
