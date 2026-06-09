@@ -460,6 +460,43 @@ async function insertNewDimensions(db: SupaClient, layerId: string, names: strin
 }
 
 /**
+ * Replace all vault-sourced Memory.md entries in hikari_memory with fresh ones.
+ * Manual / auto entries (different `source`) are preserved. Each H2 section in
+ * Memory.md becomes one row with type='context', status='active' — Matyáš wrote
+ * the file by hand, so it's authoritative.
+ */
+async function syncMemoryBootstrap(
+  db: SupaClient,
+  profileId: string,
+  sections: MemorySection[],
+  errors: string[]
+): Promise<void> {
+  const SOURCE = 'vault:Memory.md'
+
+  const { error: delErr } = await db.from('hikari_memory')
+    .delete().eq('profile_id', profileId).eq('source', SOURCE)
+  if (delErr) {
+    errors.push(`hikari_memory delete ${SOURCE}: ${delErr.message}`)
+    return
+  }
+  if (!sections.length) return
+
+  const rows = sections.map(s => ({
+    profile_id: profileId,
+    type:       'context',
+    content:    s.content,
+    source:     SOURCE,
+    source_ref: s.name,
+    status:     'active',
+    confidence: 1.0,
+    approved_at: new Date().toISOString(),
+  }))
+
+  const { error } = await db.from('hikari_memory').insert(rows)
+  if (error) errors.push(`hikari_memory insert ${SOURCE}: ${error.message}`)
+}
+
+/**
  * Replace ALL dimensions for a layer with the given priorities (full refresh).
  * Used for weekly layer 5 — without this, dims from previous weeks accumulate.
  * Falls back to a plain insert without kind/detail/sort_order if migration 004
