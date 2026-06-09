@@ -596,12 +596,43 @@ export async function POST() {
 
   const raw: Record<string, string | null> = {}
   for (const [key, path] of Object.entries(FILES)) {
+    if (key === 'weekly') continue   // handled below with rollover
     try {
       raw[key] = await ghFetch(path, token)
       if (raw[key] !== null) synced.push(path)
       else if (key !== 'monthly') errors.push(`Not found: ${path}`)
     } catch (e) {
       errors.push(`Fetch ${path}: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  // Weekly with graceful rollover — try today's week, then 1 week back, …, up to 6.
+  // Without this, an empty current-week file forced the sync to error out and the
+  // dashboard kept stale W## priorities forever (no auto-fallback to W##-1).
+  {
+    const candidates = weeklyPathCandidates(6)
+    const triedNotFound: string[] = []
+    for (const path of candidates) {
+      try {
+        const md = await ghFetch(path, token)
+        if (md !== null) {
+          raw.weekly = md
+          FILES.weekly = path           // remember which one actually loaded — drives L5 source_file
+          synced.push(path)
+          if (triedNotFound.length) {
+            // Soft note: tell caller we rolled over (UI shows in error list with prefix "ℹ️")
+            errors.push(`ℹ️ Rollover: použit ${path} (chybí novější: ${triedNotFound.join(', ')})`)
+          }
+          break
+        }
+        triedNotFound.push(path)
+      } catch (e) {
+        errors.push(`Fetch ${path}: ${e instanceof Error ? e.message : String(e)}`)
+        break                            // network error → stop trying
+      }
+    }
+    if (!raw.weekly) {
+      errors.push(`Not found: weekly plan (zkoušeno ${candidates.length} týdnů zpět)`)
     }
   }
 
