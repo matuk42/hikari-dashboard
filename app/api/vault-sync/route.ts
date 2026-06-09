@@ -222,9 +222,9 @@ type HabitRow = {
   pack_code: string | null
 }
 
-function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks: Map<string, number> } {
+function parseHabits(md: string, profileId: string): { rows: HabitRow[]; streaks: Map<string, number | 'reset'> } {
   const rows: HabitRow[] = []
-  const streaks = new Map<string, number>()
+  const streaks = new Map<string, number | 'reset'>()
 
   function fromTable(sectionMd: string, cat: HabitRow['category'], parseStreakCol = false) {
     for (const row of mdTable(sectionMd)) {
