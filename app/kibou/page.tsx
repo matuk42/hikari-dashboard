@@ -445,7 +445,7 @@ export default function KibouPage() {
                   </div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <KibouIcon kind="mood" size={10} />
+                      <KibouIcon kind="mood" size={8} />
                       {stat.mood}
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
