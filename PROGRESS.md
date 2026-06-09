@@ -4,20 +4,20 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-02
+**Poslední aktualizace:** 2026-06-09
 
 ---
 
 ## 🎯 Kde teď jsme
-Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat + odškrtáváš habity, bez notebooku a Obsidianu.** Celý řetězec `vault (Obsidian / Claude Code) → GitHub → Sync → Supabase → mobil` byl **živě ověřen** Matyášem 2026-06-02.
+Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat + odškrtáváš habity, bez notebooku a Obsidianu.** Celý řetězec `vault (Obsidian / Claude Code) → GitHub → Sync → Supabase → mobil` byl **živě ověřen** Matyášem 2026-06-02. 9.6. session: oprava sync na nový W24 formát + Memory.md bootstrap + kibou ikonky + multi-save fix.
 
 ## ✅ Funguje (ověřeno živě)
 - **Habits** — živý seznam z DB (vault = zdroj pravdy), skupiny Aktivní/Testovací/Balíčky(Imunita,Fyzička)/Zautomatizováno. Odškrtnutí → zápis do Supabase, offline queue.
 - **Streaky** — pravdivé „X dní v řadě": denní přepočet při otevření appky, grace day (1 den odpuštěn), autoškola = mandatory (bez grace). Vault baseline (Anki=45) zachován.
-- **Home** — streak hero (max), habity X/Y, HOPE dnes, **3 hlavní priority reálně z vaultu** (týdenní plán).
-- **kibou** — slidery mood/energy/hope, 30d graf.
+- **Home** — streak hero (max), habity X/Y, HOPE dnes, **3 sekce úkolů reálně z vaultu** (Hlavní + Vedlejší + Bonus, každý s detailem za pomlčkou).
+- **kibou** — slidery mood/energy/hope s vlastními PNG ikonkami (mood=kameny, energy=blesk, hope=All Might; všechny čtvercově paddované, transparentní pozadí). Multi-save během dne ✓ (UPSERT, ne INSERT). 30d graf.
 - **Cascade** — kurátované vrstvy + chipy s detailem, štítek „odhad" (viz rozhodnutí níže).
-- **Vault sync** — tlačítko na home, dynamické cesty (aktuální týden/měsíc), parsuje habity+pack, cascade, priority.
+- **Vault sync** — tlačítko na home, dynamické cesty (aktuální týden/měsíc), parsuje habity+pack, cascade L1-L5 (L5 = full replace, ne accumulate), priority (Hlavní/Vedlejší/Bonus se sub-sekcemi a `**Name** — detail` formátem), Memory.md bootstrap (16 H2 sekcí → hikari_memory).
 - Google login, onboarding, PWA, CSP.
 
 ## 🧭 Co dál (priorita shora)
