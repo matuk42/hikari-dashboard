@@ -133,11 +133,19 @@ function LuffySilhouette({ opacity = 0.06, right = -10, height = 160 }: {
   )
 }
 
-function TaskRow({ label, tag, dim = false }: { label: string; tag: string; dim?: boolean }) {
+function TaskRow({ name, detail, dim = false, last = false }: {
+  name: string; detail?: string; dim?: boolean; last?: boolean
+}) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-      <span style={{ fontSize: 13, color: dim ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.82)', lineHeight: 1.4, flex: 1, paddingRight: 8 }}>{label}</span>
-      <span style={{ fontSize: 10, color: 'rgba(245,158,11,0.55)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 6, padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>{tag}</span>
+    <div style={{ padding: '10px 14px', borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.04)' }}>
+      <div style={{ fontSize: 13, color: dim ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.85)', lineHeight: 1.35 }}>
+        {name}
+      </div>
+      {detail && (
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3 }}>
+          {detail}
+        </div>
+      )}
     </div>
   )
 }
