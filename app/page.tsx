@@ -304,7 +304,8 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekTasks } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, mainTasks, sideTasks, bonusTasks } = data
+  const weekTaskCount = mainTasks.length + sideTasks.length + bonusTasks.length
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
