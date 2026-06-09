@@ -440,7 +440,7 @@ export default function KibouPage() {
                     {stat.label}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <KibouIcon kind="hope" size={16} />
+                    <KibouIcon kind="hope" size={13} />
                     {stat.hope}
                   </div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
