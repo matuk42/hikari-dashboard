@@ -14,15 +14,32 @@ const STATIC_PATHS = {
   memory: 'Memory.md',
 } as const
 
-/** ISO 8601 week string, e.g. "2026-W23" */
-function isoWeekStr(): string {
-  const d = new Date()
+/** ISO 8601 week string for a given date, e.g. "2026-W23" */
+function isoWeekStrFromDate(input: Date): string {
+  const d = new Date(input)
   const dow = d.getDay() || 7           // Sun→7, Mon→1 … Sat→6
   d.setDate(d.getDate() + 4 - dow)     // advance to Thursday of current week
   const y = d.getFullYear()
   const yearStart = new Date(y, 0, 1)
   const wn = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
   return `${y}-W${String(wn).padStart(2, '0')}`
+}
+
+/** ISO 8601 week string for today, e.g. "2026-W24" */
+function isoWeekStr(): string {
+  return isoWeekStrFromDate(new Date())
+}
+
+/** List of weekly file paths to try, most-recent first (today's week → up to N weeks back). */
+function weeklyPathCandidates(weeksBack = 6): string[] {
+  const out: string[] = []
+  const today = new Date()
+  for (let i = 0; i <= weeksBack; i++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i * 7)
+    out.push(`wiki/reviews/weekly/${isoWeekStrFromDate(d)}.md`)
+  }
+  return out
 }
 
 /** Current year-month string, e.g. "2026-06" */
