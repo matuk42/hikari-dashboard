@@ -558,10 +558,14 @@ export async function POST() {
     return NextResponse.json({ error: 'GITHUB_TOKEN not set' }, { status: 500 })
   }
 
-  // Dynamic file paths — computed at request time so sync always reads the current week/month
+  // Dynamic file paths — computed at request time so sync always reads the current week/month.
+  // `weekly` is resolved later with rollover: if the current week's plan file
+  // doesn't exist yet (typical mid-week before Sunday review), we fall back to
+  // the most recent existing weekly file. This keeps the dashboard usable instead
+  // of erroring out with "Not found".
   const FILES = {
     ...STATIC_PATHS,
-    weekly:  `wiki/reviews/weekly/${isoWeekStr()}.md`,
+    weekly:  '',                                                  // resolved below
     monthly: `wiki/reviews/monthly/${yearMonthStr()}.md`,
   }
 
