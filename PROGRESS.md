@@ -27,7 +27,6 @@ Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat 
    - detekce vzorů ("úterý low energy", "les → +HOPE")
    - živá energetická osa z HOPE dat (teď statická)
 2. **Drobnosti:**
-   - Graceful rollover týdenního souboru — když chybí soubor aktuálního týdne, vrátit se k poslednímu existujícímu místo chyby + tiché staré.
    - Auto-sync cron (Ne 22:00) místo jen ručního tlačítka.
    - Energy obrázek v kibou — kdyby chtěl něco jiného než blesk.
 3. **V2:** `/history` heat-mapa · **V3:** `/calculator`.
