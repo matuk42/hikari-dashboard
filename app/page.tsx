@@ -198,7 +198,9 @@ export default function HomePage() {
     hopeToday: null,
     weekTitle: 'W23',
     weekProgress: 0,
-    weekTasks: MAIN_TASKS,
+    mainTasks: FALLBACK_MAIN,
+    sideTasks: [],
+    bonusTasks: [],
   })
 
   useEffect(() => {
