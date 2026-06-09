@@ -258,9 +258,11 @@ export default function HomePage() {
               .order('current_streak', { ascending: false })
               .limit(1).maybeSingle()
           : Promise.resolve({ data: null }),
-        // Cascade layer 5 (current week) for tasks + cascade card
+        // Cascade layer 5 (current week) for tasks + cascade card.
+        // `kind`/`detail`/`sort_order` arrive in migration 004 — Supabase
+        // ignores unknown columns gracefully if the migration hasn't run.
         supabase.from('cascade_layers')
-          .select('title, description, progress_pct, cascade_dimensions(name)')
+          .select('title, description, progress_pct, cascade_dimensions(name, detail, kind, sort_order)')
           .eq('profile_id', profileId).eq('tree', 'sen').eq('layer', 5)
           .maybeSingle(),
       ])
