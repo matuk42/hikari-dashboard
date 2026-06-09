@@ -345,9 +345,9 @@ export default function KibouPage() {
               padding: '20px 18px 16px',
               marginBottom: 16,
             }}>
-              <SliderInput label="Mood" value={mood} onChange={setMood} emoji="😌" />
-              <SliderInput label="Energy" value={energy} onChange={setEnergy} emoji="⚡" />
-              <SliderInput label="Hope" value={hope} onChange={setHope} emoji="🌟" />
+              <SliderInput label="Mood" value={mood} onChange={setMood} iconKind="mood" />
+              <SliderInput label="Energy" value={energy} onChange={setEnergy} iconKind="energy" />
+              <SliderInput label="Hope" value={hope} onChange={setHope} iconKind="hope" />
 
               <textarea
                 value={note}
