@@ -116,7 +116,7 @@ function KibouSkeleton() {
 type KibouIconKey = 'mood' | 'energy' | 'hope'
 const ICON_SRC: Record<KibouIconKey, string | null> = {
   mood:   '/kibou/mood.png',
-  energy: null,                // TODO: drop in /kibou/energy.{png,avif} when ready
+  energy: '/kibou/energy.png',
   hope:   '/kibou/hope.png',
 }
 const ICON_FALLBACK: Record<KibouIconKey, string> = {
