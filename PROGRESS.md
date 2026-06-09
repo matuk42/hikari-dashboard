@@ -9,7 +9,7 @@
 ---
 
 ## 🎯 Kde teď jsme
-Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat + odškrtáváš habity, bez notebooku a Obsidianu.** Celý řetězec `vault (Obsidian / Claude Code) → GitHub → Sync → Supabase → mobil` byl **živě ověřen** Matyášem 2026-06-02. 9.6. session: oprava sync na nový W24 formát + Memory.md bootstrap + kibou ikonky + multi-save fix.
+Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat + odškrtáváš habity, bez notebooku a Obsidianu.** Celý řetězec `vault (Obsidian / Claude Code) → GitHub → Sync → Supabase → mobil` byl **živě ověřen** Matyášem 2026-06-02. 9.6. session: oprava sync na nový W24 formát + Memory.md bootstrap + kibou ikonky + multi-save fix + **graceful weekly rollover** (sync zkouší 6 týdnů zpět, fix UTC vs CEST week-flip na Vercel serveru).
 
 ## ✅ Funguje (ověřeno živě)
 - **Habits** — živý seznam z DB (vault = zdroj pravdy), skupiny Aktivní/Testovací/Balíčky(Imunita,Fyzička)/Zautomatizováno. Odškrtnutí → zápis do Supabase, offline queue.
