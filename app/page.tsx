@@ -92,18 +92,12 @@ const ENERGY_COLOR: Record<string, string> = {
   low: '#ef4444',
 }
 
-const MAIN_TASKS = [
-  { label: 'Hikari Dashboard: Home + Cascade + Kibou', tag: 'Kód · peak' },
-  { label: 'Autoškola testy A1 · 2× sezení', tag: 'Autoškola · mandatory' },
-  { label: 'Anki 25+ karet · japonština', tag: 'Japonština · streak' },
+// Fallback shown only when the weekly vault file is missing or unparseable.
+const FALLBACK_MAIN: PriorityItem[] = [
+  { name: 'Hikari Dashboard', detail: 'Home + Cascade + Kibou', kind: 'main' },
+  { name: 'Autoškola testy A1', detail: '2× sezení', kind: 'main' },
+  { name: 'Anki 25+ karet', detail: 'japonština · streak', kind: 'main' },
 ]
-
-const SIDE_TASKS = [
-  { label: 'Kytara 20 min', tag: 'DofE' },
-  { label: 'Les 30 min', tag: 'Imunita' },
-]
-
-const BONUS_TASK = { label: '30 min One Piece — pasivní imerze', tag: 'Japonština' }
 
 // ─── LS keys (shared with habits page) ───────────────────────────────────────
 
