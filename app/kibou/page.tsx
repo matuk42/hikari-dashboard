@@ -439,17 +439,17 @@ export default function KibouPage() {
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
                     {stat.label}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <KibouIcon kind="hope" size={12} />
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <KibouIcon kind="hope" size={16} />
                     {stat.hope}
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                      <KibouIcon kind="mood" size={10} />
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <KibouIcon kind="mood" size={13} />
                       {stat.mood}
                     </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                      <KibouIcon kind="energy" size={10} />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <KibouIcon kind="energy" size={13} />
                       {stat.energy}
                     </span>
                   </div>
