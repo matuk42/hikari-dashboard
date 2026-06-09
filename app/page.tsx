@@ -383,8 +383,16 @@ export default function HomePage() {
                     </div>
                     <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.06)' }} />
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>😌 {hopeToday.mood}</span>
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>⚡ {hopeToday.energy}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/kibou/mood.png" alt="" aria-hidden="true" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                        {hopeToday.mood}
+                      </span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/kibou/energy.png" alt="" aria-hidden="true" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                        {hopeToday.energy}
+                      </span>
                     </div>
                   </div>
                 ) : (
