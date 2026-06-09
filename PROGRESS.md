@@ -33,7 +33,7 @@ Dashboard reálně slouží svému účelu: **ráno na mobilu vidíš co dělat 
 3. **V2:** `/history` heat-mapa · **V3:** `/calculator`.
 
 ## ⚠️ Háčky / co vědět
-- **Migrace 003 aplikovaná** (`pack`, `pack_code`). Další migrace → říct Matyášovi ať spustí SQL v Supabase před deployem.
+- **Migrace 003 + 004 aplikované**. 004 = `kind`/`detail`/`sort_order` na `cascade_dimensions`. Bez ní sync běží přes fallback (insert bez nových sloupců) ale home pak nezobrazí Vedlejší/Bonus. Další migrace → říct Matyášovi ať spustí SQL v Supabase před deployem.
 - **CSP je jen v kódu** (`next.config.ts`). Nesmí být druhá ve Vercel dashboardu (kombinovaly by se restriktivně).
 - **Týdenní priority se aktualizují jen když existuje soubor daného týdne** (`wiki/reviews/weekly/2026-W##.md`) s hlavičkou `### 3 hlavní priority`. Chybí → sync hodí „Not found" a home drží minulý týden.
 - **Streak přepočet je client-side líný** (běží při otevření appky), dokud nebude ranní cron.
