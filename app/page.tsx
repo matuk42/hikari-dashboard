@@ -421,12 +421,14 @@ export default function HomePage() {
         <section style={{ marginBottom: 20 }}>
           <SectionLabel>Hlavní úkoly</SectionLabel>
           <Card>
-            {weekTasks.map((t, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < weekTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+            {mainTasks.map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < mainTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,158,11,0.6)', minWidth: 16, paddingTop: 1 }}>{i + 1}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.4 }}>{t.label}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(245,158,11,0.45)', marginTop: 3 }}>{t.tag}</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35 }}>{t.name}</div>
+                  {t.detail && (
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3 }}>{t.detail}</div>
+                  )}
                 </div>
               </div>
             ))}
@@ -434,20 +436,30 @@ export default function HomePage() {
         </section>
 
         {/* ── Vedlejší úkoly + Bonus ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-          <section>
-            <SectionLabel>Vedlejší</SectionLabel>
-            <Card>
-              {SIDE_TASKS.map((t, i) => <TaskRow key={i} label={t.label} tag={t.tag} />)}
-            </Card>
-          </section>
-          <section>
-            <SectionLabel>Bonus</SectionLabel>
-            <Card>
-              <TaskRow label={BONUS_TASK.label} tag={BONUS_TASK.tag} dim />
-            </Card>
-          </section>
-        </div>
+        {(sideTasks.length > 0 || bonusTasks.length > 0) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+            <section>
+              <SectionLabel>Vedlejší</SectionLabel>
+              <Card>
+                {sideTasks.length > 0
+                  ? sideTasks.map((t, i) => (
+                      <TaskRow key={i} name={t.name} detail={t.detail} last={i === sideTasks.length - 1} />
+                    ))
+                  : <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>—</div>}
+              </Card>
+            </section>
+            <section>
+              <SectionLabel>Bonus</SectionLabel>
+              <Card>
+                {bonusTasks.length > 0
+                  ? bonusTasks.map((t, i) => (
+                      <TaskRow key={i} name={t.name} detail={t.detail} dim last={i === bonusTasks.length - 1} />
+                    ))
+                  : <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>—</div>}
+              </Card>
+            </section>
+          </div>
+        )}
 
         {/* ── Zlepšení za měsíc ── */}
         <section style={{ marginBottom: 20 }}>
