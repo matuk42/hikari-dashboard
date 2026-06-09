@@ -440,16 +440,16 @@ export default function KibouPage() {
                     {stat.label}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <KibouIcon kind="hope" size={13} />
+                    <KibouIcon kind="hope" size={10} />
                     {stat.hope}
                   </div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <KibouIcon kind="mood" size={13} />
+                      <KibouIcon kind="mood" size={10} />
                       {stat.mood}
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <KibouIcon kind="energy" size={13} />
+                      <KibouIcon kind="energy" size={10} />
                       {stat.energy}
                     </span>
                   </div>
