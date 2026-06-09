@@ -37,7 +37,9 @@ const ALL_HABITS: Habit[] = [
   { id: 'mining',     name: 'Anki tvorba',          status: 'trial',     serves: 'japonština · sen',          frequency: '200 karet / týden', streak: 0, trialEnd: '30.6.' },
   { id: 'kytara',     name: 'Kytara',               status: 'trial',     serves: 'DofE talent',               frequency: '3× týdně · 20 min', streak: 1, trialEnd: '30.6.' },
   // Balíček Imunita
-  { id: 'spanek',     name: 'Spánek 22:00–06:15',   status: 'trial', serves: 'imunita · fyzička',       frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'A' },
+  // (Spánek habit byl přejmenován ve vaultu na "Spánek 21:30 nebo dříve…" —
+  // sync ho insertne sám, takže ve fallbacku nepotřebujeme; mít tu starý
+  // název způsobovalo re-seed po DB delete.)
   { id: 'vitd3',      name: 'Vit D3 1000 IU',       status: 'trial', serves: 'imunita',                 frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'B' },
   { id: 'zinek',      name: 'Zinek',                status: 'trial', serves: 'imunita',                 frequency: '1×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'C' },
   { id: 'probiotika', name: 'Probiotika',           status: 'trial', serves: 'imunita',                 frequency: '3×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'D' },
