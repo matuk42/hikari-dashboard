@@ -280,6 +280,100 @@ function numberedItems(sectionMd: string): string[] {
     .filter(Boolean)
 }
 
+// ─── Weekly priorities (sub-sections under "## Priority W##") ────────────────
+
+type PriorityKind = 'main' | 'side' | 'bonus'
+type PriorityItem = { name: string; detail: string; kind: PriorityKind }
+
+/** Parse "**Name** — detail" or fallback "Name — detail" (with leading "- " / "1. " stripped). */
+function parsePriorityItem(line: string): { name: string; detail: string } | null {
+  const s = line.trim().replace(/^(?:\d+\.|[-•*])\s*/, '')
+  if (!s) return null
+
+  // Preferred shape: **Name** — detail (W24+)
+  const bold = s.match(/^\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?(.*)$/)
+  if (bold) {
+    let name   = bold[1].trim()
+    let detail = (bold[2] ?? '').trim()
+    // W23 quirk: whole phrase was bolded, e.g. **Autoškola — 350 otázek** (tail)
+    if (!detail && / — /.test(name)) {
+      const [first, ...rest] = name.split(' — ')
+      name   = first.trim()
+      detail = rest.join(' — ').trim()
+    }
+    return { name, detail }
+  }
+
+  // Plain shape: Name — detail
+  const [first, ...rest] = s.split(' — ')
+  return { name: stripBold(first).trim(), detail: rest.join(' — ').trim() }
+}
+
+/** Slice a block from "### Heading" up to the next H3+ heading (or end). */
+function h3Block(content: string, headingPrefix: string): string {
+  const lines = content.split('\n')
+  const start = lines.findIndex(l => l.startsWith(headingPrefix))
+  if (start === -1) return ''
+  let end = lines.length
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^(#{1,3})\s/.test(lines[i])) { end = i; break }
+  }
+  return lines.slice(start + 1, end).join('\n')
+}
+
+/** Collect all item lines (numbered + bullet) inside a block. */
+function itemLines(block: string): string[] {
+  return block.split('\n').filter(l => /^\s*(?:\d+\.|[-•*])\s+/.test(l))
+}
+
+/**
+ * Parse weekly priorities from the weekly review file.
+ * Recognised shapes (in order):
+ *   1. "## Priority W##"  → "### Hlavní" + "### Vedlejší" + "### Bonus"  (W24+)
+ *   2. "### 3 hlavní priority"  → flat numbered list, all main          (W23)
+ *   3. "## Priority na W##" or "## 3 priority"  → flat list, all main   (legacy)
+ */
+function parseWeeklyPriorities(md: string): PriorityItem[] {
+  // ── New format: ## Priority W## with sub-sections ─────────────────────────
+  const prioHeader = md.split('\n').find(l => /^## Priority\b/.test(l))
+  if (prioHeader) {
+    const prioSec = mdSection(md, prioHeader)
+    const result: PriorityItem[] = []
+    const groups: Array<{ prefix: string; kind: PriorityKind }> = [
+      { prefix: '### Hlavní',   kind: 'main'  },
+      { prefix: '### Vedlejší', kind: 'side'  },
+      { prefix: '### Bonus',    kind: 'bonus' },
+    ]
+    let hasAnyGroup = false
+    for (const g of groups) {
+      const block = h3Block(prioSec, g.prefix)
+      if (!block) continue
+      hasAnyGroup = true
+      for (const line of itemLines(block)) {
+        const item = parsePriorityItem(line)
+        if (item?.name) result.push({ ...item, kind: g.kind })
+      }
+    }
+    if (hasAnyGroup) return result
+    // Header present but no Hlavní/Vedlejší/Bonus — treat whole section as main.
+    return itemLines(prioSec)
+      .map(parsePriorityItem)
+      .filter((i): i is { name: string; detail: string } => !!i?.name)
+      .map(i => ({ ...i, kind: 'main' as const }))
+  }
+
+  // ── Legacy: ### 3 hlavní priority / ## 3 priority ─────────────────────────
+  const legacy = findHeaderLine(md, ['### 3 hlavní priority', '## 3 priority'])
+  if (legacy) {
+    return itemLines(mdSection(md, legacy))
+      .map(parsePriorityItem)
+      .filter((i): i is { name: string; detail: string } => !!i?.name)
+      .map(i => ({ ...i, kind: 'main' as const }))
+  }
+
+  return []
+}
+
 // ─── Supabase helpers ─────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
