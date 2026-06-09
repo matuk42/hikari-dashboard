@@ -3,7 +3,7 @@
 -- Zdroj: 30 dní (2026-05-10 → 2026-06-08)
 
 WITH p AS (SELECT id FROM profiles LIMIT 1)
-INSERT INTO hope_logs (profile_id, date, mood, energy, hope, source)
+INSERT INTO hope_logs (profile_id, date, mood, energy, hope, note)
 SELECT p.id, v.date::date, v.mood, v.energy, v.hope, 'vault-backfill'
 FROM p, (VALUES
   ('2026-05-10', 8, 8, 8),
