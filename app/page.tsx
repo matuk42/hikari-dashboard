@@ -272,10 +272,22 @@ export default function HomePage() {
         ? (allHabits.find(h => h.id === topStreak.habit_id)?.name ?? 'Anki')
         : 'Anki'
 
-      const weekLayer = (weekLayerRes as { data: { title: string; description: string | null; progress_pct: number | null; cascade_dimensions: Array<{ name: string }> } | null }).data
-      const weekDims = weekLayer?.cascade_dimensions ?? []
-      // Week token like "W23" comes from the layer description ("W23 · 1.–7.6.")
+      type WeekDim = { name: string; detail: string | null; kind: PriorityKind | null; sort_order: number | null }
+      const weekLayer = (weekLayerRes as { data: { title: string; description: string | null; progress_pct: number | null; cascade_dimensions: WeekDim[] } | null }).data
+      const weekDims  = weekLayer?.cascade_dimensions ?? []
+      // Week token like "W24" comes from the layer description ("W24 · 8.–14.6.")
       const weekToken = weekLayer?.description?.match(/W\d+/)?.[0] ?? weekLayer?.title ?? 'W23'
+
+      const sorted = [...weekDims].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      const toItem = (d: WeekDim, fallbackKind: PriorityKind): PriorityItem => ({
+        name:   d.name,
+        detail: d.detail ?? '',
+        kind:   d.kind ?? fallbackKind,
+      })
+      // Pre-migration-004 rows have kind=null → treat as main so they still render.
+      const mainTasks  = sorted.filter(d => (d.kind ?? 'main') === 'main') .map(d => toItem(d, 'main'))
+      const sideTasks  = sorted.filter(d =>  d.kind === 'side')            .map(d => toItem(d, 'side'))
+      const bonusTasks = sorted.filter(d =>  d.kind === 'bonus')           .map(d => toItem(d, 'bonus'))
 
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
@@ -285,9 +297,9 @@ export default function HomePage() {
         hopeToday:    hopeRes.data ?? null,
         weekTitle:    weekToken,
         weekProgress: weekLayer?.progress_pct ?? 0,
-        weekTasks:    weekDims.length > 0
-          ? weekDims.map(d => ({ label: d.name, tag: 'Cascade · ' + weekToken }))
-          : MAIN_TASKS,
+        mainTasks:    mainTasks.length > 0 ? mainTasks : FALLBACK_MAIN,
+        sideTasks,
+        bonusTasks,
       })
     }).catch(() => {})
   }, [dateKey])
