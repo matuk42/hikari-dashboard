@@ -111,22 +111,53 @@ function KibouSkeleton() {
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
+// Icons live in /public/kibou/. `null` falls back to the text emoji so we can
+// ship the page before the asset arrives (currently the case for energy).
+type KibouIconKey = 'mood' | 'energy' | 'hope'
+const ICON_SRC: Record<KibouIconKey, string | null> = {
+  mood:   '/kibou/mood.png',
+  energy: null,                // TODO: drop in /kibou/energy.{png,avif} when ready
+  hope:   '/kibou/hope.png',
+}
+const ICON_FALLBACK: Record<KibouIconKey, string> = {
+  mood:   '😌',
+  energy: '⚡',
+  hope:   '🌟',
+}
+
+function KibouIcon({ kind, size = 18 }: { kind: KibouIconKey; size?: number }) {
+  const src = ICON_SRC[kind]
+  if (!src) {
+    return <span style={{ fontSize: size, lineHeight: 1 }}>{ICON_FALLBACK[kind]}</span>
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      style={{ width: size, height: size, objectFit: 'contain', verticalAlign: 'middle', display: 'inline-block' }}
+    />
+  )
+}
+
 function SliderInput({
   label,
   value,
   onChange,
-  emoji,
+  iconKind,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
-  emoji: string
+  iconKind: KibouIconKey
 }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
-          {emoji} {label}
+        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <KibouIcon kind={iconKind} size={20} />
+          {label}
         </span>
         <span style={{
           fontSize: 26,
