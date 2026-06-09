@@ -683,6 +683,19 @@ export async function POST() {
           for (const [name, streak] of habitStreaks) {
             const habitId = nameToId[name]
             if (!habitId) continue
+
+            if (streak === 'reset') {
+              // Vault marks restart/break — clear current streak, keep best
+              const { error } = await db.from('streaks_cache').upsert({
+                habit_id:            habitId,
+                current_streak:      0,
+                last_completed_date: null,
+                updated_at:          new Date().toISOString(),
+              }, { onConflict: 'habit_id' })
+              if (error) errors.push(`streaks_cache "${name}" reset: ${error.message}`)
+              continue
+            }
+
             // Preserve historical best: read existing before overwriting
             const { data: existing } = await db.from('streaks_cache')
               .select('best_streak').eq('habit_id', habitId).maybeSingle()
