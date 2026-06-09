@@ -716,6 +716,17 @@ export async function POST() {
     }
   }
 
+  // ── Sync Hikari memory bootstrap (Memory.md) ──────────────────────────────
+
+  if (raw.memory) {
+    try {
+      const sections = parseMemorySections(raw.memory)
+      await syncMemoryBootstrap(db, pid, sections, errors)
+    } catch (e) {
+      errors.push(`Parse Memory.md: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
   return NextResponse.json({
     synced:    errors.length === 0,
     files:     synced,
