@@ -4,7 +4,7 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-09 (večer)
+**Poslední aktualizace:** 2026-06-14 (večer)
 
 ---
 
