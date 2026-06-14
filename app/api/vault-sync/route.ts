@@ -30,10 +30,16 @@ function isoWeekStr(): string {
   return isoWeekStrFromDate(new Date())
 }
 
-/** List of weekly file paths to try, most-recent first (today's week → up to N weeks back). */
+/** List of weekly file paths to try, most-recent first (next week → today → up to N weeks back).
+ *  Next week (+7d) is tried first so a Sunday-written W## plan is picked up before the old week. */
 function weeklyPathCandidates(weeksBack = 6): string[] {
   const out: string[] = []
   const today = new Date()
+  // Try next ISO week first — covers Sunday-evening planning (author writes W+1 before week ends)
+  const nextWeek = new Date(today)
+  nextWeek.setDate(today.getDate() + 7)
+  out.push(`wiki/reviews/weekly/${isoWeekStrFromDate(nextWeek)}.md`)
+  // Current week and backwards
   for (let i = 0; i <= weeksBack; i++) {
     const d = new Date(today)
     d.setDate(d.getDate() - i * 7)
