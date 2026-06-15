@@ -182,6 +182,9 @@ interface HomeData {
   mainTasks: PriorityItem[]
   sideTasks: PriorityItem[]
   bonusTasks: PriorityItem[]
+  aiNudge:       string | null
+  aiReasoning:   string | null
+  aiGeneratedAt: string | null
 }
 
 const FALLBACK_STREAK = 45
