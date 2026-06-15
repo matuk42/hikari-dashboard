@@ -317,7 +317,7 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, mainTasks, sideTasks, bonusTasks } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, mainTasks, sideTasks, bonusTasks, aiNudge, aiReasoning, aiGeneratedAt } = data
   const weekTaskCount = mainTasks.length + sideTasks.length + bonusTasks.length
 
   return (
