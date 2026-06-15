@@ -266,7 +266,15 @@ Hlavní max 3, vedlejší max 2, bonus max 2.`
   for (let attempt = 0; attempt < 3; attempt++) {
     res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        // Bypass Next.js's patched fetch cache: it round-trips the body through
+        // a string layer that mangled UTF-8 Czech diacritics into CP1250 mojibake
+        // ("Matyáš" → "MatyĂˇĹˇ"). no-store keeps the raw bytes intact.
+        cache:   'no-store',
+      }
     )
     if (res.ok) break
     if (res.status !== 503 && res.status !== 429) break   // non-transient → stop
@@ -275,7 +283,11 @@ Hlavní max 3, vedlejší max 2, bonus max 2.`
 
   if (!res || !res.ok) throw new Error(`Gemini HTTP ${res?.status}: ${res ? await res.text() : 'no response'}`)
 
-  const json = await res.json() as {
+  // Decode bytes explicitly as UTF-8 rather than trusting res.json()/res.text(),
+  // which under Next.js can fall back to the system codepage on Windows.
+  const buf  = await res.arrayBuffer()
+  const text = new TextDecoder('utf-8').decode(buf)
+  const json = JSON.parse(text) as {
     candidates?: Array<{ content: { parts: Array<{ text: string }> } }>
   }
   const raw   = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
