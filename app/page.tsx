@@ -5,6 +5,54 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { ReactNode, CSSProperties } from 'react'
 
+// ─── Hikari Refresh Button ────────────────────────────────────────────────────
+
+function HikariRefreshButton() {
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [msg, setMsg] = useState('')
+
+  async function handleRefresh() {
+    setState('loading')
+    setMsg('')
+    try {
+      const res = await fetch('/api/hikari/refresh', { method: 'POST' })
+      const data = await res.json() as { ok?: boolean; brief?: string | { error: string | null }; error?: string }
+      if (data.ok && data.brief === 'generated') {
+        setState('ok')
+        setMsg('Brief vygenerován ✓')
+      } else if (data.ok) {
+        setState('ok')
+        setMsg('Streaky přepočítány ✓')
+      } else {
+        setState('error')
+        setMsg(data.error ?? 'Chyba')
+      }
+    } catch {
+      setState('error')
+      setMsg('Síťová chyba')
+    }
+  }
+
+  const borderColor = state === 'ok' ? 'rgba(34,197,94,0.4)' : state === 'error' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.35)'
+  const textColor   = state === 'ok' ? 'rgba(34,197,94,0.8)'  : state === 'error' ? 'rgba(239,68,68,0.75)' : 'rgba(245,158,11,0.65)'
+  const label       = state === 'loading' ? '↻ Počítám…' : state === 'ok' ? msg : state === 'error' ? `⚠ ${msg}` : '✦ Přepočítej Hikari'
+
+  return (
+    <button
+      onClick={handleRefresh}
+      disabled={state === 'loading'}
+      style={{
+        flex: 1, background: 'transparent', border: `1px solid ${borderColor}`, borderRadius: 10,
+        color: textColor, fontSize: 11, letterSpacing: '0.04em', padding: '6px 10px',
+        cursor: state === 'loading' ? 'wait' : 'pointer', transition: 'all 0.15s',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
 // ─── Vault Sync Button ────────────────────────────────────────────────────────
 
 function VaultSyncButton() {
