@@ -429,9 +429,48 @@ function LayerCard({ layer }: { layer: Layer }) {
 // when the AI calc lands; this page intentionally renders the curated copy,
 // which carries richer chips (detail + Hikari note) than the DB can hold.
 
+// Which layers carry cron-computed (real) %: L4 month + L5 week, from habit logs.
+// L2/L3 stay curated estimates until milestone-based calc lands.
+const REAL_PCT_LAYERS = new Set([4, 5])
+
+type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
+
 export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
+  const [dbLayers, setDbLayers] = useState<Record<number, DbLayer>>({})
+  const [hasReal, setHasReal] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const user = session?.user
+      if (!user) return
+      const { data: profile } = await supabase
+        .from('profiles').select('id').eq('auth_user_id', user.id).single()
+      if (!profile) return
+      const { data: rows } = await supabase.from('cascade_layers')
+        .select('layer, progress_pct, description')
+        .eq('profile_id', profile.id).eq('tree', 'sen')
+      if (!rows?.length) return
+      const map: Record<number, DbLayer> = {}
+      for (const r of rows) map[r.layer as number] = r as DbLayer
+      setDbLayers(map)
+      // Real % exists if any cron-computed layer came back with a non-null pct
+      setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
+    }).catch(() => {})
+  }, [])
+
+  // Merge DB overrides onto the curated layers: real % + fresh week/month label
+  // where the cron has written them; curated estimate otherwise.
+  const displayLayers: Layer[] = LAYERS.map(l => {
+    const db = dbLayers[l.n]
+    if (!db) return l
+    return {
+      ...l,
+      progress:  db.progress_pct != null && REAL_PCT_LAYERS.has(l.n) ? db.progress_pct : l.progress,
+      timeframe: db.description || l.timeframe,
+    }
+  })
 
   return (
     <div style={{
