@@ -297,6 +297,8 @@ export default function HomePage() {
       const sideTasks  = sorted.filter(d =>  d.kind === 'side')            .map(d => toItem(d, 'side'))
       const bonusTasks = sorted.filter(d =>  d.kind === 'bonus')           .map(d => toItem(d, 'bonus'))
 
+      const brief = (briefRes as { data: { cascade_nudge: string | null; reasoning: string | null; generated_at: string | null } | null }).data
+
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
         habitsTotal:  trackableIds.length,
@@ -308,6 +310,9 @@ export default function HomePage() {
         mainTasks:    mainTasks.length > 0 ? mainTasks : FALLBACK_MAIN,
         sideTasks,
         bonusTasks,
+        aiNudge:       brief?.cascade_nudge ?? null,
+        aiReasoning:   brief?.reasoning     ?? null,
+        aiGeneratedAt: brief?.generated_at  ?? null,
       })
     }).catch(() => {})
   }, [dateKey])
