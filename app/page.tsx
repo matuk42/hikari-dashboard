@@ -95,29 +95,18 @@ function VaultSyncButton() {
     '↻ Sync s vaultem'
 
   return (
-    <div style={{ textAlign: 'center', paddingBottom: 8 }}>
-      <button
-        onClick={handleSync}
-        disabled={state === 'loading'}
-        style={{
-          background: 'transparent',
-          border: `1px solid ${borderColor}`,
-          borderRadius: 10,
-          color: textColor,
-          fontSize: 11,
-          letterSpacing: '0.04em',
-          padding: '6px 16px',
-          cursor: state === 'loading' ? 'wait' : 'pointer',
-          transition: 'all 0.15s',
-          maxWidth: 260,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {label}
-      </button>
-    </div>
+    <button
+      onClick={handleSync}
+      disabled={state === 'loading'}
+      style={{
+        flex: 1, background: 'transparent', border: `1px solid ${borderColor}`, borderRadius: 10,
+        color: textColor, fontSize: 11, letterSpacing: '0.04em', padding: '6px 10px',
+        cursor: state === 'loading' ? 'wait' : 'pointer', transition: 'all 0.15s',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </button>
   )
 }
 
