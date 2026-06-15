@@ -571,7 +571,11 @@ export default function CascadePage() {
             }}>
               <span style={{ fontSize: 13 }}>📊</span>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-                % jsou <span style={{ color: 'rgba(245,158,11,0.7)' }}>odhad</span> — Hikari spočítá přesně s AI cronem.
+                {hasReal ? (
+                  <>Týden a měsíc <span style={{ color: 'rgba(245,158,11,0.7)' }}>počítá Hikari</span> z habitů. Rok a 5 let zatím odhad.</>
+                ) : (
+                  <>% jsou <span style={{ color: 'rgba(245,158,11,0.7)' }}>odhad</span> — Hikari spočítá přesně s AI cronem.</>
+                )}
               </span>
             </div>
 
