@@ -243,7 +243,7 @@ Vytvoř ranní brief — konkrétní akce na DNES, ne obecné rady. Odpověz POU
 Hlavní max 3, vedlejší max 2, bonus max 2.`
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
     {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
