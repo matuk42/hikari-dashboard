@@ -281,8 +281,8 @@ Hlavní 2-3, vedlejší 1-2, bonus 1-2. cascade_nudge a reasoning musí být boh
   const body = JSON.stringify({
     contents:         [{ parts: [{ text: prompt }] }],
     generationConfig: {
-      temperature:      0.7,
-      maxOutputTokens:  2048,
+      temperature:      0.8,
+      maxOutputTokens:  4096,
       // Force structured output (no markdown fences, always valid JSON)
       responseMimeType: 'application/json',
       // 2.5-flash "thinking" eats the token budget before the answer; for a
