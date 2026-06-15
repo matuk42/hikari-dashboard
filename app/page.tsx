@@ -521,30 +521,10 @@ export default function HomePage() {
           </Card>
         </Link>
 
-        {/* ── Hikari Brief (AI nudge) ── */}
+        {/* ── Hikari Brief (AI nudge) — collapsible ── */}
         {(aiNudge ?? aiReasoning) && (
           <section style={{ marginBottom: 20 }}>
-            <SectionLabel>Hikari dnes</SectionLabel>
-            <Card style={{ padding: '14px 16px', position: 'relative', overflow: 'hidden' }}>
-              <LuffySilhouette opacity={0.05} height={100} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                {aiNudge && (
-                  <p style={{ fontSize: 13, color: '#F59E0B', lineHeight: 1.6, margin: '0 0 8px', fontStyle: 'italic' }}>
-                    &ldquo;{aiNudge}&rdquo;
-                  </p>
-                )}
-                {aiReasoning && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5, margin: 0 }}>
-                    {aiReasoning}
-                  </p>
-                )}
-                {aiGeneratedAt && (
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', margin: '8px 0 0' }}>
-                    {new Date(aiGeneratedAt).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
-              </div>
-            </Card>
+            <HikariBriefCard nudge={aiNudge} reasoning={aiReasoning} generatedAt={aiGeneratedAt} />
           </section>
         )}
 
