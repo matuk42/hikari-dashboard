@@ -38,7 +38,7 @@ function streakFromDates(
   let streak    = 0
   let best      = 0
   let graceUsed = false
-  let lastDone: string | null = [...doneDates].sort().reverse()[0] ?? null
+  const lastDone: string | null = [...doneDates].sort().reverse()[0] ?? null
 
   // Walk backwards starting from today (today may or may not be done)
   for (let i = 0; i <= 400; i++) {
