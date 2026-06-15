@@ -410,6 +410,7 @@ export async function runMorningCron(
       weekPriorities,
       hopeYest:       hopeRow.data ?? null,
       memory:         (memRows.data ?? []).map(m => m.content as string),
+      todayHabits,
     })
   } catch (e) {
     briefError = e instanceof Error ? e.message : String(e)
