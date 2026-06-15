@@ -211,6 +211,7 @@ interface BriefCtx {
   weekPriorities:  Array<{ name: string; detail: string | null; kind: string | null }>
   hopeYest:        { mood: number; energy: number; hope: number } | null
   memory:          string[]
+  todayHabits:     { done: string[]; undone: string[]; total: number }
 }
 
 export async function callGemini(ctx: BriefCtx): Promise<BriefData | null> {
