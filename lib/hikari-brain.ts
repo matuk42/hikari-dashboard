@@ -247,27 +247,33 @@ Vytvoř ranní brief — konkrétní akce na DNES, ne obecné rady. Odpověz POU
 {"hlavni":[{"title":"...","project":"...","reason":"..."}],"vedlejsi":[{"title":"...","project":"...","reason":"..."}],"bonus":[{"title":"...","project":"...","reason":"..."}],"cascade_nudge":"...","reasoning":"..."}
 Hlavní max 3, vedlejší max 2, bonus max 2.`
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-    {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        contents:         [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature:      0.7,
-          maxOutputTokens:  2048,
-          // Force structured output (no markdown fences, always valid JSON)
-          responseMimeType: 'application/json',
-          // 2.5-flash "thinking" eats the token budget before the answer; for a
-          // bounded structured task we don't need it. Disabling avoids truncation.
-          thinkingConfig:   { thinkingBudget: 0 },
-        },
-      }),
-    }
-  )
+  const body = JSON.stringify({
+    contents:         [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature:      0.7,
+      maxOutputTokens:  2048,
+      // Force structured output (no markdown fences, always valid JSON)
+      responseMimeType: 'application/json',
+      // 2.5-flash "thinking" eats the token budget before the answer; for a
+      // bounded structured task we don't need it. Disabling avoids truncation.
+      thinkingConfig:   { thinkingBudget: 0 },
+    },
+  })
 
-  if (!res.ok) throw new Error(`Gemini HTTP ${res.status}: ${await res.text()}`)
+  // Retry transient errors (503 overloaded, 429 rate-limit) with backoff —
+  // the daily cron shouldn't fail just because the free tier was momentarily busy.
+  let res: Response | null = null
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+    )
+    if (res.ok) break
+    if (res.status !== 503 && res.status !== 429) break   // non-transient → stop
+    if (attempt < 2) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
+  }
+
+  if (!res || !res.ok) throw new Error(`Gemini HTTP ${res?.status}: ${res ? await res.text() : 'no response'}`)
 
   const json = await res.json() as {
     candidates?: Array<{ content: { parts: Array<{ text: string }> } }>
