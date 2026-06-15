@@ -33,7 +33,7 @@ export async function POST() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const result = await runMorningCron(adminDb, profile.id as string, today)
+  const result = await runMorningCron(adminDb, profile.id as string, today, 'button')
 
   return NextResponse.json({ ok: true, ...result })
 }
