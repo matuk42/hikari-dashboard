@@ -5,8 +5,11 @@ import type { NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
-  // Let auth callback and login through without any Supabase call
-  if (path.startsWith('/auth/') || path === '/login') {
+  // Let auth callback and login through without any Supabase call.
+  // /api/cron/* is machine-triggered (Vercel cron) with a Bearer token and no
+  // session cookie — it authorizes itself via CRON_SECRET, so it must skip the
+  // session check here or it would be redirected to /login and never run.
+  if (path.startsWith('/auth/') || path === '/login' || path.startsWith('/api/cron/')) {
     return NextResponse.next({ request })
   }
 
