@@ -354,7 +354,7 @@ export async function runMorningCron(
 
   // 3 — Build Gemini context
   const [profileHabits, streakRows, weekDimRow, hopeRow, memRows] = await Promise.all([
-    db.from('habits').select('id, name').eq('profile_id', profileId).neq('category', 'retired'),
+    db.from('habits').select('id, name, category').eq('profile_id', profileId).neq('category', 'retired'),
     db.from('streaks_cache').select('habit_id, current_streak').gt('current_streak', 0),
     db.from('cascade_layers')
       .select('cascade_dimensions(name, detail, kind, sort_order)')
@@ -376,6 +376,21 @@ export async function runMorningCron(
     .filter(r => habitIds.has(r.habit_id as string))
     .map(r => ({ name: nameById[r.habit_id as string] ?? '', streak: r.current_streak as number }))
     .filter(s => s.name)
+
+  // Today's habit completion — trackable (non-graduated) only, so the brief can
+  // say "2/19 done" instead of the misleading week-% rollup.
+  const trackable = (profileHabits.data ?? []).filter(h => h.category !== 'graduated')
+  const trackableIds = trackable.map(h => h.id as string)
+  const { data: todayLogs } = trackableIds.length
+    ? await db.from('habit_logs').select('habit_id').in('habit_id', trackableIds)
+        .eq('date', today).eq('status', 'done')
+    : { data: [] as { habit_id: string }[] }
+  const doneIdSet = new Set((todayLogs ?? []).map(l => l.habit_id as string))
+  const todayHabits = {
+    done:   trackable.filter(h => doneIdSet.has(h.id as string)).map(h => h.name as string),
+    undone: trackable.filter(h => !doneIdSet.has(h.id as string)).map(h => h.name as string),
+    total:  trackable.length,
+  }
 
   type WeekDim = { name: string; detail: string | null; kind: string | null; sort_order: number | null }
   const weekPriorities = (
