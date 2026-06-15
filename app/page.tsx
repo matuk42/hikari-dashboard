@@ -203,6 +203,71 @@ function Card({ children, style }: { children: ReactNode; style?: CSSProperties 
   )
 }
 
+// ─── Hikari Brief (collapsible) ───────────────────────────────────────────────
+
+function HikariBriefCard({ nudge, reasoning, generatedAt }: {
+  nudge: string | null; reasoning: string | null; generatedAt: string | null
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Card style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Header — always visible, toggles open */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, padding: '14px 16px', background: 'transparent', border: 'none',
+          cursor: 'pointer', color: 'inherit', textAlign: 'left',
+        }}
+        aria-expanded={open}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: open ? 0 : 4 }}>
+            Hikari dnes
+          </div>
+          {/* Collapsed: one-line teaser of the nudge */}
+          {!open && nudge && (
+            <div style={{ fontSize: 12, color: 'rgba(245,158,11,0.7)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {nudge}
+            </div>
+          )}
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" style={{
+          width: 16, height: 16, flexShrink: 0, color: 'rgba(255,255,255,0.25)',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease',
+        }}>
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Expanded content */}
+      {open && (
+        <div style={{ position: 'relative', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <LuffySilhouette opacity={0.05} height={100} />
+          <div style={{ position: 'relative', zIndex: 1, padding: '12px 16px 14px' }}>
+            {nudge && (
+              <p style={{ fontSize: 13, color: '#F59E0B', lineHeight: 1.6, margin: '0 0 8px', fontStyle: 'italic' }}>
+                &ldquo;{nudge}&rdquo;
+              </p>
+            )}
+            {reasoning && (
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5, margin: 0 }}>
+                {reasoning}
+              </p>
+            )}
+            {generatedAt && (
+              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', margin: '8px 0 0' }}>
+                {new Date(generatedAt).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type PriorityKind = 'main' | 'side' | 'bonus'
