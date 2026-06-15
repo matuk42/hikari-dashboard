@@ -200,6 +200,7 @@ export default function HomePage() {
     streakHabit: 'Anki',
     hopeToday: null,
     weekTitle: 'W23',
+    aiNudge: null, aiReasoning: null, aiGeneratedAt: null,
     weekProgress: 0,
     mainTasks: FALLBACK_MAIN,
     sideTasks: [],
