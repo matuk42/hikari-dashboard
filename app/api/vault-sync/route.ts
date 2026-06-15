@@ -131,7 +131,11 @@ async function ghFetch(path: string, token: string): Promise<string | null> {
   })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`GitHub HTTP ${res.status} for ${path}`)
-  return res.text()
+  // Decode bytes explicitly as UTF-8. res.text() under Next.js on Windows falls
+  // back to the system codepage (CP1250) and mangles Czech diacritics
+  // ("Životní sen" → "ŽivotnĂ­ sen") straight into the DB.
+  const buf = await res.arrayBuffer()
+  return new TextDecoder('utf-8').decode(buf)
 }
 
 // ─── Markdown utilities ───────────────────────────────────────────────────────
