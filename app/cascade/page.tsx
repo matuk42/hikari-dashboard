@@ -577,7 +577,7 @@ export default function CascadePage() {
 
             {/* ── Timeline ── */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {LAYERS.map((layer, i) => (
+              {displayLayers.map((layer, i) => (
                 <div key={layer.n} style={{ display: 'flex', gap: 0 }}>
 
                   {/* Dot + line */}
@@ -597,7 +597,7 @@ export default function CascadePage() {
                       boxShadow: '0 0 8px rgba(245,158,11,0.5)',
                       flexShrink: 0,
                     }} />
-                    {i < LAYERS.length - 1 && (
+                    {i < displayLayers.length - 1 && (
                       <div style={{
                         flex: 1,
                         width: 2,
