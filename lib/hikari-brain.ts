@@ -350,7 +350,7 @@ export async function runMorningCron(
     profile_id:  profileId,
     trigger,
     purpose:     'daily_brief',
-    model:       'gemini-1.5-flash-latest',
+    model:       GEMINI_MODEL,
     duration_ms: durationMs,
     success:     !!brief,
     error:       briefError,
