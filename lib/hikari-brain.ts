@@ -343,7 +343,7 @@ export async function runMorningCron(
   // Log AI invocation
   const { data: invoc } = await db.from('ai_invocations').insert({
     profile_id:  profileId,
-    trigger:     'cron',
+    trigger,
     purpose:     'daily_brief',
     model:       'gemini-1.5-flash-latest',
     duration_ms: durationMs,
