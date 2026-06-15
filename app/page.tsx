@@ -556,8 +556,11 @@ export default function HomePage() {
           </Card>
         </section>
 
-        {/* ── Vault sync ── */}
-        <VaultSyncButton />
+        {/* ── Akce ── */}
+        <div style={{ display: 'flex', gap: 8, paddingBottom: 8 }}>
+          <HikariRefreshButton />
+          <VaultSyncButton />
+        </div>
 
       </div>
     </div>
