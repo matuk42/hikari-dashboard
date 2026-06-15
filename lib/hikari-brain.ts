@@ -169,7 +169,7 @@ export async function calcCascadePct(
     .select('date')
     .in('habit_id', ids)
     .gte('date', monthStart)
-    .lt('date', today)        // exclude today (still in progress)
+    .lte('date', today)       // include today — its completions should count
     .eq('status', 'done')
 
   if (lErr) {
@@ -181,13 +181,15 @@ export async function calcCascadePct(
   const weekStart  = isoMonday(today)
   const weekLogs   = (logs ?? []).filter(l => (l.date as string) >= weekStart)
 
+  // Elapsed days INCLUDING today — Monday with 2/19 done = ~11%, not 0%.
+  // (Earlier it divided by days-before-today, so the first day of any period
+  // was always 0% even after completing habits.)
   const d = new Date(`${today}T12:00:00Z`)
-  const dayOfWeek  = d.getDay() === 0 ? 7 : d.getDay()
-  const weekDays   = Math.max(1, dayOfWeek - 1)   // completed days before today in this week
-  const monthDay   = parseInt(today.slice(8), 10)
-  const monthDays  = Math.max(1, monthDay - 1)    // completed days before today in this month
+  const dayOfWeek  = d.getDay() === 0 ? 7 : d.getDay()  // Sun→7 Mon→1
+  const weekDays   = dayOfWeek                          // days elapsed this week incl. today
+  const monthDays  = parseInt(today.slice(8), 10)       // day-of-month = days elapsed incl. today
 
-  const week  = Math.min(100, Math.round((weekLogs.length  / (n * weekDays))  * 100))
+  const week  = Math.min(100, Math.round((weekLogs.length    / (n * weekDays))  * 100))
   const month = Math.min(100, Math.round(((logs ?? []).length / (n * monthDays)) * 100))
 
   return { week, month, errors }
