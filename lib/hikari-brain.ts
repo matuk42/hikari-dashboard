@@ -269,7 +269,8 @@ Hlavní max 3, vedlejší max 2, bonus max 2.`
 export async function runMorningCron(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
-  today: string
+  today: string,
+  trigger: 'cron' | 'button' = 'cron'
 ): Promise<CronResult> {
 
   // 1 — Streaks
