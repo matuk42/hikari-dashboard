@@ -609,7 +609,7 @@ export default function CascadePage() {
                   </div>
 
                   {/* Layer card */}
-                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < LAYERS.length - 1 ? 12 : 0 }}>
+                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < displayLayers.length - 1 ? 12 : 0 }}>
                     <LayerCard layer={layer} />
                   </div>
 
