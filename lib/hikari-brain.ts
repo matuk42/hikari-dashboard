@@ -195,6 +195,11 @@ export async function calcCascadePct(
 
 // ─── Gemini brief ─────────────────────────────────────────────────────────────
 
+// Pinned concrete model (not a "-latest" alias — those get removed without
+// notice, which 404'd the first run with gemini-1.5-flash-latest). 2.5-flash
+// is free-tier and ample for one brief/day. Bump deliberately when desired.
+const GEMINI_MODEL = 'gemini-2.5-flash'
+
 const CZ_DAYS = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota']
 
 interface BriefCtx {
