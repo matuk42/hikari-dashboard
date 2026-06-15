@@ -254,7 +254,15 @@ Hlavní max 3, vedlejší max 2, bonus max 2.`
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         contents:         [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 800 },
+        generationConfig: {
+          temperature:      0.7,
+          maxOutputTokens:  2048,
+          // Force structured output (no markdown fences, always valid JSON)
+          responseMimeType: 'application/json',
+          // 2.5-flash "thinking" eats the token budget before the answer; for a
+          // bounded structured task we don't need it. Disabling avoids truncation.
+          thinkingConfig:   { thinkingBudget: 0 },
+        },
       }),
     }
   )
