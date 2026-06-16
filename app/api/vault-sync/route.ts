@@ -196,6 +196,35 @@ function numberedItems(sectionMd: string): string[] {
     .filter(Boolean)
 }
 
+/** A cascade milestone: a name + optional detail (for the clean vault list). */
+type DimItem = { name: string; detail: string }
+
+/**
+ * Monthly SEN milestones (layer 4) → {name, detail}. Reads the numbered "### SEN —"
+ * list, splitting "**Name** — detail" via parsePriorityItem (same shape as weekly).
+ */
+function parseMonthlyMilestones(sectionMd: string): DimItem[] {
+  return sectionMd.split('\n')
+    .filter(l => /^\s*\d+\.\s/.test(l))
+    .map(parsePriorityItem)
+    .filter((i): i is { name: string; detail: string } => !!i?.name)
+    .map(i => ({ name: i.name, detail: cleanDetail(i.detail) }))
+}
+
+/**
+ * Yearly dimensions+milestones (layer 3) → {name, detail} from the
+ * "### Dimenze a milníky" table (columns "Dimenze" + "Milník k 1.9.2027").
+ */
+function parseYearlyDimensions(sectionMd: string): DimItem[] {
+  return mdTable(sectionMd)
+    .map(r => {
+      const name = stripBold(r['Dimenze'] ?? '')
+      const milestone = Object.entries(r).find(([k]) => /Mil[ní]/i.test(k))?.[1] ?? ''
+      return { name, detail: cleanDetail(milestone) }
+    })
+    .filter(d => d.name && d.name !== '—' && !/^\d+$/.test(d.name))
+}
+
 // ─── Weekly priorities (sub-sections under "## Priority W##") ────────────────
 
 type PriorityKind = 'main' | 'side' | 'bonus'
