@@ -648,21 +648,21 @@ export async function POST() {
       }, errors)
       if (l2id) await insertNewDimensions(db, l2id, l2dims)
 
-      // Layer 3 — Rok — table in "## Roční cíl"
+      // Layer 3 — Rok — table in "## Roční cíl" (full refresh, name + milník detail)
       const l3sec  = mdSection(sen, '## Roční cíl')
-      const l3dims = dimsFromTable(l3sec, 'Dimenze')
+      const l3dims = parseYearlyDimensions(l3sec)
       // Add income milestone from prijem.md
       if (raw.prijem) {
         const pSec3 = mdSection(raw.prijem, '## Roční cíl')
         const pRows = mdTable(pSec3)
         const firstMilestone = pRows.find(r => r['Milník k 1.9.2027'])?.['Milník k 1.9.2027']
-        if (firstMilestone) l3dims.push(stripBold(firstMilestone))
+        if (firstMilestone) l3dims.push({ name: 'Příjem', detail: cleanDetail(firstMilestone) })
       }
       const l3id = await upsertLayer(db, pid, {
         tree: 'sen', layer: 3, title: 'Rok', description: '1. 9. 2027',
         deadline: '2027-09-01', sourceFile: FILES.sen,
       }, errors)
-      if (l3id) await insertNewDimensions(db, l3id, l3dims)
+      if (l3id) await replaceDimensions(db, l3id, 3, l3dims, errors)
 
       // Layer 4 — Měsíc — from monthly review (skip if not fetched)
       if (raw.monthly) {
