@@ -44,7 +44,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - Nikdy necommituj/nepushuj bez explicitní žádosti Matyáše.
 
 ## 🔑 Klíčová rozhodnutí
-- **Cascade %** = kurátované odhady + štítek „odhad — Hikari spočítá s AI cronem", dokud nebude AI (W26). Sync plní DB tiše. **Až bude cron počítat reálné %, přepnout `/cascade` zpět na čtení z DB** (mapper `dbToLayers` byl odebrán — git-recover z commitu kolem cascade revertu).
+- **Cascade %** — ✅ vyřešeno: cron počítá týden (L5) a měsíc (L4) z habitů, `/cascade` je čte z DB pro tyto vrstvy (`REAL_PCT_LAYERS`) se štítkem „počítá Hikari". Rok a 5 let zůstávají kurátovaný „odhad", dokud nebude goal-based výpočet.
 - **Habits** = DB-driven, `ALL_HABITS` jen fallback (offline / prázdná DB / chybí 003).
 - **Streaky** = vault baseline + ±1 na toggle + denní reconcile (gap≥3 zlom pro běžné, gap≥2 pro mandatory).
 
