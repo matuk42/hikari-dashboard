@@ -27,37 +27,8 @@ interface Habit {
   mandatory?: boolean   // no grace day (autoškola) — streak breaks on a single miss
 }
 
-// ─── Data z vaultu (habits.md) ───────────────────────────────────────────────
-
-const ALL_HABITS: Habit[] = [
-  // Active
-  { id: 'anki',       name: 'Anki procvičování',    status: 'active',    serves: 'japonština · sen',          frequency: '25+ karet denně', streak: 45 },
-  { id: 'autoschola', name: 'Autoškola testy A1',   status: 'active',    serves: 'motorky · svoboda pohybu',  frequency: '2× denně',        streak: 2, endDate: '30.6.', mandatory: true },
-  // Trial solo
-  { id: 'mining',     name: 'Anki tvorba',          status: 'trial',     serves: 'japonština · sen',          frequency: '200 karet / týden', streak: 0, trialEnd: '30.6.' },
-  { id: 'kytara',     name: 'Kytara',               status: 'trial',     serves: 'DofE talent',               frequency: '3× týdně · 20 min', streak: 1, trialEnd: '30.6.' },
-  // Balíček Imunita
-  // (Spánek habit byl přejmenován ve vaultu na "Spánek 21:30 nebo dříve…" —
-  // sync ho insertne sám, takže ve fallbacku nepotřebujeme; mít tu starý
-  // název způsobovalo re-seed po DB delete.)
-  { id: 'vitd3',      name: 'Vit D3 1000 IU',       status: 'trial', serves: 'imunita',                 frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'B' },
-  { id: 'zinek',      name: 'Zinek',                status: 'trial', serves: 'imunita',                 frequency: '1×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'C' },
-  { id: 'probiotika', name: 'Probiotika',           status: 'trial', serves: 'imunita',                 frequency: '3×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'D' },
-  { id: 'voda',       name: '2 L vody',             status: 'trial', serves: 'imunita',                 frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'E' },
-  { id: 'les',        name: '30 min v lese',        status: 'trial', serves: 'příroda · imunita · sen', frequency: '5×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'G' },
-  { id: 'ovoce',      name: '2× ovoce + 0 sladké', status: 'trial', serves: 'imunita',                 frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'H' },
-  { id: 'vetrani',    name: 'Větrat ložnici',       status: 'trial', serves: 'imunita',                 frequency: 'denně',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'I' },
-  { id: 'omega3',     name: 'Omega-3',              status: 'trial', serves: 'imunita',                 frequency: '2×/tý',     streak: 0, trialEnd: '30.6.', pack: 'imunita', packCode: 'J' },
-  // Balíček Fyzička
-  { id: 'posilovani', name: 'Posilování calisthenics', status: 'trial', serves: 'fyzička · sen',      frequency: '3×/tý',     streak: 0, pack: 'fyzicka' },
-  { id: 'sprcha',     name: 'Studená sprcha 30s',      status: 'trial', serves: 'imunita · fyzička',  frequency: 'denně',     streak: 0, pack: 'fyzicka' },
-  { id: 'beh',        name: 'Běh',                     status: 'trial', serves: 'fyzička · sen',      frequency: '2–3×/tý',   streak: 0, pack: 'fyzicka' },
-  { id: 'boulder',    name: 'Boulder',                 status: 'trial', serves: 'fyzička',            frequency: '1×/měs',    streak: 0, pack: 'fyzicka' },
-  { id: 'kolo',       name: 'Kolo 100km+',             status: 'trial', serves: 'výpravy · fyzička',  frequency: 'dle plánu', streak: 0, pack: 'fyzicka' },
-  // Graduated
-  { id: 'imerze', name: 'Japonská imerze', status: 'graduated', serves: 'japonština · sen', frequency: 'denně', streak: 45 },
-  { id: 'denik',  name: 'Hlasový deník',   status: 'graduated', serves: 'vault · meta',     frequency: 'denně', streak: 45 },
-]
+// Habits jsou plně spravované v appce (přidat/upravit/odebrat) a žijí v Supabase.
+// Žádný hardcoded seznam ani seed — prázdná DB = prázdný stav s tlačítkem „Přidat".
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
