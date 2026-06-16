@@ -47,7 +47,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 ## 🔑 Klíčová rozhodnutí
 - **Denní úkoly = vault, ne Gemini.** Hlavní/vedlejší/bonus na home jsou DENNÍ, píše je Matyáš v `logs/mentor-feedback/` (generuje s plným kontextem, ladí s Claudem). Gemini dělá jen mentorský nudge+reasoning. Soubor D = priority pro D+1 → dnešek čte z včerejšího souboru. Týdenní priority zůstávají v `/cascade` (cascade L5).
 - **Cascade %** — ✅ vyřešeno: cron počítá týden (L5) a měsíc (L4) z habitů, `/cascade` je čte z DB pro tyto vrstvy (`REAL_PCT_LAYERS`) se štítkem „počítá Hikari". Rok a 5 let zůstávají kurátovaný „odhad", dokud nebude goal-based výpočet.
-- **Habits** = DB-driven, `ALL_HABITS` jen fallback (offline / prázdná DB / chybí 003).
+- **Habits = appka je zdroj pravdy** (16.6.). CRUD přímo v appce, vault-sync habity nečte. `habits.md` zůstává jako ruční archiv, ale rozejde se s appkou (záměr). Streaky historicky uložené v `streaks_cache` zůstávají; dál je počítá cron z logů. Případný export app→vault by šel přidat později.
 - **Streaky** = vault baseline + ±1 na toggle + denní reconcile (gap≥3 zlom pro běžné, gap≥2 pro mandatory).
 
 ## 🔬 Ověřovací nástroje
