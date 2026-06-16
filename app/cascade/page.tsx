@@ -289,6 +289,60 @@ function ChipDetail({ chip, onClose }: { chip: Chip; onClose: () => void }) {
   )
 }
 
+// One milestone row: marker + name + truncated detail. minWidth:0 enables ellipsis.
+function VaultDimRow({ d }: { d: Dimension }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.5, flexShrink: 0 }}>›</span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>{d.name}</div>
+        {d.detail && (
+          <div style={{
+            fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>{d.detail}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const KIND_LABELS: Array<{ kind: DimKind; label: string }> = [
+  { kind: 'main',  label: 'Hlavní' },
+  { kind: 'side',  label: 'Vedlejší' },
+  { kind: 'bonus', label: 'Bonus' },
+]
+
+function VaultDimList({ dims }: { dims: Dimension[] }) {
+  const grouped = dims.some(d => d.kind)
+  if (!grouped) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+        {dims.map(d => <VaultDimRow key={d.name} d={d} />)}
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {KIND_LABELS.map(({ kind, label }) => {
+        const items = dims.filter(d => (d.kind ?? 'main') === kind)
+        if (!items.length) return null
+        return (
+          <div key={kind}>
+            <div style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: 'rgba(245,158,11,0.5)', marginBottom: 8,
+            }}>{label}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {items.map(d => <VaultDimRow key={d.name} d={d} />)}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function LayerCard({ layer }: { layer: Layer }) {
   const [open, setOpen] = useState(layer.n === 1)
   const [activeChip, setActiveChip] = useState<Chip | null>(null)
