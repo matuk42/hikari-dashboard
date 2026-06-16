@@ -686,7 +686,7 @@ export async function POST() {
           tree: 'sen', layer: 5, title: 'Týden', description: weekLabelFromFile(weeklyMd),
           deadline: endOfWeekISO(), sourceFile: FILES.weekly,
         }, errors)
-        if (l5id) await replaceWeeklyDimensions(db, l5id, l5items, errors)
+        if (l5id) await replaceDimensions(db, l5id, 5, l5items, errors)
       }
 
     } catch (e) {
