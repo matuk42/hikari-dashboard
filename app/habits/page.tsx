@@ -87,6 +87,8 @@ function dbToHabits(rows: DbHabit[]): Habit[] {
       streak: 0,
       endDate: r.end_date ? formatShortCz(r.end_date) : undefined,
       trialEnd: r.trial_end ? formatShortCz(r.trial_end) : undefined,
+      endIso: r.end_date ?? undefined,
+      trialIso: r.trial_end ?? undefined,
       pack: (r.pack === 'imunita' || r.pack === 'fyzicka') ? r.pack : undefined,
       packCode: r.pack_code ?? undefined,
       mandatory: !!r.mandatory,
