@@ -994,11 +994,29 @@ export default function HabitsPage() {
             {formatCzechDate(today)}
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
             {!isOnline && (
               <span style={{ fontSize: 9, color: 'rgba(255,100,50,0.7)', background: 'rgba(255,100,50,0.08)', border: '1px solid rgba(255,100,50,0.15)', borderRadius: 5, padding: '2px 6px', letterSpacing: '0.04em', fontWeight: 600 }}>
                 OFFLINE
               </span>
+            )}
+            {editMode ? (
+              <button
+                onClick={() => setEditMode(false)}
+                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, color: '#F59E0B', fontSize: 11, fontWeight: 600, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                Hotovo
+              </button>
+            ) : (
+              <button
+                onClick={() => setEditMode(true)}
+                aria-label="Upravit habity"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" style={{ width: 14, height: 14 }}>
+                  <path d="M4 20h4l10-10-4-4L4 16v4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: doneCount > 0 ? '#F59E0B' : 'rgba(255,255,255,0.25)', lineHeight: 1 }}>{doneCount}</span>
