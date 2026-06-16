@@ -13,7 +13,7 @@ interface Chip {
   linkedHabits?: string[]
   hikariNote?: string
 }
-interface Dimension { name: string; progress: number; completed?: boolean }
+interface Dimension { name: string; progress: number; completed?: boolean; detail?: string }
 
 interface Layer {
   n: number
@@ -24,6 +24,8 @@ interface Layer {
   progress?: number
   chips?: Chip[]
   dimensions?: Dimension[]
+  /** When true the milestones are the live vault list — render names only (no per-milestone %). */
+  dimsFromVault?: boolean
 }
 
 const LAYERS: Layer[] = [
