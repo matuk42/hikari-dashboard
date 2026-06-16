@@ -1158,6 +1158,16 @@ export default function HabitsPage() {
         </div>{/* end relative wrapper */}
 
       </div>
+
+      {editor && (
+        <HabitEditor
+          initial={editor.habit ? habitToForm(editor.habit) : emptyForm()}
+          isNew={!editor.habit}
+          onSave={handleSaveHabit}
+          onDelete={editor.habit ? handleDeleteHabit : undefined}
+          onClose={() => setEditor(null)}
+        />
+      )}
     </div>
   )
 }
