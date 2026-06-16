@@ -2,12 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface BriefItem { title: string; project: string; reason: string }
-
+// Daily tasks (hlavní/vedlejší/bonus) come from the vault via vault-sync — Gemini
+// no longer generates them. The morning brief is now just the mentor message.
 export interface BriefData {
-  hlavni:       BriefItem[]
-  vedlejsi:     BriefItem[]
-  bonus:        BriefItem[]
   cascade_nudge: string
   reasoning:    string
 }
