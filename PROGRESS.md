@@ -51,7 +51,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - **Migrace 005 — SPUSTIT v Supabase** (`ALTER TABLE ai_daily_brief ALTER COLUMN hlavni DROP NOT NULL`). Bez ní cron (který už nepíše úkoly) selže na NOT NULL při insertu řádku jen s nudge/reasoning. Po migraci ťuknout **Sync s vaultem** → načte dnešní denní úkoly.
 - **CSP je jen v kódu** (`next.config.ts`). Nesmí být druhá ve Vercel dashboardu (kombinovaly by se restriktivně).
 - **Týdenní priority** — Vercel server běží UTC, kolem půlnoci CEST se může lišit ISO týden o 1 oproti autorovi. Proto **rollover** zkouší 6 týdnů zpět — sync nepadne když ti chybí soubor aktuálního týdne, použije poslední existující. Layer 5 description (`weekLabelFromFile`) odráží skutečně načtený týden.
-- **Streak přepočet je client-side líný** (běží při otevření appky), dokud nebude ranní cron.
+- **Streak se přestaví z `habit_logs` při otevření `/habits`** (`rebuildStreaksFromLogs`, self-healing) + v ranním cronu — oba sdílí `lib/streak-core.ts`. `bumpStreak` dělá jen okamžité `±1` při toggle, autoritativní hodnota je rebuild.
 - **Dashboard → vault zpětný zápis NENÍ a nemá být** v dashboardu — dělá ho Hikari přes Claude Code CLI při hlasovém deníku (Supabase = mozek, vault = archiv).
 - **Pre-push hook** pouští `npm run build` — push se zablokuje když build spadne.
 - **Auto-commit/push hook (`.claude/settings.json`)** — po každém Edit/Write se automaticky `git add . && commit "auto: save changes" && push`. Vše tedituješ = jde rovnou do produkce přes Vercel (GitHub → Vercel → Supabase). Necommituj ručně.
