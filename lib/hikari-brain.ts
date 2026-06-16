@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { streakFromDates } from './streak-core'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
