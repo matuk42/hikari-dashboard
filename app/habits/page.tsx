@@ -556,29 +556,49 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
 
 // ─── Habit row ────────────────────────────────────────────────────────────────
 
-function HabitRow({ habit, done, onToggle, liveStreak }: {
+function HabitRow({ habit, done, onToggle, liveStreak, editMode, onEdit }: {
   habit: Habit; done: boolean; onToggle: () => void; liveStreak?: number
+  editMode?: boolean; onEdit?: () => void
 }) {
   const displayStreak = liveStreak !== undefined ? liveStreak : habit.streak
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-      <button
-        onClick={onToggle}
-        style={{
-          flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
-          border: done ? '2px solid #F59E0B' : '2px solid rgba(255,255,255,0.15)',
-          background: done ? '#F59E0B' : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.15s ease', cursor: 'pointer',
-        }}
-        aria-label={done ? 'Odznačit' : 'Splnit'}
-      >
-        {done && (
-          <svg viewBox="0 0 24 24" fill="none" style={{ width: 13, height: 13 }}>
-            <path d="M5 13l4 4L19 7" stroke="#080808" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+    <div
+      className="flex items-center gap-3 py-3 border-b last:border-0"
+      style={{ borderColor: 'rgba(255,255,255,0.05)', cursor: editMode ? 'pointer' : 'default' }}
+      onClick={editMode ? onEdit : undefined}
+    >
+      {editMode ? (
+        <div
+          style={{
+            flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
+            border: '2px solid rgba(245,158,11,0.4)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 12, height: 12 }}>
+            <path d="M4 20h4l10-10-4-4L4 16v4z" stroke="#F59E0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        )}
-      </button>
+        </div>
+      ) : (
+        <button
+          onClick={onToggle}
+          style={{
+            flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
+            border: done ? '2px solid #F59E0B' : '2px solid rgba(255,255,255,0.15)',
+            background: done ? '#F59E0B' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.15s ease', cursor: 'pointer',
+          }}
+          aria-label={done ? 'Odznačit' : 'Splnit'}
+        >
+          {done && (
+            <svg viewBox="0 0 24 24" fill="none" style={{ width: 13, height: 13 }}>
+              <path d="M5 13l4 4L19 7" stroke="#080808" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+      )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
