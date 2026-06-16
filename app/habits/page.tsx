@@ -1063,48 +1063,89 @@ export default function HabitsPage() {
               <WaterTracker profileId={profileId} isOnline={isOnline} />
             </section>
 
-            {/* Aktivní */}
-            <section style={{ marginBottom: 20 }}>
-              <SectionLabel>Aktivní</SectionLabel>
-              <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-                {groups.active.map(h => (
-                  <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
-                ))}
+            {/* Empty state — no habits yet */}
+            {dataLoaded && habits.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '32px 24px', background: '#0e0e0e', borderRadius: 14, border: '1px dashed rgba(255,255,255,0.1)', marginBottom: 20 }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                  Zatím žádné habity.<br />Přidej první a začni budovat streak.
+                </p>
+                <button
+                  onClick={() => setEditor({ habit: null })}
+                  style={{ background: '#F59E0B', color: '#080808', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  + Přidat habit
+                </button>
               </div>
-            </section>
+            )}
+
+            {/* Add button (edit mode) */}
+            {editMode && habits.length > 0 && (
+              <button
+                onClick={() => setEditor({ habit: null })}
+                style={{ width: '100%', background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 12, fontSize: 13, fontWeight: 700, padding: '12px 0', cursor: 'pointer', marginBottom: 20 }}
+              >
+                + Přidat habit
+              </button>
+            )}
+
+            {/* Aktivní */}
+            {groups.active.length > 0 && (
+              <section style={{ marginBottom: 20 }}>
+                <SectionLabel>Aktivní</SectionLabel>
+                <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+                  {groups.active.map(h => (
+                    <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Testovací */}
-            <section style={{ marginBottom: 20 }}>
-              <SectionLabel>Testovací</SectionLabel>
-              <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
-                {groups.trialSolo.map(h => (
-                  <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} />
-                ))}
-              </div>
-            </section>
+            {groups.trialSolo.length > 0 && (
+              <section style={{ marginBottom: 20 }}>
+                <SectionLabel>Testovací</SectionLabel>
+                <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+                  {groups.trialSolo.map(h => (
+                    <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Balíčky */}
-            <section style={{ marginBottom: 20 }}>
-              <SectionLabel>Balíčky</SectionLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={groups.imunita} done={done} onToggle={toggle} streakMap={streakMap} />
-                <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} onToggle={toggle} streakMap={streakMap} />
-              </div>
-            </section>
+            {(groups.imunita.length > 0 || groups.fyzicka.length > 0) && (
+              <section style={{ marginBottom: 20 }}>
+                <SectionLabel>Balíčky</SectionLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {groups.imunita.length > 0 && (
+                    <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={groups.imunita} done={done} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
+                  )}
+                  {groups.fyzicka.length > 0 && (
+                    <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Zautomatizováno */}
-            <section>
-              <SectionLabel>Zautomatizováno</SectionLabel>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {groups.graduated.map(h => (
-                  <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
-                    <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {groups.graduated.length > 0 && (
+              <section>
+                <SectionLabel>Zautomatizováno</SectionLabel>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {groups.graduated.map(h => (
+                    <div
+                      key={h.id}
+                      onClick={editMode ? () => setEditor({ habit: h }) : undefined}
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, background: '#0e0e0e', border: editMode ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.06)', cursor: editMode ? 'pointer' : 'default' }}
+                    >
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(245,158,11,0.45)', flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{h.name}</span>
+                      <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.35)', fontWeight: 600 }}>{streakMap[h.id] ?? h.streak}×</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
               <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
