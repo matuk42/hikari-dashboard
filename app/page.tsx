@@ -281,6 +281,7 @@ interface HomeData {
   hopeToday: { mood: number; energy: number; hope: number } | null
   weekTitle: string
   weekProgress: number
+  weekPriorityCount: number
   mainTasks: PriorityItem[]
   sideTasks: PriorityItem[]
   bonusTasks: PriorityItem[]
