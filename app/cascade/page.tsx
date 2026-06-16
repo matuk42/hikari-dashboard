@@ -531,7 +531,7 @@ export default function CascadePage() {
       ...(useVaultDims
         ? {
             dimsFromVault: true,
-            dimensions: liveDims!.map(d => ({ name: d.name, progress: 0, detail: d.detail ?? undefined })),
+            dimensions: liveDims!.map(d => ({ name: d.name, progress: 0, detail: d.detail ?? undefined, kind: d.kind })),
           }
         : {}),
     }
