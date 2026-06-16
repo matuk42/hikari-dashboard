@@ -353,7 +353,8 @@ export default function HomePage() {
           .order('logged_at', { ascending: false }).limit(1).maybeSingle(),
       ])
 
-      const allHabits = habitsRes.data ?? []
+      // Drop retired (soft-deleted in /habits) so the count matches the habits page.
+      const allHabits = (habitsRes.data ?? []).filter(h => h.category !== 'retired')
       const allHabitIds = allHabits.map(h => h.id)
       const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
 
