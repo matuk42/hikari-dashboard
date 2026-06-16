@@ -68,6 +68,9 @@ function VaultSyncButton() {
       if (data.synced) {
         setState('ok')
         setMsg(`${data.files?.length ?? 0} files synced ✓`)
+        // Home loads its data on mount only — reload so freshly-synced daily tasks
+        // (ai_daily_brief) and cascade show without a manual refresh.
+        setTimeout(() => window.location.reload(), 900)
       } else {
         setState('error')
         setMsg(data.errors?.[0] ?? data.error ?? 'Chyba syncu')
