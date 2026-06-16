@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getProfileId } from '@/lib/profile'
+import { rebuildStreaksFromLogs } from '@/lib/streak'
 
 // ─── LocalStorage keys ───────────────────────────────────────────────────────
 
