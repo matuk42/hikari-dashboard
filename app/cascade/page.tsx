@@ -488,8 +488,9 @@ export default function CascadePage() {
       setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
 
       // Live milestones per layer (sorted) for the vault-sourced layers.
+      type DimRow = { layer_id: string; name: string; detail: string | null; sort_order: number | null }
       const ids = rows.map(r => r.id as string)
-      let dimRows: Array<{ layer_id: string; name: string; detail: string | null; sort_order: number | null }> | null = null
+      let dimRows: DimRow[] = []
       const sel = await supabase.from('cascade_dimensions')
         .select('layer_id, name, detail, sort_order').in('layer_id', ids)
       if (sel.error) {
@@ -497,10 +498,10 @@ export default function CascadePage() {
         const basic = await supabase.from('cascade_dimensions').select('layer_id, name').in('layer_id', ids)
         dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, sort_order: null }))
       } else {
-        dimRows = sel.data as typeof dimRows
+        dimRows = (sel.data ?? []) as DimRow[]
       }
       const dimMap: Record<number, DbDim[]> = {}
-      for (const d of dimRows ?? []) {
+      for (const d of dimRows) {
         const ln = idToLayer[d.layer_id]
         if (ln == null) continue
         ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, _sort: d.sort_order ?? 0 } as DbDim & { _sort: number })
