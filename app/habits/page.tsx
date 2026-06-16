@@ -224,52 +224,11 @@ async function loadTodayDone(ids: string[], date: string): Promise<Set<string>> 
   return new Set((data ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string))
 }
 
-/** Whole calendar days between two YYYY-MM-DD strings (b − a). */
-function daysBetween(a: string, b: string): number {
-  const da = Date.parse(`${a}T00:00:00Z`)
-  const db = Date.parse(`${b}T00:00:00Z`)
-  if (Number.isNaN(da) || Number.isNaN(db)) return 0
-  return Math.round((db - da) / 86_400_000)
-}
-
 /**
- * Lazy daily streak recompute (the morning cron's job until it exists, PRD W26).
- * Runs on load: if a streak's last completion is too far back, the streak is
- * broken and reset to 0. Rules per PRD:
- *   - mandatory (autoškola): no grace — break after 1 missed day (gap ≥ 2)
- *   - others: 1 rest day forgiven — break after 2+ missed days (gap ≥ 3)
- * gap = days since last completion; gap 0 (done today) / 1 (done yesterday,
- * today still open) never break. The vault-seeded baseline is preserved until
- * an actual miss; best_streak is untouched. Returns the corrected streak map.
+ * Daily streak recompute now rebuilds from habit_logs (see rebuildStreaksFromLogs
+ * in lib/streak.ts) — the same algorithm the morning cron uses. The old break-only
+ * reconcile lived here but desynced streaks (Anki showed 1 instead of 3).
  */
-async function reconcileStreaks(habits: Habit[], today: string): Promise<Record<string, number>> {
-  const ids = habits.map(h => h.id)
-  if (!ids.length) return {}
-  const mandatoryById: Record<string, boolean> = {}
-  for (const h of habits) mandatoryById[h.id] = !!h.mandatory
-
-  const { data } = await supabase.from('streaks_cache')
-    .select('habit_id, current_streak, last_completed_date').in('habit_id', ids)
-
-  const out: Record<string, number> = {}
-  for (const row of data ?? []) {
-    const id = row.habit_id as string
-    let streak = (row.current_streak as number) ?? 0
-    const last = row.last_completed_date as string | null
-    if (streak > 0 && last) {
-      const gap = daysBetween(last, today)
-      const broke = mandatoryById[id] ? gap >= 2 : gap >= 3
-      if (broke) {
-        streak = 0
-        await supabase.from('streaks_cache')
-          .update({ current_streak: 0, updated_at: new Date().toISOString() })
-          .eq('habit_id', id)
-      }
-    }
-    out[id] = streak
-  }
-  return out
-}
 
 /**
  * Apply a single ±1 streak change while preserving the vault-seeded baseline and
