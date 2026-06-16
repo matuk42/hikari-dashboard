@@ -478,7 +478,7 @@ export default function HomePage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
                 <span suppressHydrationWarning style={{ fontSize: 26, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{weekTitle}</span>
-                <span suppressHydrationWarning style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>· {weekTaskCount} priority</span>
+                <span suppressHydrationWarning style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>· {weekPriorityCount} priority</span>
               </div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 8 }}>aktuální týden · klepni →</div>
             </Card>
