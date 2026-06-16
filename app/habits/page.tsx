@@ -1043,7 +1043,9 @@ export default function HabitsPage() {
             <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '8px 0' }}>
               <StrawHatFigure />
               <div style={{ position: 'relative', zIndex: 1, fontSize: 64, fontWeight: 900, color: '#F59E0B', lineHeight: 1, letterSpacing: '-0.02em' }}>{heroStreak}</div>
-              <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>dní v řadě · {heroHabit.name}</div>
+              <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.28)', marginTop: 6, letterSpacing: '0.04em' }}>
+                {heroHabit ? `dní v řadě · ${heroHabit.name}` : 'zatím žádné habity'}
+              </div>
               {allDone && (
                 <div style={{ marginTop: 20, padding: '0 24px' }}>
                   <div style={{ width: 24, height: 1, background: 'rgba(245,158,11,0.3)', margin: '0 auto 14px' }} />
