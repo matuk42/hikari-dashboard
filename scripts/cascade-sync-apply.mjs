@@ -36,7 +36,7 @@ async function replace(layer, items){
 
 // L4 měsíc
 const monthly=await gh(`wiki/reviews/monthly/${ym}.md`)
-const l4=itemLines(mdSection(monthly,'### SEN — ')).map(parseItem).filter(i=>i?.name).map(i=>({name:i.name,detail:cleanDetail(i.detail)}))
+const l4=mdSection(monthly,'### SEN — ').split('\n').filter(l=>/^\s*\d+\.\s/.test(l)).map(parseItem).filter(i=>i?.name).map(i=>({name:i.name,detail:cleanDetail(i.detail)}))
 await replace(4,l4)
 
 // L3 rok
