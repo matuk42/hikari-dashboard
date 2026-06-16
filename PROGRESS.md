@@ -54,7 +54,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - **Streak přepočet je client-side líný** (běží při otevření appky), dokud nebude ranní cron.
 - **Dashboard → vault zpětný zápis NENÍ a nemá být** v dashboardu — dělá ho Hikari přes Claude Code CLI při hlasovém deníku (Supabase = mozek, vault = archiv).
 - **Pre-push hook** pouští `npm run build` — push se zablokuje když build spadne.
-- Nikdy necommituj/nepushuj bez explicitní žádosti Matyáše.
+- **Auto-commit/push hook (`.claude/settings.json`)** — po každém Edit/Write se automaticky `git add . && commit "auto: save changes" && push`. Vše tedituješ = jde rovnou do produkce přes Vercel (GitHub → Vercel → Supabase). Necommituj ručně.
 
 ## 🔑 Klíčová rozhodnutí
 - **Denní úkoly = vault, ne Gemini.** Hlavní/vedlejší/bonus na home jsou DENNÍ, píše je Matyáš v `logs/mentor-feedback/` (generuje s plným kontextem, ladí s Claudem). Gemini dělá jen mentorský nudge+reasoning. Soubor D = priority pro D+1 → dnešek čte z včerejšího souboru. Týdenní priority zůstávají v `/cascade` (cascade L5).
