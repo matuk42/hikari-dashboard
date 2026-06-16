@@ -452,11 +452,18 @@ function LayerCard({ layer }: { layer: Layer }) {
 // L2/L3 stay curated estimates until milestone-based calc lands.
 const REAL_PCT_LAYERS = new Set([4, 5])
 
+// Layers whose milestone LIST is the live vault (synced + rolled over each period).
+// Rendered as a clean name list (no per-milestone % — that's a future Gemini calc).
+// L1 (chips) + L2 (5 let) stay curated; L2 is set once via chat, not auto-parsed.
+const VAULT_DIM_LAYERS = new Set([3, 4, 5])
+
 type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
+type DbDim = { name: string; detail: string | null }
 
 export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
   const [dbLayers, setDbLayers] = useState<Record<number, DbLayer>>({})
+  const [dbDims, setDbDims] = useState<Record<number, DbDim[]>>({})
   const [hasReal, setHasReal] = useState(false)
 
   useEffect(() => {
@@ -468,26 +475,60 @@ export default function CascadePage() {
         .from('profiles').select('id').eq('auth_user_id', user.id).single()
       if (!profile) return
       const { data: rows } = await supabase.from('cascade_layers')
-        .select('layer, progress_pct, description')
+        .select('id, layer, progress_pct, description')
         .eq('profile_id', profile.id).eq('tree', 'sen')
       if (!rows?.length) return
       const map: Record<number, DbLayer> = {}
-      for (const r of rows) map[r.layer as number] = r as DbLayer
+      const idToLayer: Record<string, number> = {}
+      for (const r of rows) {
+        map[r.layer as number] = r as DbLayer
+        idToLayer[r.id as string] = r.layer as number
+      }
       setDbLayers(map)
-      // Real % exists if any cron-computed layer came back with a non-null pct
       setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
+
+      // Live milestones per layer (sorted) for the vault-sourced layers.
+      const ids = rows.map(r => r.id as string)
+      let dimRows: Array<{ layer_id: string; name: string; detail: string | null; sort_order: number | null }> | null = null
+      const sel = await supabase.from('cascade_dimensions')
+        .select('layer_id, name, detail, sort_order').in('layer_id', ids)
+      if (sel.error) {
+        // Migration 004 not applied → no detail/sort_order columns
+        const basic = await supabase.from('cascade_dimensions').select('layer_id, name').in('layer_id', ids)
+        dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, sort_order: null }))
+      } else {
+        dimRows = sel.data as typeof dimRows
+      }
+      const dimMap: Record<number, DbDim[]> = {}
+      for (const d of dimRows ?? []) {
+        const ln = idToLayer[d.layer_id]
+        if (ln == null) continue
+        ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, _sort: d.sort_order ?? 0 } as DbDim & { _sort: number })
+      }
+      for (const ln of Object.keys(dimMap)) {
+        (dimMap[Number(ln)] as Array<DbDim & { _sort: number }>).sort((a, b) => a._sort - b._sort)
+      }
+      setDbDims(dimMap)
     }).catch(() => {})
   }, [])
 
   // Merge DB overrides onto the curated layers: real % + fresh week/month label
-  // where the cron has written them; curated estimate otherwise.
+  // where the cron has written them; live vault milestones for L3/L4/L5.
   const displayLayers: Layer[] = LAYERS.map(l => {
     const db = dbLayers[l.n]
     if (!db) return l
+    const liveDims = dbDims[l.n]
+    const useVaultDims = VAULT_DIM_LAYERS.has(l.n) && liveDims && liveDims.length > 0
     return {
       ...l,
       progress:  db.progress_pct != null && REAL_PCT_LAYERS.has(l.n) ? db.progress_pct : l.progress,
       timeframe: db.description || l.timeframe,
+      ...(useVaultDims
+        ? {
+            dimsFromVault: true,
+            dimensions: liveDims!.map(d => ({ name: d.name, progress: 0, detail: d.detail ?? undefined })),
+          }
+        : {}),
     }
   })
 
