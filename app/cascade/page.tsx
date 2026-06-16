@@ -492,26 +492,26 @@ export default function CascadePage() {
       setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
 
       // Live milestones per layer (sorted) for the vault-sourced layers.
-      type DimRow = { layer_id: string; name: string; detail: string | null; sort_order: number | null }
+      type DimRow = { layer_id: string; name: string; detail: string | null; kind: DimKind | null; sort_order: number | null }
       const ids = rows.map(r => r.id as string)
       let dimRows: DimRow[] = []
       const sel = await supabase.from('cascade_dimensions')
-        .select('layer_id, name, detail, sort_order').in('layer_id', ids)
+        .select('layer_id, name, detail, kind, sort_order').in('layer_id', ids)
       if (sel.error) {
-        // Migration 004 not applied → no detail/sort_order columns
+        // Migration 004 not applied → no detail/kind/sort_order columns
         const basic = await supabase.from('cascade_dimensions').select('layer_id, name').in('layer_id', ids)
-        dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, sort_order: null }))
+        dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, kind: null, sort_order: null }))
       } else {
         dimRows = (sel.data ?? []) as DimRow[]
       }
-      const dimMap: Record<number, DbDim[]> = {}
+      const dimMap: Record<number, Array<DbDim & { _sort: number }>> = {}
       for (const d of dimRows) {
         const ln = idToLayer[d.layer_id]
         if (ln == null) continue
-        ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, _sort: d.sort_order ?? 0 } as DbDim & { _sort: number })
+        ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, kind: d.kind, _sort: d.sort_order ?? 0 })
       }
       for (const ln of Object.keys(dimMap)) {
-        (dimMap[Number(ln)] as Array<DbDim & { _sort: number }>).sort((a, b) => a._sort - b._sort)
+        dimMap[Number(ln)].sort((a, b) => a._sort - b._sort)
       }
       setDbDims(dimMap)
     }).catch(() => {})
