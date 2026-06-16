@@ -905,7 +905,7 @@ export default function HabitsPage() {
     setHabits(dbHabits)
     setHabitsFromDb(true)
     localStorage.setItem(LS_HABIT_LIST, JSON.stringify(dbHabits))
-    const fresh = await reconcileStreaks(dbHabits, dateKey).catch(() => ({} as Record<string, number>))
+    const fresh = await rebuildStreaksFromLogs(dbHabits, dateKey).catch(() => ({} as Record<string, number>))
     if (Object.keys(fresh).length > 0) {
       setStreakMap(fresh)
       localStorage.setItem(LS_STREAK_MAP, JSON.stringify(fresh))
