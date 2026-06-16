@@ -55,5 +55,5 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - `node scripts/live-fetch-check.mjs` — **reálný** GitHub fetch tokenem + parse (ověří sync až po DB zápis).
 
 ## 📌 Stav modulů vs PRD (W23–W27)
-Hotovo: Habits, kibou, Cascade UI + reálná % týden/měsíc, Vault sync (ruční), login, onboarding, PWA, Home, **AI brain ranní cron (W26 jádro: streaky + cascade % + Gemini brief)**.
-Chybí: 3+2+1 brief úkoly na home, automatická detekce vzorů, živá energetická osa, konflikt workflow (CLI ↔ Supabase), auto-sync cron (Ne 22:00), /history, /calculator.
+Hotovo: Habits, kibou, Cascade UI + reálná % týden/měsíc, Vault sync (ruční) + denní úkoly z mentor-feedbacku, login, onboarding, PWA, Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + cascade % + Gemini nudge/reasoning)**.
+Chybí: automatická detekce vzorů, živá energetická osa, konflikt workflow (CLI ↔ Supabase), auto-sync cron (Ne 22:00), /history, /calculator.
