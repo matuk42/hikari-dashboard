@@ -703,75 +703,10 @@ export async function POST() {
     }
   }
 
-  // ── Sync habits ───────────────────────────────────────────────────────────
-
-  if (raw.habits) {
-    try {
-      const { rows: habits, streaks: habitStreaks } = parseHabits(raw.habits, pid)
-
-      // Strip pack columns for a retry if migration 003 isn't applied yet, so a
-      // forgotten migration degrades (habits sync without grouping) instead of
-      // failing every upsert wholesale.
-      const withoutPack = (h: HabitRow) => {
-        const r: Partial<HabitRow> = { ...h }
-        delete r.pack; delete r.pack_code
-        return r
-      }
-
-      for (const h of habits) {
-        let { error } = await db.from('habits').upsert(h, { onConflict: 'profile_id,name' })
-        if (error) {
-          ({ error } = await db.from('habits').upsert(withoutPack(h), { onConflict: 'profile_id,name' }))
-        }
-        if (error) errors.push(`habits "${h.name}": ${error.message}`)
-      }
-
-      // Upsert streak numbers from vault into streaks_cache
-      if (habitStreaks.size > 0) {
-        const names = [...habitStreaks.keys()]
-        const { data: dbHabits } = await db.from('habits')
-          .select('id, name').eq('profile_id', pid).in('name', names)
-
-        if (dbHabits) {
-          const nameToId: Record<string, string> = {}
-          for (const h of dbHabits) nameToId[h.name] = h.id
-
-          const today = new Date().toISOString().slice(0, 10)
-          for (const [name, streak] of habitStreaks) {
-            const habitId = nameToId[name]
-            if (!habitId) continue
-
-            if (streak === 'reset') {
-              // Vault marks restart/break — clear current streak, keep best
-              const { error } = await db.from('streaks_cache').upsert({
-                habit_id:            habitId,
-                current_streak:      0,
-                last_completed_date: null,
-                updated_at:          new Date().toISOString(),
-              }, { onConflict: 'habit_id' })
-              if (error) errors.push(`streaks_cache "${name}" reset: ${error.message}`)
-              continue
-            }
-
-            // Preserve historical best: read existing before overwriting
-            const { data: existing } = await db.from('streaks_cache')
-              .select('best_streak').eq('habit_id', habitId).maybeSingle()
-            const bestStreak = Math.max(streak, existing?.best_streak ?? 0)
-            const { error } = await db.from('streaks_cache').upsert({
-              habit_id:            habitId,
-              current_streak:      streak,
-              best_streak:         bestStreak,
-              last_completed_date: today,
-              updated_at:          new Date().toISOString(),
-            }, { onConflict: 'habit_id' })
-            if (error) errors.push(`streaks_cache "${name}": ${error.message}`)
-          }
-        }
-      }
-    } catch (e) {
-      errors.push(`Parse habits.md: ${e instanceof Error ? e.message : String(e)}`)
-    }
-  }
+  // Habits are NOT synced from the vault anymore — the app is the source of truth
+  // (add/edit/remove in /habits writes straight to Supabase). habits.md stays in
+  // the vault as a hand-written archive but the dashboard no longer reads it, and
+  // streaks_cache is left untouched here (the morning cron recomputes from logs).
 
   // ── Sync cascade ──────────────────────────────────────────────────────────
 
