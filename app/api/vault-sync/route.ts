@@ -488,20 +488,23 @@ async function syncMemoryBootstrap(
 }
 
 /**
- * Replace ALL dimensions for a layer with the given priorities (full refresh).
- * Used for weekly layer 5 — without this, dims from previous weeks accumulate.
- * Falls back to a plain insert without kind/detail/sort_order if migration 004
- * hasn't been applied yet, so a forgotten migration degrades gracefully.
+ * Replace ALL dimensions for a layer with the vault's current milestones (full
+ * refresh). Used for layers that must always mirror the vault and roll over with
+ * the period — week (L5), month (L4), year (L3). Without this the old insert-only
+ * path let stale/previous-period milestones accumulate forever.
+ * Falls back to a plain name-only insert if migration 004 (detail/kind/sort_order)
+ * hasn't been applied, so a forgotten migration degrades gracefully.
  */
-async function replaceWeeklyDimensions(
+async function replaceDimensions(
   db: SupaClient,
   layerId: string,
-  items: PriorityItem[],
+  layer: number,
+  items: Array<{ name: string; detail: string; kind?: PriorityKind | null }>,
   errors: string[]
 ): Promise<void> {
   const { error: delErr } = await db.from('cascade_dimensions').delete().eq('layer_id', layerId)
   if (delErr) {
-    errors.push(`cascade_dimensions delete L5: ${delErr.message}`)
+    errors.push(`cascade_dimensions delete L${layer}: ${delErr.message}`)
     return
   }
   if (!items.length) return
@@ -510,7 +513,7 @@ async function replaceWeeklyDimensions(
     layer_id:     layerId,
     name:         p.name,
     detail:       p.detail || null,
-    kind:         p.kind,
+    kind:         p.kind ?? null,
     sort_order:   i,
     progress_pct: 0,
   }))
@@ -521,7 +524,7 @@ async function replaceWeeklyDimensions(
     const basic = items.map(p => ({ layer_id: layerId, name: p.name, progress_pct: 0 }))
     ;({ error } = await db.from('cascade_dimensions').insert(basic))
   }
-  if (error) errors.push(`cascade_dimensions insert L5: ${error.message}`)
+  if (error) errors.push(`cascade_dimensions insert L${layer}: ${error.message}`)
 }
 
 // ─── POST handler ─────────────────────────────────────────────────────────────
