@@ -384,22 +384,23 @@ export default function HomePage() {
 
       type WeekDim = { name: string; detail: string | null; kind: PriorityKind | null; sort_order: number | null }
       const weekLayer = (weekLayerRes as { data: { title: string; description: string | null; progress_pct: number | null; cascade_dimensions: WeekDim[] } | null }).data
-      const weekDims  = weekLayer?.cascade_dimensions ?? []
       // Week token like "W24" comes from the layer description ("W24 · 8.–14.6.")
       const weekToken = weekLayer?.description?.match(/W\d+/)?.[0] ?? weekLayer?.title ?? 'W23'
+      // Cascade card shows the WEEKLY priority count (from cascade dims), independent
+      // of the daily tasks below.
+      const weekPriorityCount = (weekLayer?.cascade_dimensions ?? []).length
 
-      const sorted = [...weekDims].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      const toItem = (d: WeekDim, fallbackKind: PriorityKind): PriorityItem => ({
-        name:   d.name,
-        detail: d.detail ?? '',
-        kind:   d.kind ?? fallbackKind,
-      })
-      // Pre-migration-004 rows have kind=null → treat as main so they still render.
-      const mainTasks  = sorted.filter(d => (d.kind ?? 'main') === 'main') .map(d => toItem(d, 'main'))
-      const sideTasks  = sorted.filter(d =>  d.kind === 'side')            .map(d => toItem(d, 'side'))
-      const bonusTasks = sorted.filter(d =>  d.kind === 'bonus')           .map(d => toItem(d, 'bonus'))
-
-      const brief = (briefRes as { data: { cascade_nudge: string | null; reasoning: string | null; generated_at: string | null } | null }).data
+      // Daily tasks (hlavní/vedlejší/bonus) come from ai_daily_brief — authored by
+      // Matyáš in the vault (mentor-feedback), loaded by vault-sync. Stored as
+      // {title, detail}; older Gemini rows used {title, project, reason}.
+      type DailyTaskRow = { title?: string; name?: string; detail?: string; reason?: string }
+      const brief = (briefRes as { data: { hlavni: DailyTaskRow[] | null; vedlejsi: DailyTaskRow[] | null; bonus: DailyTaskRow[] | null; cascade_nudge: string | null; reasoning: string | null; generated_at: string | null } | null }).data
+      const toItems = (arr: DailyTaskRow[] | null | undefined, kind: PriorityKind): PriorityItem[] =>
+        (arr ?? []).map(t => ({ name: t.title ?? t.name ?? '', detail: t.detail ?? t.reason ?? '', kind }))
+          .filter(t => t.name)
+      const mainTasks  = toItems(brief?.hlavni,   'main')
+      const sideTasks  = toItems(brief?.vedlejsi, 'side')
+      const bonusTasks = toItems(brief?.bonus,    'bonus')
 
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
@@ -409,6 +410,7 @@ export default function HomePage() {
         hopeToday:    hopeRes.data ?? null,
         weekTitle:    weekToken,
         weekProgress: weekLayer?.progress_pct ?? 0,
+        weekPriorityCount,
         mainTasks:    mainTasks.length > 0 ? mainTasks : FALLBACK_MAIN,
         sideTasks,
         bonusTasks,
