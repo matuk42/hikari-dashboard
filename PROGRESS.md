@@ -24,11 +24,11 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - Google login, onboarding, PWA, CSP.
 
 ## 🧭 Co dál (priorita shora)
-1. **AI brain / ranní cron 6:00 (PRD W26)** — největší milník, udělá z dashboardu „Jarvise":
-   - reálné cascade % (rozsvítí to, co je teď „odhad")
-   - denní brief 3+2+1 úkolů (z cascade + habits + HOPE) → opravdu *denní* adaptivní úkoly
-   - detekce vzorů ("úterý low energy", "les → +HOPE")
-   - živá energetická osa z HOPE dat (teď statická)
+1. **Dotáhnout AI brain (cron jádro hotové):**
+   - **Denní brief 3+2+1 úkolů na home** — Gemini je generuje (hlavní/vedlejší/bonus v `ai_daily_brief`), ale home je zatím nerenderuje (ukazuje jen nudge + reasoning; úkoly na home jsou pořád z vault sync). Napojit brief.hlavni/vedlejsi/bonus do home.
+   - **Detekce vzorů** ("úterý low energy", "les → +HOPE") — Gemini nad nimi reasonuje z paměti, ale není automatický pattern-detection zápis do DB.
+   - **Živá energetická osa** z HOPE dat (teď statická — cron nepíše `energy_blocks`).
+   - **Rok/5 let reálná %** (zatím „odhad").
 2. **Drobnosti:**
    - Auto-sync cron (Ne 22:00) místo jen ručního tlačítka.
    - Energy obrázek v kibou — kdyby chtěl něco jiného než blesk.
