@@ -406,11 +406,14 @@ function LayerCard({ layer }: { layer: Layer }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {layer.dimensions.map(d => (
                   <div key={d.name} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.4, flexShrink: 0 }}>›</span>
-                    <div style={{ minWidth: 0 }}>
-                      <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)' }}>{d.name}</span>
+                    <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.5, flexShrink: 0 }}>›</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>{d.name}</div>
                       {d.detail && (
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', marginLeft: 6 }}>· {d.detail}</span>
+                        <div style={{
+                          fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{d.detail}</div>
                       )}
                     </div>
                   </div>
