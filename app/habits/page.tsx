@@ -102,27 +102,90 @@ function groupHabits(list: Habit[]) {
   }
 }
 
-// ─── Habit DB helpers ─────────────────────────────────────────────────────────
+// ─── Habit CRUD (app is the source of truth) ──────────────────────────────────
 
-/**
- * Seed the DB with the fallback list on first login so habits can be logged
- * before the first vault sync. Best-effort, full shape incl pack so this writer
- * and vault-sync agree on the same rows. Retries without pack columns if
- * migration 003 is not applied yet, so a forgotten migration can't brick logging.
- */
-async function seedHabits(profileId: string): Promise<void> {
-  const { data: existing } = await supabase
-    .from('habits').select('name').eq('profile_id', profileId)
-  const have = new Set((existing ?? []).map(h => h.name))
-  const missing = ALL_HABITS.filter(h => !have.has(h.name))
-  if (!missing.length) return
-  const base = missing.map(h => ({
-    profile_id: profileId, name: h.name, category: h.status as string,
-    frequency: h.frequency, vault_serves: [h.serves], mandatory: h.mandatory ?? false,
-  }))
-  const { error } = await supabase.from('habits')
-    .insert(missing.map((h, i) => ({ ...base[i], pack: h.pack ?? null, pack_code: h.packCode ?? null })))
-  if (error) await supabase.from('habits').insert(base)   // pre-003 fallback
+// UI group → DB (category, pack). One picker covers both columns so the form
+// stays simple. Packs are always trial-category.
+type HabitGroup = 'active' | 'trial' | 'imunita' | 'fyzicka' | 'graduated'
+
+const GROUP_LABELS: Record<HabitGroup, string> = {
+  active:    'Aktivní',
+  trial:     'Testovací',
+  imunita:   'Balíček Imunita',
+  fyzicka:   'Balíček Fyzička',
+  graduated: 'Zautomatizováno',
+}
+
+interface HabitForm {
+  name: string
+  group: HabitGroup
+  frequency: string
+  serves: string
+  mandatory: boolean
+  packCode: string
+  until: string   // YYYY-MM-DD, optional → end_date (active) / trial_end (others)
+}
+
+function emptyForm(): HabitForm {
+  return { name: '', group: 'trial', frequency: '', serves: '', mandatory: false, packCode: '', until: '' }
+}
+
+/** Existing habit → form (for editing). */
+function habitToForm(h: Habit): HabitForm {
+  const group: HabitGroup =
+    h.pack === 'imunita' ? 'imunita' :
+    h.pack === 'fyzicka' ? 'fyzicka' :
+    h.status === 'active' ? 'active' :
+    h.status === 'graduated' ? 'graduated' : 'trial'
+  // endDate/trialEnd are display-formatted ("30.6.") — keep the date input empty
+  // rather than feeding it a non-ISO value it can't parse.
+  return {
+    name: h.name, group, frequency: h.frequency, serves: h.serves,
+    mandatory: !!h.mandatory, packCode: h.packCode ?? '', until: '',
+  }
+}
+
+/** Form → DB row columns (without profile_id). */
+function formToRow(form: HabitForm): Record<string, unknown> {
+  const category = form.group === 'imunita' || form.group === 'fyzicka' ? 'trial' : form.group
+  const pack     = form.group === 'imunita' ? 'imunita' : form.group === 'fyzicka' ? 'fyzicka' : null
+  const until    = /^\d{4}-\d{2}-\d{2}$/.test(form.until) ? form.until : null
+  return {
+    name:        form.name.trim(),
+    category,
+    frequency:   form.frequency.trim() || null,
+    vault_serves: form.serves.trim() ? [form.serves.trim()] : [],
+    mandatory:   form.mandatory,
+    end_date:    category === 'active' ? until : null,
+    trial_end:   category === 'active' ? null : until,
+    pack,
+    pack_code:   pack && form.packCode.trim() ? form.packCode.trim().toUpperCase() : null,
+  }
+}
+
+/** Strip pack columns for a pre-migration-003 retry so a forgotten migration degrades. */
+function withoutPack(row: Record<string, unknown>): Record<string, unknown> {
+  const r = { ...row }; delete r.pack; delete r.pack_code; return r
+}
+
+async function createHabit(profileId: string, form: HabitForm): Promise<string | null> {
+  const row = { ...formToRow(form), profile_id: profileId }
+  let { error } = await supabase.from('habits').insert(row)
+  if (error) ({ error } = await supabase.from('habits').insert(withoutPack(row)))
+  return error ? error.message : null
+}
+
+async function updateHabit(habitId: string, form: HabitForm): Promise<string | null> {
+  const row = formToRow(form)
+  let { error } = await supabase.from('habits').update(row).eq('id', habitId)
+  if (error) ({ error } = await supabase.from('habits').update(withoutPack(row)).eq('id', habitId))
+  return error ? error.message : null
+}
+
+/** Soft-delete: category='retired' (reads everywhere filter it out; logs/streaks survive). */
+async function retireHabit(habitId: string): Promise<string | null> {
+  const { error } = await supabase.from('habits').update({ category: 'retired' }).eq('id', habitId)
+  return error ? error.message : null
 }
 
 /**
