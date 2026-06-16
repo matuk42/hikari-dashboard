@@ -831,7 +831,6 @@ export default function HabitsPage() {
       setProfileId(pid)
       localStorage.setItem(LS_PROFILE_ID, pid)
 
-      await seedHabits(pid).catch(() => {})
       const dbHabits = await loadHabits(pid).catch(() => null)
       if (dbHabits && dbHabits.length) {
         setHabits(dbHabits)
