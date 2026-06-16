@@ -96,28 +96,6 @@ function weekLabelFromFile(md: string): string {
   return wk ?? 'Týden'
 }
 
-// Vault uses longer names; dashboard uses shorter canonical ones.
-// Without this map the sync would INSERT parallel duplicate habits instead of
-// updating existing rows (habits has UNIQUE profile_id,name).
-const HABIT_NAME_MAP: Record<string, string> = {
-  'Anki tvorba (sentence mining)': 'Anki tvorba',
-  'Spánek 22:00–06:15 pravidelně (víkend ±30 min)': 'Spánek 22:00–06:15',
-  'Vit D3 1000 IU denně': 'Vit D3 1000 IU',
-  'Zinek 1×/týden preventivně + 5 dní při škrábání': 'Zinek',
-  'Probiotika (kefír / kysané zelí / bílý jogurt)': 'Probiotika',
-  '2 L vody / den': '2 L vody',
-  '2× ovoce + 0 sladké/slané': '2× ovoce + 0 sladké',
-  'Větrat ložnici + vlhčit vzduch před spaním': 'Větrat ložnici',
-  'Větrat ložnici + vlhčit vzduch': 'Větrat ložnici',
-  'Omega-3 (sardinky 2×/tý NEBO doplněk)': 'Omega-3',
-  'Omega-3 — sardinky 2×/týden NEBO rybí olej doplněk': 'Omega-3',
-  'Posilování calisthenic před školou': 'Posilování calisthenics',
-  'Studená sprcha ráno 30s': 'Studená sprcha 30s',
-  'Kolo k 100km+': 'Kolo 100km+',
-  'Japonská imerze (One Piece v autobusu, podcasty, pasivní poslech)': 'Japonská imerze',
-  'Deník hlasový': 'Hlasový deník',
-}
-
 // ─── GitHub fetch ─────────────────────────────────────────────────────────────
 
 async function ghFetch(path: string, token: string): Promise<string | null> {
