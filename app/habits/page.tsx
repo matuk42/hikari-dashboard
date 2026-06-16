@@ -797,12 +797,15 @@ export default function HabitsPage() {
   const dateKey = todayISO()
   const isOnline = useOnlineStatus()
 
-  const [habits, setHabits] = useState<Habit[]>(ALL_HABITS)
+  const [habits, setHabits] = useState<Habit[]>([])
   const [habitsFromDb, setHabitsFromDb] = useState(false)
   const [done, setDone] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
   const [dataLoaded, setDataLoaded] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  // null = closed; { habit } = edit existing; { habit: null } = add new
+  const [editor, setEditor] = useState<null | { habit: Habit | null }>(null)
 
   const groups = useMemo(() => groupHabits(habits), [habits])
 
