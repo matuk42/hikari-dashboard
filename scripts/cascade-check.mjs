@@ -1,7 +1,7 @@
 // Ověří L3/L4 parsery proti lokálnímu vaultu (kontrola před sync). Nic nezapisuje.
 // node scripts/cascade-check.mjs
 import { readFileSync } from 'fs'
-const VAULT = '../2nd_brain'
+const VAULT = '../../2nd_brain'
 const r = p => readFileSync(new URL(`${VAULT}/${p}`, import.meta.url), 'utf8')
 
 function mdSection(content, hdr) {
