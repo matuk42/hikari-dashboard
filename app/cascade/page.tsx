@@ -676,8 +676,9 @@ export default function CascadePage() {
                     )}
                   </div>
 
-                  {/* Layer card */}
-                  <div style={{ flex: 1, paddingLeft: 14, paddingBottom: i < displayLayers.length - 1 ? 12 : 0 }}>
+                  {/* Layer card — minWidth:0 lets the flex child shrink so long
+                      milestone details truncate (ellipsis) instead of widening the card. */}
+                  <div style={{ flex: 1, minWidth: 0, paddingLeft: 14, paddingBottom: i < displayLayers.length - 1 ? 12 : 0 }}>
                     <LayerCard layer={layer} />
                   </div>
 
