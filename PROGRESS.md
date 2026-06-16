@@ -4,20 +4,19 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-16 (večer, session 2)
+**Poslední aktualizace:** 2026-06-16 (večer, session 3)
 
 ---
 
-## ⏳ ROZPRACOVÁNO — navázat příští session (tato spadla na API errory)
+## ✅ VYŘEŠENO tuto session (16.6. session 3)
 
-**1. Anki streak ukazuje 0 — NEDOŘEŠENO (bug k opravě).**
-- Matyáš: „Anki procvičování" má reálně **3 dny streak**, ale appka ukazuje 0.
-- Podezření na příčinu: ranní cron `recalcStreaks` (`lib/hikari-brain.ts`) přepisuje `current_streak` **jen z `habit_logs`**, a protože vault už streak baseline nesyncuje (tato session to vypnula), starý baseline (Anki 45) se ztratil. Pokud Anki nebylo odškrtáváno v appce (jen reálně děláno), `habit_logs` nemají `done` záznamy → streak 0. → **Není to nutně bug v logice, ale chybí data v `habit_logs`.**
-- **Co udělat:** ověřit DB (mám service key v `.env.local` — napsat node skript: dotaz na `habits` Anki + `streaks_cache` + posledních ~10 `habit_logs`). Zjistit, jestli (a) existuje duplicitní Anki habit, (b) jsou done logy. Pak buď opravit logiku, nebo **jednorázově nastavit Anki `current_streak=3`** v `streaks_cache` (Matyáš to schválil — má 3 dny). Pozor: další cron run může přepsat zpět z logů, takže pokud chybí logy, doplnit i `habit_logs` za ty dny.
+**1. Anki streak ukazoval špatně (1 místo 3) — OPRAVENO.**
+- Příčina byla architektonická, ne chybějící data. Logy v `habit_logs` byly správně (3denní run), ale klientská logika streak jen **lámala na 0** (`reconcileStreaks`) a inkrementovala `±1` (`bumpStreak`) — nikdy ho nepostavila zpět z logů. Cache se tím rozjela od reality.
+- **Oprava:** sdílené čisté jádro `lib/streak-core.ts` (`streakFromDates`) používá cron i klient. Nový `rebuildStreaksFromLogs` (`lib/streak.ts`) přestaví streak z `habit_logs` při každém načtení `/habits` (self-healing, `best_streak` zachován přes max). `reconcileStreaks` + mrtvý `rebuildStreak` odstraněny. Cron (`hikari-brain.ts`) teď importuje jádro místo lokální kopie.
+- DB jednorázově opravena (`scripts/streak-apply.mjs`): Anki=3 (best 46), Kytara=5. Dry-run (`scripts/streak-dryrun.mjs`) ukázal žádné regrese.
 
-**2. Auto-commit/push hook — zdokumentovat (NEDOKONČENO).**
-- Matyáš upozornil, že **vše se celou dobu automaticky pushuje** (commity „auto: save changes") — existuje auto hook.
-- **Úkol:** najít mechanismus (běžel background grep na „auto: save changes" v ps1/sh/bat/js/json + `.git/hooks` — nedoběhlo) a pak **přepsat instrukce „nikdy necommituj/nepushuj"** v: `hikari-dashboard/CLAUDE.md`, `Hikari_all/CLAUDE.md`, `2nd_brain/CLAUDE.md`, `PROGRESS.md` (sekce Háčky níž), případně `AGENTS.md` — přidat info, že existuje auto-commit/push hook a co dělá. NEměnit vault obsahové soubory (deník, raw-sources).
+**2. Auto-commit/push hook — ZDOKUMENTOVÁN.**
+- `.claude/settings.json` má PostToolUse hook: po každém Edit/Write `git add . && git commit "auto: save changes" && git push`. **Vše se commituje + pushuje + přes Vercel nasazuje automaticky** (GitHub → Vercel → Supabase). Zaneseno do `hikari-dashboard/CLAUDE.md` a sekce Háčky níž.
 
 ---
 
