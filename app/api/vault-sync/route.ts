@@ -446,6 +446,53 @@ function parseWeeklyPriorities(md: string): PriorityItem[] {
   return []
 }
 
+// ─── Daily priorities (mentor-feedback "### Priority na zítřek") ──────────────
+
+type DailyTask = { title: string; detail: string }
+
+/** ISO date N days before today, e.g. yesterday = isoDaysAgo(1). */
+function isoDaysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Collect items under a "**Hlavní**" / "**Vedlejší**" / "**Bonus**" bold marker,
+ * stopping at the next such marker. Items are bullet or numbered lines parsed via
+ * parsePriorityItem ("**Name** — detail" or plain "Name — detail").
+ */
+function dailyGroup(prioSec: string, marker: string): DailyTask[] {
+  const lines = prioSec.split('\n')
+  const start = lines.findIndex(l => l.trim().startsWith(marker))
+  if (start === -1) return []
+  const items: DailyTask[] = []
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^\s*\*\*(Hlavní|Vedlejší|Bonus)/.test(lines[i])) break  // next group
+    if (/^\s*(?:\d+\.|[-•*])\s+/.test(lines[i])) {
+      const it = parsePriorityItem(lines[i])
+      if (it?.name) items.push({ title: it.name, detail: it.detail })
+    }
+  }
+  return items
+}
+
+/**
+ * Parse the daily priorities section from a mentor-feedback file.
+ * Heading wording varies (na zítra / zítřek / dnes / víkend …) so we match any
+ * "### Priority" line, then split by the three bold group markers.
+ */
+function parseDailyPriorities(md: string): { hlavni: DailyTask[]; vedlejsi: DailyTask[]; bonus: DailyTask[] } | null {
+  const prioLine = md.split('\n').find(l => l.startsWith('### Priority'))
+  if (!prioLine) return null
+  const sec = mdSection(md, prioLine)
+  return {
+    hlavni:   dailyGroup(sec, '**Hlavní'),
+    vedlejsi: dailyGroup(sec, '**Vedlejší'),
+    bonus:    dailyGroup(sec, '**Bonus'),
+  }
+}
+
 // ─── Supabase helpers ─────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
