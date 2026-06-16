@@ -859,6 +859,41 @@ export async function POST() {
     }
   }
 
+  // ── Sync today's daily priorities (from yesterday's mentor-feedback) ───────
+  // A feedback file dated D holds "### Priority na zítřek" = the plan for D+1.
+  // So today's tasks live in yesterday's file. Written/edited by Matyáš (Gemini
+  // does NOT generate these) → stored in ai_daily_brief.{hlavni,vedlejsi,bonus}
+  // for today; the morning cron only fills cascade_nudge + reasoning.
+  {
+    const todayISO = isoDaysAgo(0)
+    const fbPath   = `logs/mentor-feedback/${isoDaysAgo(1)}-feedback.md`
+    try {
+      const fb = await ghFetch(fbPath, token)
+      if (!fb) {
+        errors.push(`ℹ️ Denní priority: chybí ${fbPath} (dnešní úkoly nenačteny)`)
+      } else {
+        synced.push(fbPath)
+        const parsed = parseDailyPriorities(fb)
+        if (!parsed) {
+          errors.push(`ℹ️ Denní priority: '### Priority' sekce chybí v ${fbPath}`)
+        } else if (!parsed.hlavni.length && !parsed.vedlejsi.length && !parsed.bonus.length) {
+          errors.push(`ℹ️ Denní priority: sekce nalezena ale prázdná v ${fbPath}`)
+        } else {
+          const { error } = await db.from('ai_daily_brief').upsert({
+            profile_id: pid,
+            date:       todayISO,
+            hlavni:     parsed.hlavni,
+            vedlejsi:   parsed.vedlejsi,
+            bonus:      parsed.bonus,
+          }, { onConflict: 'profile_id,date' })
+          if (error) errors.push(`daily priorities upsert: ${error.message}`)
+        }
+      }
+    } catch (e) {
+      errors.push(`Fetch ${fbPath}: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
   return NextResponse.json({
     synced:    errors.length === 0,
     files:     synced,
