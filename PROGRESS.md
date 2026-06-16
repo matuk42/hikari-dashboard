@@ -18,6 +18,13 @@
 **2. Auto-commit/push hook — ZDOKUMENTOVÁN.**
 - `.claude/settings.json` má PostToolUse hook: po každém Edit/Write `git add . && git commit "auto: save changes" && git push`. **Vše se commituje + pushuje + přes Vercel nasazuje automaticky** (GitHub → Vercel → Supabase). Zaneseno do `hikari-dashboard/CLAUDE.md` a sekce Háčky níž.
 
+**3. Cascade milníky — teď ŽIVĚ Z VAULTU (dřív hardcoded) + UI fixy.**
+- Příčina: `/cascade` vykreslovala milníky napevno z konstanty `LAYERS`, z DB brala jen layer-% a popisek. Synced `cascade_dimensions` se vůbec nečetly → L4/L5 ukazovaly stará data. Starý sync navíc dimenze jen **přidával** (nános duplikátů).
+- **Sync (`vault-sync/route.ts`):** full-refresh dimenzí teď i pro L3 (rok) a L4 (měsíc) — `replaceDimensions` (smaže+vloží) + parsery `parseMonthlyMilestones` (číslované SEN milníky, jen `^\d+\.` řádky — ne pod-odrážky) a `parseYearlyDimensions` (tabulka Dimenze/Milník). `cleanDetail` strhne wikilinky/závorky. L5 už full-refresh měl. Rolování na nový měsíc/týden/rok automaticky.
+- **Stránka (`cascade/page.tsx`):** čte `cascade_dimensions` z DB pro `VAULT_DIM_LAYERS={3,4,5}` → čistý seznam **jmen + oříznutý detail, BEZ per-milník %** (`VaultDimList`/`VaultDimRow`). L1 chips + L2 zůstávají kurátované v `LAYERS`.
+- **UI fixy:** `minWidth:0` na wrapperu karty → dlouhé detaily se oříznou (…) místo roztažení karty; všechny karty stejně široké. **L5 rozděleno na Hlavní/Vedlejší/Bonus** (z `kind` v DB).
+- DB pročištěna reálným syncem (`scripts/cascade-sync-apply.mjs`, ověřeno `scripts/cascade-check.mjs`): zmizely duplikáty (2× Příjem, 2× B1) a ošklivé „Fyzička (START po uzdravení):". Reálná route byla správně, chyba byla jen v jednorázovém skriptu (`itemLines` bral pod-odrážky) — opraveno.
+
 ---
 
 ## 🎯 Kde teď jsme
