@@ -142,4 +142,4 @@ Luffy silueta jako atmosférický prvek na každé stránce (opacity 0.05–0.10
 - **Jeden modul najednou** — nikdy nerozpracovávat víc modulů paralelně.
 - **Před buildováním modulu** VŽDY přečti relevantní vault soubory.
 - **Na začátku každého nového modulu** uveď, která funkce Claude Code se při stavění tohoto modulu používá (hooks, slash commands, MCP, atd.).
-- **Nikdy necommituj a nepushuj** bez explicitní žádosti od Matyáše.
+- **Auto-commit/push hook je aktivní.** V `.claude/settings.json` běží PostToolUse hook, který po každém Edit/Write udělá `git add . && git commit -m "auto: save changes" && git push`. Takže **vše se commituje a pushuje automaticky** — a přes Vercel se to samo zbuilduje a nasadí (GitHub → Vercel → Supabase). Necommituj/nepushuj ručně; jen ber v potaz, že každá editace souboru jde rovnou do produkce.
