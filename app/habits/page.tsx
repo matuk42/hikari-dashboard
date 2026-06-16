@@ -825,8 +825,8 @@ export default function HabitsPage() {
       const ids = (dbHabits ?? []).map(h => h.id)
       const [dbDone, dbStreaks] = await Promise.all([
         loadTodayDone(ids, dateKey).catch(() => new Set<string>()),
-        // Recompute streaks (break the ones with a missed day) before showing them
-        reconcileStreaks(dbHabits ?? [], dateKey).catch(() => ({} as Record<string, number>)),
+        // Rebuild streaks from logs (self-healing) before showing them
+        rebuildStreaksFromLogs(dbHabits ?? [], dateKey).catch(() => ({} as Record<string, number>)),
       ])
 
       if (Object.keys(dbStreaks).length > 0) {
