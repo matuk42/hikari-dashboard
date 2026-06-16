@@ -913,16 +913,51 @@ export default function HabitsPage() {
     })
   }
 
+  // Re-fetch the habit list + streaks after a CRUD change.
+  const reloadHabits = useCallback(async () => {
+    if (!profileId) return
+    const dbHabits = await loadHabits(profileId).catch(() => null)
+    if (!dbHabits) return
+    setHabits(dbHabits)
+    setHabitsFromDb(true)
+    localStorage.setItem(LS_HABIT_LIST, JSON.stringify(dbHabits))
+    const fresh = await reconcileStreaks(dbHabits, dateKey).catch(() => ({} as Record<string, number>))
+    if (Object.keys(fresh).length > 0) {
+      setStreakMap(fresh)
+      localStorage.setItem(LS_STREAK_MAP, JSON.stringify(fresh))
+    }
+  }, [profileId, dateKey])
+
+  const handleSaveHabit = async (form: HabitForm) => {
+    if (!profileId) throw new Error('Nejsi přihlášený')
+    const existing = editor?.habit
+    const err = existing ? await updateHabit(existing.id, form) : await createHabit(profileId, form)
+    if (err) throw new Error(err)
+    await reloadHabits()
+    setEditor(null)
+  }
+
+  const handleDeleteHabit = async () => {
+    const existing = editor?.habit
+    if (!existing) return
+    const err = await retireHabit(existing.id)
+    if (err) throw new Error(err)
+    await reloadHabits()
+    setEditor(null)
+  }
+
   const doneCount = groups.trackable.filter(h => done.has(h.id)).length
   const totalCount = groups.trackable.length
   const allDone = doneCount === totalCount && totalCount > 0
 
   // Hero: habit with the highest current streak (streaks_cache, else baseline)
-  const heroHabit = habits.reduce((best, h) => {
-    const val = streakMap[h.id] ?? h.streak ?? 0
-    return val > (streakMap[best.id] ?? best.streak ?? 0) ? h : best
-  }, habits[0] ?? ALL_HABITS[0])
-  const heroStreak = streakMap[heroHabit?.id] ?? heroHabit?.streak ?? 0
+  const heroHabit = habits.length
+    ? habits.reduce((best, h) => {
+        const val = streakMap[h.id] ?? h.streak ?? 0
+        return val > (streakMap[best.id] ?? best.streak ?? 0) ? h : best
+      }, habits[0])
+    : null
+  const heroStreak = heroHabit ? (streakMap[heroHabit.id] ?? heroHabit.streak ?? 0) : 0
 
   return (
     <div style={{ minHeight: '100vh', color: '#ededed', overflowX: 'hidden' }}>
