@@ -659,6 +659,137 @@ function SectionLabel({ children }: { children: string }) {
   )
 }
 
+// ─── Habit editor modal ───────────────────────────────────────────────────────
+
+const fieldStyle: React.CSSProperties = {
+  width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 10, color: '#ededed', fontSize: 14, padding: '10px 12px', outline: 'none',
+  boxSizing: 'border-box',
+}
+const labelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
+  color: 'rgba(255,255,255,0.35)', margin: '0 0 6px 2px', display: 'block',
+}
+
+function HabitEditor({ initial, isNew, onSave, onDelete, onClose }: {
+  initial: HabitForm
+  isNew: boolean
+  onSave: (form: HabitForm) => Promise<void>
+  onDelete?: () => Promise<void>
+  onClose: () => void
+}) {
+  const [form, setForm] = useState<HabitForm>(initial)
+  const [busy, setBusy] = useState<null | 'save' | 'delete'>(null)
+  const [err, setErr] = useState('')
+  const isPack = form.group === 'imunita' || form.group === 'fyzicka'
+
+  const set = <K extends keyof HabitForm>(k: K, v: HabitForm[K]) => setForm(f => ({ ...f, [k]: v }))
+
+  async function handleSave() {
+    if (!form.name.trim()) { setErr('Název nesmí být prázdný.'); return }
+    setBusy('save'); setErr('')
+    try { await onSave(form) } catch (e) { setErr(e instanceof Error ? e.message : 'Chyba'); setBusy(null) }
+  }
+  async function handleDelete() {
+    if (!onDelete) return
+    setBusy('delete'); setErr('')
+    try { await onDelete() } catch (e) { setErr(e instanceof Error ? e.message : 'Chyba'); setBusy(null) }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480, background: '#0e0e0e',
+          borderTopLeftRadius: 18, borderTopRightRadius: 18,
+          border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none',
+          padding: '20px 20px 28px', maxHeight: '88vh', overflowY: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F59E0B', margin: 0 }}>
+            {isNew ? 'Nový habit' : 'Upravit habit'}
+          </h2>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Název</label>
+            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Např. Anki procvičování" style={fieldStyle} autoFocus={isNew} />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Skupina</label>
+            <select value={form.group} onChange={e => set('group', e.target.value as HabitGroup)} style={{ ...fieldStyle, appearance: 'none' }}>
+              {(Object.keys(GROUP_LABELS) as HabitGroup[]).map(g => (
+                <option key={g} value={g} style={{ background: '#0e0e0e' }}>{GROUP_LABELS[g]}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Frekvence</label>
+              <input value={form.frequency} onChange={e => set('frequency', e.target.value)} placeholder="denně · 3×/tý" style={fieldStyle} />
+            </div>
+            {isPack && (
+              <div style={{ width: 90 }}>
+                <label style={labelStyle}>Kód</label>
+                <input value={form.packCode} onChange={e => set('packCode', e.target.value)} placeholder="A" maxLength={3} style={fieldStyle} />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label style={labelStyle}>Slouží (dimenze)</label>
+            <input value={form.serves} onChange={e => set('serves', e.target.value)} placeholder="japonština · sen" style={fieldStyle} />
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>{form.group === 'active' ? 'End-date (volitelné)' : 'Konec triálu (volitelné)'}</label>
+              <input type="date" value={form.until} onChange={e => set('until', e.target.value)} style={{ ...fieldStyle, colorScheme: 'dark' }} />
+            </div>
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '4px 2px' }}>
+            <input type="checkbox" checked={form.mandatory} onChange={e => set('mandatory', e.target.checked)} style={{ width: 18, height: 18, accentColor: '#F59E0B' }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>Povinné — bez grace dne (streak padá při 1 vynechání)</span>
+          </label>
+
+          {err && <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{err}</p>}
+
+          <button
+            onClick={handleSave}
+            disabled={busy !== null}
+            style={{ background: '#F59E0B', color: '#080808', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, padding: '12px 0', cursor: busy ? 'wait' : 'pointer', marginTop: 4 }}
+          >
+            {busy === 'save' ? 'Ukládám…' : isNew ? 'Přidat habit' : 'Uložit změny'}
+          </button>
+
+          {!isNew && onDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={busy !== null}
+              style={{ background: 'transparent', color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, fontSize: 13, fontWeight: 600, padding: '10px 0', cursor: busy ? 'wait' : 'pointer' }}
+            >
+              {busy === 'delete' ? 'Odebírám…' : 'Odebrat habit'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function HabitsPage() {
