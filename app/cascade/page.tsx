@@ -13,7 +13,8 @@ interface Chip {
   linkedHabits?: string[]
   hikariNote?: string
 }
-interface Dimension { name: string; progress: number; completed?: boolean; detail?: string }
+type DimKind = 'main' | 'side' | 'bonus'
+interface Dimension { name: string; progress: number; completed?: boolean; detail?: string; kind?: DimKind | null }
 
 interface Layer {
   n: number
