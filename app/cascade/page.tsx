@@ -402,24 +402,10 @@ function LayerCard({ layer }: { layer: Layer }) {
               </div>
             )}
 
-            {/* Layers 3-5: live vault milestones — clean list, names only (no per-milestone %) */}
+            {/* Layers 3-5: live vault milestones — clean list (no per-milestone %).
+                Grouped into Hlavní / Vedlejší / Bonus when the dims carry a kind (weekly L5). */}
             {layer.dimensions && layer.dimsFromVault && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {layer.dimensions.map(d => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.5, flexShrink: 0 }}>›</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>{d.name}</div>
-                      {d.detail && (
-                        <div style={{
-                          fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1,
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}>{d.detail}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <VaultDimList dims={layer.dimensions} />
             )}
 
             {/* Layer 2: curated dimensions with estimate % */}
