@@ -141,11 +141,10 @@ function habitToForm(h: Habit): HabitForm {
     h.pack === 'fyzicka' ? 'fyzicka' :
     h.status === 'active' ? 'active' :
     h.status === 'graduated' ? 'graduated' : 'trial'
-  // endDate/trialEnd are display-formatted ("30.6.") — keep the date input empty
-  // rather than feeding it a non-ISO value it can't parse.
   return {
     name: h.name, group, frequency: h.frequency, serves: h.serves,
-    mandatory: !!h.mandatory, packCode: h.packCode ?? '', until: '',
+    mandatory: !!h.mandatory, packCode: h.packCode ?? '',
+    until: h.endIso ?? h.trialIso ?? '',
   }
 }
 
