@@ -10,7 +10,6 @@ const BRANCH = 'master'
 const STATIC_PATHS = {
   sen:    'wiki/cile/cascade/sen.md',
   prijem: 'wiki/cile/cascade/prijem.md',
-  habits: 'wiki/cile/habits.md',
   memory: 'Memory.md',
 } as const
 
