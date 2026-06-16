@@ -894,8 +894,12 @@ export async function POST() {
     }
   }
 
+  // "ℹ️" lines are informational (rollover used, daily plan missing) — not failures.
+  // Only real errors flip `synced` to false, so an info note doesn't show as ⚠.
+  const realErrors = errors.filter(e => !e.startsWith('ℹ️'))
+
   return NextResponse.json({
-    synced:    errors.length === 0,
+    synced:    realErrors.length === 0,
     files:     synced,
     errors,
     timestamp: new Date().toISOString(),
