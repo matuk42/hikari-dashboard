@@ -401,8 +401,25 @@ function LayerCard({ layer }: { layer: Layer }) {
               </div>
             )}
 
-            {/* Layers 2-5: dimensions */}
-            {layer.dimensions && (
+            {/* Layers 3-5: live vault milestones — clean list, names only (no per-milestone %) */}
+            {layer.dimensions && layer.dimsFromVault && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {layer.dimensions.map(d => (
+                  <div key={d.name} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.4, flexShrink: 0 }}>›</span>
+                    <div style={{ minWidth: 0 }}>
+                      <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)' }}>{d.name}</span>
+                      {d.detail && (
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', marginLeft: 6 }}>· {d.detail}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Layer 2: curated dimensions with estimate % */}
+            {layer.dimensions && !layer.dimsFromVault && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {layer.dimensions.map(d => (
                   <div key={d.name}>
