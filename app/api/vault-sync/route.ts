@@ -181,21 +181,6 @@ function dimsFromH3(sectionMd: string): string[] {
   return h3Names(sectionMd)
 }
 
-/** Dimensions from table column "Dimenze". */
-function dimsFromTable(sectionMd: string, col: string): string[] {
-  return mdTable(sectionMd)
-    .map(r => r[col] ?? '')
-    .filter(n => n && n !== '—' && !/^\d+$/.test(n))
-}
-
-/** Numbered bullet items from a section. */
-function numberedItems(sectionMd: string): string[] {
-  return sectionMd.split('\n')
-    .filter(l => /^\d+\./.test(l.trim()))
-    .map(l => stripBold(l.replace(/^\d+\.\s*/, '').split(' — ')[0]))
-    .filter(Boolean)
-}
-
 /** A cascade milestone: a name + optional detail (for the clean vault list). */
 type DimItem = { name: string; detail: string }
 
