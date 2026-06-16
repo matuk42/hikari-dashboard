@@ -18,7 +18,8 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - **Streaky** — pravdivé „X dní v řadě": denní přepočet při otevření appky, grace day (1 den odpuštěn), autoškola = mandatory (bez grace). Vault baseline (Anki=45) zachován.
 - **Home** — streak hero (max), habity X/Y, HOPE dnes, **3 sekce úkolů reálně z vaultu** (Hlavní + Vedlejší + Bonus, každý s detailem za pomlčkou).
 - **kibou** — slidery mood/energy/hope s vlastními PNG ikonkami (mood=kameny, energy=blesk, hope=All Might; všechny čtvercově paddované, transparentní pozadí). Multi-save během dne ✓ (UPSERT, ne INSERT). 30d graf.
-- **Cascade** — kurátované vrstvy + chipy s detailem, štítek „odhad" (viz rozhodnutí níže).
+- **Cascade** — týden (L5) a měsíc (L4) **počítá Hikari z habitů** (reálná % z DB, štítek „počítá Hikari"); rok a 5 let zatím kurátovaný „odhad".
+- **AI brain / ranní cron** — `/api/cron/morning` (Vercel `0 6 * * *`) + on-demand `/api/hikari/refresh` (tlačítko „Přepočítej Hikari"). Krok 1 streaky, krok 2 cascade % (L4/L5), krok 3 kontext z DB (habits, streaky, týdenní priority, poslední HOPE, Hikari paměť), krok 4 Gemini `gemini-2.5-flash` brief (JSON: hlavní/vedlejší/bonus + cascade_nudge + reasoning) → cache `ai_daily_brief`, log do `ai_invocations`. UTF-8/Windows fetch gotcha ošetřen (`cache: no-store` + ruční TextDecoder). Home zatím zobrazuje **nudge + reasoning** (3+2+1 úkoly z briefu se ještě nerenderují — viz Co dál).
 - **Vault sync** — tlačítko na home, dynamické cesty (aktuální týden/měsíc), parsuje habity+pack, cascade L1-L5 (L5 = full replace, ne accumulate), priority (Hlavní/Vedlejší/Bonus se sub-sekcemi a `**Name** — detail` formátem), Memory.md bootstrap (16 H2 sekcí → hikari_memory). **Weekly rollover ✓** — zkouší W+1, current, W-1, …, až 6 týdnů zpět. W+1 se zkouší první — pokud je nedělní W## plán napsaný dopředu, sync ho načte správně.
 - Google login, onboarding, PWA, CSP.
 
