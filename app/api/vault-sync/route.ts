@@ -664,15 +664,16 @@ export async function POST() {
       }, errors)
       if (l3id) await replaceDimensions(db, l3id, 3, l3dims, errors)
 
-      // Layer 4 — Měsíc — from monthly review (skip if not fetched)
+      // Layer 4 — Měsíc — from monthly review (full refresh, name + detail).
+      // Rolls over automatically: FILES.monthly is the current month's file.
       if (raw.monthly) {
         const monthlySec = mdSection(raw.monthly, '### SEN — ')
-        const l4dims = numberedItems(monthlySec)
+        const l4dims = parseMonthlyMilestones(monthlySec)
         const l4id = await upsertLayer(db, pid, {
           tree: 'sen', layer: 4, title: 'Měsíc', description: monthLabel(),
           deadline: endOfMonthISO(), sourceFile: FILES.monthly,
         }, errors)
-        if (l4id) await insertNewDimensions(db, l4id, l4dims)
+        if (l4id) await replaceDimensions(db, l4id, 4, l4dims, errors)
       }
 
       // Layer 5 — Týden — priorities (Hlavní + Vedlejší + Bonus) from weekly file.
