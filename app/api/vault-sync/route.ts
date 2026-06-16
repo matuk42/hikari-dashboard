@@ -471,7 +471,7 @@ function dailyGroup(prioSec: string, marker: string): DailyTask[] {
     if (/^\s*\*\*(Hlavní|Vedlejší|Bonus)/.test(lines[i])) break  // next group
     if (/^\s*(?:\d+\.|[-•*])\s+/.test(lines[i])) {
       const it = parsePriorityItem(lines[i])
-      if (it?.name) items.push({ title: it.name, detail: it.detail })
+      if (it?.name) items.push({ title: it.name, detail: stripBold(it.detail) })
     }
   }
   return items
