@@ -423,14 +423,12 @@ export async function runMorningCron(
     error:       briefError,
   }).select('id').maybeSingle()
 
-  // Cache brief
+  // Cache brief — only nudge + reasoning. Daily tasks (hlavni/vedlejsi/bonus) are
+  // owned by vault-sync and must not be touched here (disjoint columns, no clash).
   if (brief) {
     await db.from('ai_daily_brief').upsert({
       profile_id:    profileId,
       date:          today,
-      hlavni:        brief.hlavni,
-      vedlejsi:      brief.vedlejsi,
-      bonus:         brief.bonus,
       cascade_nudge: brief.cascade_nudge,
       reasoning:     brief.reasoning,
       invocation_id: invoc?.id ?? null,
