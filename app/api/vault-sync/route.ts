@@ -162,6 +162,18 @@ function stripBold(s: string): string {
   return s.replace(/\*\*/g, '').trim()
 }
 
+/** Tidy a milestone detail for display: drop wikilinks, bold, parenthetical notes,
+ *  collapse whitespace, strip trailing punctuation. "" if nothing meaningful left. */
+function cleanDetail(s: string): string {
+  return s
+    .replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, '$1')  // [[a|b]] / [[a]] → a
+    .replace(/\*\*/g, '')
+    .replace(/\s*\([^)]*\)\s*/g, ' ')                   // drop (parenthetical) notes
+    .replace(/\s+/g, ' ')
+    .replace(/[\s:–—-]+$/, '')                          // trailing punctuation
+    .trim()
+}
+
 // ─── Parsers ──────────────────────────────────────────────────────────────────
 
 /** Dimensions from H3 headers (life dream section or 5-year section). */
