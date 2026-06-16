@@ -263,17 +263,14 @@ ${prios}
 Vzory a kontext z Hikari paměti:
 ${memStr}
 
-ÚKOL — vytvoř ranní mentorský brief na DNES. Konkrétní akce, ne obecné rady. Propojuj tečky: odkazuj na streaky, dnešní stav habits, vzory, a hlavně na to, co posouvá sen. Když něco vázne, pojmenuj to přímo s důkazem z dat.
+ÚKOL — vytvoř ranní mentorskou zprávu na DNES. Konkrétní, ne obecné rady. Propojuj tečky: odkazuj na streaky, dnešní stav habits, vzory, týdenní priority, a hlavně na to, co posouvá sen. Když něco vázne, pojmenuj to přímo s důkazem z dat. (Konkrétní seznam denních úkolů NEgeneruj — ty si Matyáš píše sám; tvoje role je mentorský pohled a propojení.)
 
 Odpověz POUZE čistým JSON (česky, s diakritikou):
 {
-  "hlavni":   [{"title":"...","project":"...","reason":"konkrétní proč, vazba na týden/sen"}],
-  "vedlejsi": [{"title":"...","project":"...","reason":"..."}],
-  "bonus":    [{"title":"...","project":"...","reason":"..."}],
   "cascade_nudge": "2-4 věty: úderná mentorská zpráva na dnešek. Která priorita nejvíc posouvá sen a proč. HOPE rámec, přímý tón.",
   "reasoning": "3-5 vět: connecting the dots — propoj dnešní stav (habits, streaky, HOPE, týden) do jednoho obrazu. Pojmenuj vzor nebo riziko. Co dnešek znamená v kontextu cesty ke snu."
 }
-Hlavní 2-3, vedlejší 1-2, bonus 1-2. cascade_nudge a reasoning musí být bohaté a osobní, ne generické.`
+cascade_nudge a reasoning musí být bohaté a osobní, ne generické.`
 
   const body = JSON.stringify({
     contents:         [{ parts: [{ text: prompt }] }],
