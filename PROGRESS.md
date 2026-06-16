@@ -73,6 +73,11 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 ## 🔬 Ověřovací nástroje
 - `node scripts/parse-check.mjs` — parser proti **lokálnímu** vaultu (po změně formátu vaultu).
 - `node scripts/live-fetch-check.mjs` — **reálný** GitHub fetch tokenem + parse (ověří sync až po DB zápis).
+- `node scripts/cascade-check.mjs` — L3/L4 cascade parsery proti lokálnímu vaultu (jméno+detail milníků).
+- `node scripts/cascade-sync-apply.mjs` — jednorázově spustí reálný full-refresh cascade L3/L4/L5 (GitHub fetch + service key) — pro pročištění/re-apply mimo appku.
+- `node scripts/streak-dryrun.mjs` — porovná `current_streak` v cache vs. přepočet z logů (nic nezapisuje).
+- `node scripts/streak-apply.mjs` — jednorázově přepočítá streaky z logů a zapíše do `streaks_cache` (best zachová).
+- `node scripts/check-anki.mjs` — diagnostika konkrétního habitu (Anki): habits + streaks_cache + posledních ~15 logů.
 
 ## 📌 Stav modulů vs PRD (W23–W27)
 Hotovo: Habits, kibou, Cascade UI + reálná % týden/měsíc, Vault sync (ruční) + denní úkoly z mentor-feedbacku, login, onboarding, PWA, Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + cascade % + Gemini nudge/reasoning)**.
