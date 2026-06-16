@@ -26,44 +26,7 @@ export function createAdminClient() {
 }
 
 // ─── Streak recalculation ─────────────────────────────────────────────────────
-
-function streakFromDates(
-  doneDates: string[],   // all 'done' date strings for this habit (any order)
-  mandatory: boolean,
-  today: string          // "YYYY-MM-DD"
-): { streak: number; best: number; lastDone: string | null } {
-  const doneSet = new Set(doneDates)
-  let streak    = 0
-  let best      = 0
-  let graceUsed = false
-  const lastDone: string | null = [...doneDates].sort().reverse()[0] ?? null
-
-  // Walk backwards starting from today (today may or may not be done)
-  for (let i = 0; i <= 400; i++) {
-    const d = new Date(`${today}T12:00:00Z`)
-    d.setDate(d.getDate() - i)
-    const s = d.toISOString().slice(0, 10)
-    const isDone = doneSet.has(s)
-
-    if (i === 0) {
-      // Today: if done, count it; if not, don't break (day still in progress)
-      if (isDone) { streak++; best = Math.max(best, streak); graceUsed = false }
-      continue
-    }
-
-    if (isDone) {
-      streak++
-      best = Math.max(best, streak)
-      graceUsed = false
-    } else if (!mandatory && !graceUsed && streak > 0) {
-      graceUsed = true  // one rest day forgiven
-    } else {
-      break
-    }
-  }
-
-  return { streak, best, lastDone }
-}
+// The algorithm lives in ./streak-core (shared with the client load path).
 
 export async function recalcStreaks(
   db: ReturnType<typeof createAdminClient>,
