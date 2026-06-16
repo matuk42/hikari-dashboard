@@ -305,6 +305,7 @@ export default function HomePage() {
     weekTitle: 'W23',
     aiNudge: null, aiReasoning: null, aiGeneratedAt: null,
     weekProgress: 0,
+    weekPriorityCount: 0,
     mainTasks: FALLBACK_MAIN,
     sideTasks: [],
     bonusTasks: [],
