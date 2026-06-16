@@ -25,8 +25,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - Google login, onboarding, PWA, CSP.
 
 ## 🧭 Co dál (priorita shora)
-1. **Dotáhnout AI brain (cron jádro hotové):**
-   - **Denní brief 3+2+1 úkolů na home** — Gemini je generuje (hlavní/vedlejší/bonus v `ai_daily_brief`), ale home je zatím nerenderuje (ukazuje jen nudge + reasoning; úkoly na home jsou pořád z vault sync). Napojit brief.hlavni/vedlejsi/bonus do home.
+1. **Dotáhnout AI brain (cron jádro + denní úkoly hotové):**
    - **Detekce vzorů** ("úterý low energy", "les → +HOPE") — Gemini nad nimi reasonuje z paměti, ale není automatický pattern-detection zápis do DB.
    - **Živá energetická osa** z HOPE dat (teď statická — cron nepíše `energy_blocks`).
    - **Rok/5 let reálná %** (zatím „odhad").
