@@ -372,7 +372,7 @@ export default function HomePage() {
           .eq('profile_id', profileId).eq('tree', 'sen').eq('layer', 5)
           .maybeSingle(),
         supabase.from('ai_daily_brief')
-          .select('cascade_nudge, reasoning, generated_at')
+          .select('hlavni, vedlejsi, bonus, cascade_nudge, reasoning, generated_at')
           .eq('profile_id', profileId).eq('date', dateKey)
           .maybeSingle(),
       ])
