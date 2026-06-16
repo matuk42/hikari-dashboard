@@ -423,8 +423,7 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, mainTasks, sideTasks, bonusTasks, aiNudge, aiReasoning, aiGeneratedAt } = data
-  const weekTaskCount = mainTasks.length + sideTasks.length + bonusTasks.length
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, aiNudge, aiReasoning, aiGeneratedAt } = data
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
