@@ -502,7 +502,7 @@ const REAL_PCT_LAYERS = new Set([4, 5])
 const VAULT_DIM_LAYERS = new Set([3, 4, 5])
 
 type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
-type DbDim = { name: string; detail: string | null; kind: DimKind | null }
+type DbDim = { name: string; detail: string | null; kind: DimKind | null; progress: number }
 
 export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
