@@ -173,16 +173,32 @@ function LuffySilhouette({ opacity = 0.06, right = -10, height = 160 }: {
   )
 }
 
-function TaskRow({ name, detail, dim = false, last = false }: {
-  name: string; detail?: string; dim?: boolean; last?: boolean
+function TaskRow({ name, detail, dim = false, last = false, done = false, onClick }: {
+  name: string; detail?: string; dim?: boolean; last?: boolean; done?: boolean; onClick?: () => void
 }) {
   return (
-    <div style={{ padding: '10px 14px', borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.04)' }}>
-      <div style={{ fontSize: 13, color: dim ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.85)', lineHeight: 1.35 }}>
+    <div
+      onClick={onClick}
+      style={{
+        padding: '10px 14px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.04)',
+        cursor: onClick ? 'pointer' : 'default',
+        opacity: done ? 0.5 : 1,
+        transition: 'opacity 0.15s ease',
+      }}
+    >
+      <div style={{
+        fontSize: 13, lineHeight: 1.35,
+        color: dim ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.85)',
+        textDecoration: done ? 'line-through' : 'none',
+      }}>
         {name}
       </div>
       {detail && (
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3 }}>
+        <div style={{
+          fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3,
+          textDecoration: done ? 'line-through' : 'none',
+        }}>
           {detail}
         </div>
       )}
