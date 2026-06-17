@@ -708,7 +708,7 @@ export async function runMorningCron(
   let milestones: MilestoneResult | undefined
   if (withMilestones) {
     try {
-      milestones = await calcMilestonePct(db, profileId, today, cascade)
+      milestones = await calcMilestonePct(db, profileId, today, cascade, vaultState)
     } catch (e) {
       milestones = { dims: 0, layers: 0, error: e instanceof Error ? e.message : String(e) }
     }
