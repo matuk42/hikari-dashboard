@@ -646,6 +646,16 @@ export async function runMorningCron(
     (weekDimRow.data as { cascade_dimensions: WeekDim[] } | null)?.cascade_dimensions ?? []
   ).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 
+  // 3b — Assemble current actual state from the vault review hierarchy (plans +
+  // last completed reviews + recent feedbacks). Shared by the brief and the
+  // milestone calc. Daily-cron cost: ~5–7 GitHub fetches; degrades to '' on
+  // missing token / fetch error so the brief still runs.
+  const ghToken = process.env.GITHUB_TOKEN ?? ''
+  let vaultState = ''
+  if (ghToken) {
+    try { vaultState = (await gatherVaultState(ghToken, today)).text } catch { /* degrade silently */ }
+  }
+
   // 4 — Gemini brief
   const t0 = Date.now()
   let brief: BriefData | null = null
@@ -660,6 +670,7 @@ export async function runMorningCron(
       hopeYest:       hopeRow.data ?? null,
       memory:         (memRows.data ?? []).map(m => m.content as string),
       todayHabits,
+      vaultState,
     })
   } catch (e) {
     briefError = e instanceof Error ? e.message : String(e)
