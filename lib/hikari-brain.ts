@@ -310,23 +310,96 @@ async function ghFetchRaw(path: string, token: string): Promise<string | null> {
   return new TextDecoder('utf-8').decode(buf)   // UTF-8 explicit (Windows CP1250 guard)
 }
 
-function isoDaysAgoFrom(today: string, n: number): string {
-  const d = new Date(`${today}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - n)
+// ── Date / vault-path helpers (UTC) for the state assembly ──────────────────────
+function shiftDays(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
+function monthOffset(today: string, off: number): string {
+  const d = new Date(`${today.slice(0, 7)}-01T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() + off)
+  return d.toISOString().slice(0, 7)
+}
+function endOfMonthISO(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10)   // day 0 of next month
+}
+function isoWeekStr(d: Date): string {
+  const t = new Date(d); const dow = t.getUTCDay() || 7
+  t.setUTCDate(t.getUTCDate() + 4 - dow)                          // Thursday of this week
+  const y = t.getUTCFullYear()
+  const wn = Math.ceil(((t.getTime() - Date.UTC(y, 0, 1)) / 86400000 + 1) / 7)
+  return `${y}-W${String(wn).padStart(2, '0')}`
+}
+function isoWeekOf(iso: string): string { return isoWeekStr(new Date(`${iso}T12:00:00Z`)) }
+function sundayOf(iso: string): string { return shiftDays(isoMondayOf(iso), 6) }
 
-/** Last `want` mentor-feedback files, scanning up to `scanBack` days back. */
-async function recentFeedbacks(token: string, today: string, want = 5, scanBack = 12): Promise<string[]> {
-  const out: string[] = []
-  for (let i = 1; i <= scanBack && out.length < want; i++) {
-    const date = isoDaysAgoFrom(today, i)
-    try {
-      const md = await ghFetchRaw(`logs/mentor-feedback/${date}-feedback.md`, token)
-      if (md) out.push(`### Feedback ${date}\n${md.trim()}`)
-    } catch { /* skip a bad fetch, keep collecting */ }
+// A period file still carrying this marker is plan-only (current period) — its
+// review isn't written yet, so it can't serve as actual-state evidence for %.
+const PLAN_MARKER = 'vyplnit na konci'
+
+/**
+ * Assemble the current ACTUAL state from the vault review hierarchy, bounded:
+ *   1. current month + week PLAN  (targets/context — whole file)
+ *   2. latest COMPLETED monthly review  (step back past plan-only months)
+ *   3. COMPLETED weekly reviews after that month's end
+ *   4. daily mentor-feedbacks after the last completed week's end
+ * The year layer needs months+weeks+days, which is a superset of what month/week
+ * need, so one assembly serves the whole milestone calc + the brief. ~5–7 files.
+ */
+async function gatherVaultState(token: string, today: string): Promise<{ text: string; files: string[] }> {
+  const parts: string[] = []
+  const files: string[] = []
+  const add = (label: string, path: string, md: string) => {
+    parts.push(`### ${label} (${path})\n${md.trim()}`); files.push(path)
   }
-  return out
+
+  // 1 — current month + week PLAN (whole file: plan + as-yet-empty review)
+  const curMonth = monthOffset(today, 0)
+  const curWeek  = isoWeekOf(today)
+  const cmMd = await ghFetchRaw(`wiki/reviews/monthly/${curMonth}.md`, token)
+  if (cmMd) add(`Plán měsíce ${curMonth}`, `monthly/${curMonth}`, cmMd)
+  const cwMd = await ghFetchRaw(`wiki/reviews/weekly/${curWeek}.md`, token)
+  if (cwMd) add(`Plán týdne ${curWeek}`, `weekly/${curWeek}`, cwMd)
+
+  // 2 — latest COMPLETED monthly review (skip plan-only). Bound 6 months back.
+  let lastMonthEnd: string | null = null
+  for (let i = 0; i <= 6; i++) {
+    const ym = monthOffset(today, -i)
+    const md = i === 0 ? cmMd : await ghFetchRaw(`wiki/reviews/monthly/${ym}.md`, token)
+    if (md && !md.includes(PLAN_MARKER)) {
+      if (i > 0) add(`Měsíční review ${ym}`, `monthly/${ym}`, md)   // i==0 already added as plan
+      lastMonthEnd = endOfMonthISO(ym)
+      break
+    }
+  }
+
+  // 3 — COMPLETED weekly reviews after lastMonthEnd. Bound 8 weeks back; current
+  // week is plan-only (added above) so start one week back.
+  const weeks: Array<{ wk: string; end: string; md: string }> = []
+  for (let i = 1; i <= 8; i++) {
+    const probe = shiftDays(today, -7 * i)
+    const wkEnd = sundayOf(probe)
+    if (lastMonthEnd && wkEnd <= lastMonthEnd) break    // already covered by the monthly review
+    const wk = isoWeekOf(probe)
+    const md = await ghFetchRaw(`wiki/reviews/weekly/${wk}.md`, token)
+    if (md && !md.includes(PLAN_MARKER) && !weeks.some(w => w.wk === wk)) {
+      weeks.push({ wk, end: wkEnd, md })
+    }
+  }
+  const lastWeekEnd = weeks[0]?.end ?? lastMonthEnd     // weeks[0] = most recent completed week
+  for (const w of [...weeks].reverse()) add(`Týdenní review ${w.wk}`, `weekly/${w.wk}`, w.md)
+
+  // 4 — daily feedbacks after the last completed week (chronological). Bound 12 days.
+  const days: Array<{ date: string; md: string }> = []
+  for (let i = 1; i <= 12; i++) {
+    const date = shiftDays(today, -i)
+    if (lastWeekEnd && date <= lastWeekEnd) break
+    const md = await ghFetchRaw(`logs/mentor-feedback/${date}-feedback.md`, token)
+    if (md) days.push({ date, md })
+  }
+  for (const d of [...days].reverse()) add(`Feedback ${d.date}`, d.date, d.md)
+
+  return { text: parts.join('\n\n---\n\n'), files }
 }
 
 export interface MilestoneResult {
