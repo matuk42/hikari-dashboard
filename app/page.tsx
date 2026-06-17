@@ -410,6 +410,12 @@ export default function HomePage() {
       const sideTasks  = toItems(brief?.vedlejsi, 'side')
       const bonusTasks = toItems(brief?.bonus,    'bonus')
 
+      // done_keys is a separate, defensive read so a pre-migration-006 DB (no such
+      // column) degrades to "nothing struck" instead of breaking the task list.
+      const dkRes = await supabase.from('ai_daily_brief')
+        .select('done_keys').eq('profile_id', profileId).eq('date', dateKey).maybeSingle()
+      const doneKeys = (dkRes.data?.done_keys as string[] | null) ?? []
+
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
         habitsTotal:  trackableIds.length,
