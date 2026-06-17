@@ -702,9 +702,19 @@ export async function runMorningCron(
     try { vaultState = (await gatherVaultState(ghToken, today)).text } catch { /* degrade silently */ }
   }
 
-  // Yesterday's daily-task completion (home click-to-strike) — a signal for the nudge.
-  let yesterdayTasks = ''
-  try { yesterdayTasks = await summarizeYesterdayTasks(db, profileId, today) } catch { /* degrade */ }
+  // Daily-task completion (home click-to-strike) — today's in-progress (so a mid-day
+  // "Přepočítej Hikari" reflects it) + yesterday's outcome. A signal for the nudge.
+  let taskState = ''
+  try {
+    const [td, yd] = await Promise.all([
+      summarizeDayTasks(db, profileId, today),
+      summarizeDayTasks(db, profileId, shiftDays(today, -1)),
+    ])
+    const segs: string[] = []
+    if (td) segs.push(`dnes zatím ${td}`)
+    if (yd) segs.push(`včera ${yd}`)
+    taskState = segs.join(' | ')
+  } catch { /* degrade */ }
 
   // 4 — Gemini brief
   const t0 = Date.now()
