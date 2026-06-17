@@ -534,7 +534,7 @@ export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
   const [dbLayers, setDbLayers] = useState<Record<number, DbLayer>>({})
   const [dbDims, setDbDims] = useState<Record<number, DbDim[]>>({})
-  const [hasReal, setHasReal] = useState(false)
+  const [habitPct, setHabitPct] = useState<{ week: number; month: number } | null>(null)
 
   useEffect(() => {
     setMounted(true)
