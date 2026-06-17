@@ -579,6 +579,25 @@ export default function CascadePage() {
         dimMap[Number(ln)].sort((a, b) => a._sort - b._sort)
       }
       setDbDims(dimMap)
+
+      // Live habit-adherence % (week/month) — the deterministic "in rhythm?" badge,
+      // same math as the server calcCascadePct via the shared lib/cascade-pct helpers.
+      const today      = new Date().toISOString().slice(0, 10)
+      const monthStart = today.slice(0, 7) + '-01'
+      const { data: hb } = await supabase.from('habits').select('id')
+        .eq('profile_id', profile.id).neq('category', 'graduated').neq('category', 'retired')
+      const hIds = (hb ?? []).map(h => h.id as string)
+      if (hIds.length) {
+        const { data: hlogs } = await supabase.from('habit_logs').select('date')
+          .in('habit_id', hIds).gte('date', monthStart).lte('date', today).eq('status', 'done')
+        const weekStart = isoMondayOf(today)
+        const weekDone  = (hlogs ?? []).filter(l => (l.date as string) >= weekStart).length
+        const { week: wd, month: md } = elapsedDays(today)
+        setHabitPct({
+          week:  adherencePct(weekDone,             hIds.length, wd),
+          month: adherencePct((hlogs ?? []).length, hIds.length, md),
+        })
+      }
     }).catch(() => {})
   }, [])
 
