@@ -436,7 +436,23 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, aiNudge, aiReasoning, aiGeneratedAt } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, doneKeys, aiNudge, aiReasoning, aiGeneratedAt } = data
+
+  // Click a daily task → strike it through. Optimistic; reverts on failure.
+  const toggleTask = async (key: string) => {
+    const flip = (keys: string[]) => keys.includes(key) ? keys.filter(k => k !== key) : [...keys, key]
+    setData(prev => ({ ...prev, doneKeys: flip(prev.doneKeys) }))
+    try {
+      const res = await fetch('/api/hikari/task-toggle', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ key, date: dateKey }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setData(prev => ({ ...prev, doneKeys: flip(prev.doneKeys) }))   // revert
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#ededed', fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
