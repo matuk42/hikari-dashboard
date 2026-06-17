@@ -276,6 +276,9 @@ ${prios}
 Vzory a kontext z Hikari paměti:
 ${memStr}
 
+AKTUÁLNÍ STAV Z VAULTU (plány měsíce/týdne + poslední DOKONČENÉ reviews + denní feedbacky — skutečný stav věcí):
+${ctx.vaultState || '(nedostupné)'}
+
 ÚKOL — vytvoř ranní mentorskou zprávu na DNES. Konkrétní, ne obecné rady. Propojuj tečky: odkazuj na streaky, dnešní stav habits, vzory, týdenní priority, a hlavně na to, co posouvá sen. Když něco vázne, pojmenuj to přímo s důkazem z dat. (Konkrétní seznam denních úkolů NEgeneruj — ty si Matyáš píše sám; tvoje role je mentorský pohled a propojení.)
 
 Odpověz POUZE čistým JSON (česky, s diakritikou):
