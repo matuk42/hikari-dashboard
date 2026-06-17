@@ -344,13 +344,14 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 
 ### 7.1 Tři vrstvy "myšlení"
 
-**Vrstva 1 — Ranní cron (Vercel cron 6:00, ~30s, Claude API):**
-1. Spočítej streaky → `UPDATE streaks_cache`
-2. Spočítej cascade % per dimenze → `UPDATE cascade_dimensions.progress_pct`
-3. Detekuj patterns (např. "úterý vždy low energy") → `INSERT hikari_memory status='proposed'`
-4. Vygeneruj denní brief (3 hlavní + 2 vedlejší + 1 bonus) → `INSERT ai_daily_brief`
-5. Aktualizuj `energy_blocks` z HOPE 30d
-6. Loguj invokaci → `INSERT ai_invocations` (tokens, cost, duration)
+**Vrstva 1 — Ranní cron (Vercel cron 6:00, Gemini) — reálný stav 17.6:**
+1. ✅ Spočítej streaky → `UPDATE streaks_cache`
+2. ✅ Vygeneruj denní mentor brief (`cascade_nudge` + `reasoning`; denní úkoly NE — ty z vaultu) → `ai_daily_brief`. Kontext: streaky, habits, HOPE, paměť, **vault-state** (`gatherVaultState`) + odškrtnuté úkoly + aktuální čas.
+3. ⏳ Detekce patterns → `hikari_memory status='proposed'` — Gemini nad nimi reasonuje, ale zatím NEzapisuje (TODO).
+4. ⏳ `energy_blocks` z HOPE 30d — zatím statické (TODO „živá energetická osa").
+5. ✅ Loguj invokaci → `ai_invocations`.
+
+**Cascade milníková % NENÍ v 6:00 cronu** — běží jen on-demand přes „Přepočítej Hikari" (`calcMilestonePct`, viz §6.3), protože milníky se mění pomalu a je to těžší call.
 
 **Vrstva 2 — Reaktivní (klik / interakce, ~bez AI):**
 - Klikneš habit ✅ → `INSERT habit_logs` + rebuild streak. Žádný AI call.
