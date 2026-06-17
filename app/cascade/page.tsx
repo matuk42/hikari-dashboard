@@ -407,8 +407,9 @@ function LayerCard({ layer }: { layer: Layer }) {
               </span>
               <span style={{ fontSize: 10, color: '#555' }}>{layer.timeframe}</span>
             </div>
-            {/* Countdown */}
-            {layer.deadline && (
+            {/* Countdown — skip for the weekly layer (L5); its deadline rolls over so
+                the count is near-0 and meaningless. */}
+            {layer.deadline && layer.n !== 5 && (
               <div suppressHydrationWarning style={{ fontSize: 10, color: 'rgba(245,158,11,0.4)', marginTop: 2 }}>
                 {daysUntil(layer.deadline)} dní
               </div>
