@@ -719,6 +719,7 @@ export async function runMorningCron(
       memory:         (memRows.data ?? []).map(m => m.content as string),
       todayHabits,
       vaultState,
+      yesterdayTasks,
     })
   } catch (e) {
     briefError = e instanceof Error ? e.message : String(e)
