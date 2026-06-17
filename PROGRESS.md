@@ -4,11 +4,26 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-16 (večer, session 3)
+**Poslední aktualizace:** 2026-06-17 (session 4)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (16.6. session 3)
+## ✅ VYŘEŠENO tuto session (17.6. session 4)
+
+**1. Migrace 005 spuštěna** — `ai_daily_brief.hlavni` už není NOT NULL. Ranní cron může vložit řádek jen s nudge/reasoning bez pádu.
+
+**2. Cascade milníková % přes Gemini — POSTAVENO (on-demand).**
+- **Co:** Gemini odhaduje % u jednotlivých milníků L3 (rok) / L4 (měsíc) / L5 (týden) + celkové layer-% pro L2 (5 let) a L3 (rok). Náhrada za hardcoded odhady.
+- **Kde:** nová `calcMilestonePct` v `lib/hikari-brain.ts`. Běží **JEN přes tlačítko „Přepočítej Hikari"** (`runMorningCron(..., withMilestones=true)`), ranní cron 6:00 ji NESPOUŠTÍ (milníky se mění pomalu, je to těžší call). Rozhodnutí Matyáše: on-demand + kontext = dashboard data + poslední feedbacky.
+- **Kontext pro Gemini:** habits, streaky, týden/měsíc %, HOPE (7d), Hikari paměť + **posledních ~5 mentor-feedbacků z vaultu** (GitHub fetch přes `ghFetchRaw`/`recentFeedbacks`, UTF-8 guard). Prompt je analytický (temp 0.3), ne mentorský. Vrací JSON `{milestones:{m0..mN}, layer_5let, layer_rok}`.
+- **Zápis:** `cascade_dimensions.progress_pct` per milník (match přes klíč m→id), `cascade_layers.progress_pct` pro L2/L3. Clamp 0–100. Log do `ai_invocations` (purpose `cascade_milestones`).
+- **Refaktor:** sdílený `geminiGenerate` (fetch+retry+UTF-8 decode) — používá ho brief i milníky (DRY).
+- **Stránka (`cascade/page.tsx`):** čte `progress_pct` dimenzí → `VaultDimRow` ukazuje % + tenký bar (jen když >0; před prvním výpočtem je vše 0 → čistý seznam jako dřív). L2/L3 layer-% z DB když >0, jinak kurátovaný odhad. Notice text rozlišuje 3 stavy (Gemini milníky / jen habit % / odhad).
+- Build + lint čisté (mé soubory; ostatní lint errory pre-existing).
+
+---
+
+## ✅ VYŘEŠENO dříve (16.6. session 3)
 
 **1. Anki streak ukazoval špatně (1 místo 3) — OPRAVENO.**
 - Příčina byla architektonická, ne chybějící data. Logy v `habit_logs` byly správně (3denní run), ale klientská logika streak jen **lámala na 0** (`reconcileStreaks`) a inkrementovala `±1` (`bumpStreak`) — nikdy ho nepostavila zpět z logů. Cache se tím rozjela od reality.
