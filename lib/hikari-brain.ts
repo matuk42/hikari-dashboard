@@ -137,20 +137,14 @@ export async function calcCascadePct(
     return { week: 0, month: 0, errors }
   }
 
-  const n          = ids.length
-  const weekStart  = isoMonday(today)
-  const weekLogs   = (logs ?? []).filter(l => (l.date as string) >= weekStart)
+  const n         = ids.length
+  const weekStart = isoMondayOf(today)
+  const weekLogs  = (logs ?? []).filter(l => (l.date as string) >= weekStart)
 
   // Elapsed days INCLUDING today — Monday with 2/19 done = ~11%, not 0%.
-  // (Earlier it divided by days-before-today, so the first day of any period
-  // was always 0% even after completing habits.)
-  const d = new Date(`${today}T12:00:00Z`)
-  const dayOfWeek  = d.getDay() === 0 ? 7 : d.getDay()  // Sun→7 Mon→1
-  const weekDays   = dayOfWeek                          // days elapsed this week incl. today
-  const monthDays  = parseInt(today.slice(8), 10)       // day-of-month = days elapsed incl. today
-
-  const week  = Math.min(100, Math.round((weekLogs.length    / (n * weekDays))  * 100))
-  const month = Math.min(100, Math.round(((logs ?? []).length / (n * monthDays)) * 100))
+  const { week: weekDays, month: monthDays } = elapsedDays(today)
+  const week  = adherencePct(weekLogs.length,    n, weekDays)
+  const month = adherencePct((logs ?? []).length, n, monthDays)
 
   return { week, month, errors }
 }
