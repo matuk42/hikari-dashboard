@@ -525,7 +525,7 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 | Auth | Supabase Google OAuth, single-email restrict |
 | Hosting | Vercel (auto-deploy z GitHub) |
 | PWA | next-pwa nebo Next.js native manifest |
-| AI výpočty | Claude API (Sonnet 4.6) — výsledky cache v Supabase, log v `ai_invocations` |
+| AI výpočty | **Gemini API (`gemini-2.5-flash`)** — výsledky cache v Supabase, log v `ai_invocations`. (Původně plánován Claude/Sonnet; realita = Gemini, free-tier dostačuje na 1 brief/den + on-demand.) Sdílený `geminiGenerate` (retry 503/429, UTF-8 decode). AI se NIKDY nevolá při renderu. |
 | Vault delivery | Private Git repo (GitHub) — push z PC, fetch ze serveru |
 | Vault parser | Node.js script — čte .md soubory, parsuje frontmatter + tables + wikilinks, zapíše do Supabase |
 | CLI Hikari ↔ Supabase | Claude Code CLI volá Supabase REST API přes service role key (server-side) |
