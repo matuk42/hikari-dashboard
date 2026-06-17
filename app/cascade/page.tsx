@@ -28,6 +28,9 @@ interface Layer {
   dimensions?: Dimension[]
   /** When true the milestones are the live vault list — render names only (no per-milestone %). */
   dimsFromVault?: boolean
+  /** Live habit-adherence % for this period (week/month) — shown as a small badge. */
+  habitPct?: number
+  habitLabel?: string
 }
 
 const LAYERS: Layer[] = [
