@@ -428,6 +428,7 @@ export default function HomePage() {
         mainTasks:    mainTasks.length > 0 ? mainTasks : FALLBACK_MAIN,
         sideTasks,
         bonusTasks,
+        doneKeys,
         aiNudge:       brief?.cascade_nudge ?? null,
         aiReasoning:   brief?.reasoning     ?? null,
         aiGeneratedAt: brief?.generated_at  ?? null,
