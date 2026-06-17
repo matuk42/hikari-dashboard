@@ -585,29 +585,30 @@ Odpověz POUZE čistým JSON (žádný text navíc):
   return { dims: dimsUpdated, layers: layersUpdated, error: null }
 }
 
-// ─── Yesterday's daily-task completion (signal for the brief) ───────────────────
-// Reads yesterday's ai_daily_brief tasks + done_keys (set by home click-to-strike)
-// and summarizes "splněno hlavní 2/3 · …" + names the undone main tasks. Degrades
-// to '' before migration 006 (no done_keys column) — select errors → no row.
+// ─── Daily-task completion summary (signal for the brief) ───────────────────────
+// Summarizes one day's ai_daily_brief tasks + done_keys (set by home click-to-strike)
+// as "hlavní 2/3 · vedlejší 1/2 …" + the undone main tasks. Read live, so pressing
+// "Přepočítej Hikari" mid-day reflects today's in-progress checkmarks; the 6:00 cron
+// sees today as 0/Y (just planned) + yesterday as the real outcome. Degrades to ''
+// before migration 006 (no done_keys column) — select errors → no row.
 
 type DbTask = { title?: string; name?: string }
 
-async function summarizeYesterdayTasks(
+async function summarizeDayTasks(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
-  today: string
+  date: string
 ): Promise<string> {
-  const yDate = shiftDays(today, -1)
-  const { data: yb } = await db.from('ai_daily_brief')
+  const { data: row } = await db.from('ai_daily_brief')
     .select('hlavni, vedlejsi, bonus, done_keys')
-    .eq('profile_id', profileId).eq('date', yDate).maybeSingle()
-  if (!yb) return ''
+    .eq('profile_id', profileId).eq('date', date).maybeSingle()
+  if (!row) return ''
 
-  const done = new Set((yb.done_keys as string[] | null) ?? [])
+  const done = new Set((row.done_keys as string[] | null) ?? [])
   const groups: Array<[string, string, DbTask[]]> = [
-    ['hlavní',   'hlavni',   (yb.hlavni   as DbTask[] | null) ?? []],
-    ['vedlejší', 'vedlejsi', (yb.vedlejsi as DbTask[] | null) ?? []],
-    ['bonus',    'bonus',    (yb.bonus    as DbTask[] | null) ?? []],
+    ['hlavní',   'hlavni',   (row.hlavni   as DbTask[] | null) ?? []],
+    ['vedlejší', 'vedlejsi', (row.vedlejsi as DbTask[] | null) ?? []],
+    ['bonus',    'bonus',    (row.bonus    as DbTask[] | null) ?? []],
   ]
 
   const parts: string[] = []
@@ -622,9 +623,9 @@ async function summarizeYesterdayTasks(
   }
   if (!parts.length) return ''
 
-  let s = `Včera (${yDate}) splněno: ${parts.join(' · ')}.`
+  let s = parts.join(' · ')
   const um = undoneMain.filter(Boolean)
-  if (um.length) s += ` Nesplněné hlavní: ${um.join(', ')}.`
+  if (um.length) s += ` (nesplněné hlavní: ${um.join(', ')})`
   return s
 }
 
