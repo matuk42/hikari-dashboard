@@ -12,6 +12,8 @@
 
 **1. Migrace 005 spuštěna** — `ai_daily_brief.hlavni` už není NOT NULL. Ranní cron může vložit řádek jen s nudge/reasoning bez pádu.
 
+**0. Odškrtávání denních úkolů na home (klik → přeškrtne + zešedne).** Klik na hlavní/vedlejší/bonus úkol → `line-through` + opacity 0.5 (decentní, barva zůstává), optimisticky + revert při chybě. Stav v `ai_daily_brief.done_keys text[]` (klíče `hlavni-0`/`vedlejsi-1`/`bonus-0`) — **vyžaduje migraci 006**. Sloupec sync ani cron nepřepisují (disjunktní upsert) → přežije Sync. Endpoint `POST /api/hikari/task-toggle`. Home čte `done_keys` zvlášť (defenzivně — bez migrace degraduje na „nic přeškrtnuté", nerozbije úkoly). **Gemini čte včerejší splnění** — ranní cron `summarizeYesterdayTasks` → „Včera splněno: hlavní 2/3 …, nesplněné hlavní: X" do brief promptu.
+
 **2. Cascade milníková % přes Gemini — POSTAVENO (on-demand).**
 - **Co:** Gemini odhaduje % u jednotlivých milníků L3 (rok) / L4 (měsíc) / L5 (týden) + celkové layer-% pro L2 (5 let) a L3 (rok). Náhrada za hardcoded odhady.
 - **Kde:** nová `calcMilestonePct` v `lib/hikari-brain.ts`. Běží **JEN přes tlačítko „Přepočítej Hikari"** (`runMorningCron(..., withMilestones=true)`), ranní cron 6:00 ji NESPOUŠTÍ (milníky se mění pomalu, je to těžší call). Rozhodnutí Matyáše: on-demand + kontext = dashboard data + poslední feedbacky.
