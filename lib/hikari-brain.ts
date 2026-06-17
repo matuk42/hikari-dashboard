@@ -442,13 +442,12 @@ MILNÍKY K OHODNOCENÍ (klíč: název — detail):
 ${grouped}
 
 ÚKOL:
-Pro KAŽDÝ milník odhadni realistické % splnění (0–100) vzhledem k jeho deadline a aktuálnímu stavu. Buď konzervativní a opřený o data — když pro milník nemáš signál, drž nízko. Týdenní (L5) a měsíční (L4) milníky hodnoť vůči jejich krátkému horizontu; roční (L3) vůči 1.9.2027. Dále odhadni CELKOVÉ % pro vrstvu „5 let" (věk 21, 2031) a vrstvu „rok" (1.9.2027) jako vážený obraz pokroku napříč dimenzemi.
+Pro KAŽDÝ milník odhadni realistické % splnění (0–100) vzhledem k jeho deadline a aktuálnímu stavu. Buď konzervativní a opřený o data — když pro milník nemáš signál, drž nízko. Týdenní (L5) a měsíční (L4) milníky hodnoť vůči jejich krátkému horizontu; roční (L3) vůči 1.9.2027. (Celkové % vrstev týden/měsíc/rok se spočítají jako průměr těchto milníků — nevracej je.) Dále odhadni jen CELKOVÉ % pro vrstvu „5 let" (věk 21, 2031) jako vážený obraz pokroku napříč dimenzemi.
 
 Odpověz POUZE čistým JSON (žádný text navíc):
 {
   "milestones": { "m0": 0, "m1": 0, "...": "0-100 pro všechny klíče výše" },
-  "layer_5let": 0,
-  "layer_rok": 0
+  "layer_5let": 0
 }`
 
   // 5 — Gemini (low temperature → stable, data-grounded estimates)
