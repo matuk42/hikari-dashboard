@@ -601,25 +601,29 @@ export default function CascadePage() {
     }).catch(() => {})
   }, [])
 
-  // Merge DB overrides onto the curated layers: real % + fresh week/month label
-  // where the cron has written them; live vault milestones (with Gemini % when
-  // computed) for L3/L4/L5; Gemini layer % for L2 (5 let) / L3 (rok).
+  // Merge DB overrides onto the curated layers: Gemini layer % (when computed,
+  // i.e. > 0) for L2–L5; fresh week/month label; live vault milestones with their
+  // Gemini % for L3/L4/L5; live habit-adherence badge for L4 (month) / L5 (week).
   const displayLayers: Layer[] = LAYERS.map(l => {
     const db = dbLayers[l.n]
     if (!db) return l
     const liveDims = dbDims[l.n]
     const useVaultDims = VAULT_DIM_LAYERS.has(l.n) && liveDims && liveDims.length > 0
 
-    // L4/L5 layer % is habit-computed (always live). L2/L3 layer % is curated
-    // until Gemini writes one (>0) on the on-demand milestone run.
-    let progress = l.progress
-    if (REAL_PCT_LAYERS.has(l.n) && db.progress_pct != null) progress = db.progress_pct
-    else if ((l.n === 2 || l.n === 3) && db.progress_pct != null && db.progress_pct > 0) progress = db.progress_pct
+    // Layer % comes from the Gemini milestone calc once it has run (> 0); curated
+    // estimate is the fallback for every layer until then.
+    const progress = db.progress_pct != null && db.progress_pct > 0 ? db.progress_pct : l.progress
+
+    const habit =
+      l.n === 5 ? { habitPct: habitPct?.week,  habitLabel: 'habity tento týden' }
+    : l.n === 4 ? { habitPct: habitPct?.month, habitLabel: 'habity tento měsíc' }
+    : {}
 
     return {
       ...l,
       progress,
       timeframe: db.description || l.timeframe,
+      ...habit,
       ...(useVaultDims
         ? {
             dimsFromVault: true,
@@ -632,7 +636,7 @@ export default function CascadePage() {
   // Has Gemini written any milestone/layer % yet? Drives the notice copy below.
   const hasMilestonePct =
     Object.values(dbDims).some(dims => dims.some(d => d.progress > 0)) ||
-    [2, 3].some(n => (dbLayers[n]?.progress_pct ?? 0) > 0)
+    [2, 3, 4, 5].some(n => (dbLayers[n]?.progress_pct ?? 0) > 0)
 
   return (
     <div style={{
