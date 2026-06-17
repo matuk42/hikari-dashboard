@@ -555,7 +555,6 @@ export default function CascadePage() {
         idToLayer[r.id as string] = r.layer as number
       }
       setDbLayers(map)
-      setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
 
       // Live milestones per layer (sorted) for the vault-sourced layers.
       type DimRow = { layer_id: string; name: string; detail: string | null; kind: DimKind | null; sort_order: number | null; progress_pct: number | null }
