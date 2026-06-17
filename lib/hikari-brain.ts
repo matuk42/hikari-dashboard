@@ -168,6 +168,7 @@ interface BriefCtx {
   todayHabits:     { done: string[]; undone: string[]; total: number }
   vaultState:      string
   taskState:       string
+  nowLabel:        string
 }
 
 // Shared Gemini call: structured-JSON generation with transient-error retry and
