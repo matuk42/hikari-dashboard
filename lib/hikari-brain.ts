@@ -412,11 +412,11 @@ export async function calcMilestonePct(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
   today: string,
-  cascade: { week: number; month: number }
+  cascade: { week: number; month: number },
+  vaultState: string
 ): Promise<MilestoneResult> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) return { dims: 0, layers: 0, error: 'GEMINI_API_KEY missing' }
-  const token = process.env.GITHUB_TOKEN ?? ''
 
   // 1 — cascade layers (L2–L5) + their dimensions
   const { data: layers } = await db.from('cascade_layers')
