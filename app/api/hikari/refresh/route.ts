@@ -33,7 +33,8 @@ export async function POST() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const result = await runMorningCron(adminDb, profile.id as string, today, 'button')
+  // Button path also recomputes cascade milestone % (Gemini) — the daily cron does not.
+  const result = await runMorningCron(adminDb, profile.id as string, today, 'button', true)
 
   return NextResponse.json({ ok: true, ...result })
 }
