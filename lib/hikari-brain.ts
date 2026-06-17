@@ -523,19 +523,10 @@ export async function runMorningCron(
   // 1 — Streaks
   const streaks = await recalcStreaks(db, profileId, today)
 
-  // 2 — Cascade % (L5=week, L4=month from habit logs)
+  // 2 — Cascade habit-adherence % (week/month). No longer written to the L4/L5
+  // layer progress_pct — those now come from the Gemini milestone calc (button).
+  // Still computed here: it feeds the Gemini prompt and the brief context below.
   const cascade = await calcCascadePct(db, profileId, today)
-
-  const { data: layers } = await db.from('cascade_layers')
-    .select('id, layer')
-    .eq('profile_id', profileId).eq('tree', 'sen').in('layer', [4, 5])
-
-  for (const layer of layers ?? []) {
-    const pct = (layer.layer as number) === 5 ? cascade.week : cascade.month
-    await db.from('cascade_layers')
-      .update({ progress_pct: pct, updated_at: new Date().toISOString() })
-      .eq('id', layer.id as string)
-  }
 
   // 3 — Build Gemini context
   const [profileHabits, streakRows, weekDimRow, hopeRow, memRows] = await Promise.all([
