@@ -532,15 +532,15 @@ export default function CascadePage() {
       setHasReal(rows.some(r => REAL_PCT_LAYERS.has(r.layer as number) && r.progress_pct != null))
 
       // Live milestones per layer (sorted) for the vault-sourced layers.
-      type DimRow = { layer_id: string; name: string; detail: string | null; kind: DimKind | null; sort_order: number | null }
+      type DimRow = { layer_id: string; name: string; detail: string | null; kind: DimKind | null; sort_order: number | null; progress_pct: number | null }
       const ids = rows.map(r => r.id as string)
       let dimRows: DimRow[] = []
       const sel = await supabase.from('cascade_dimensions')
-        .select('layer_id, name, detail, kind, sort_order').in('layer_id', ids)
+        .select('layer_id, name, detail, kind, sort_order, progress_pct').in('layer_id', ids)
       if (sel.error) {
-        // Migration 004 not applied → no detail/kind/sort_order columns
-        const basic = await supabase.from('cascade_dimensions').select('layer_id, name').in('layer_id', ids)
-        dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, kind: null, sort_order: null }))
+        // Migration 004 not applied → no detail/kind/sort_order columns (progress_pct exists since 001)
+        const basic = await supabase.from('cascade_dimensions').select('layer_id, name, progress_pct').in('layer_id', ids)
+        dimRows = (basic.data ?? []).map(d => ({ layer_id: d.layer_id as string, name: d.name as string, detail: null, kind: null, sort_order: null, progress_pct: (d.progress_pct as number | null) ?? null }))
       } else {
         dimRows = (sel.data ?? []) as DimRow[]
       }
@@ -548,7 +548,7 @@ export default function CascadePage() {
       for (const d of dimRows) {
         const ln = idToLayer[d.layer_id]
         if (ln == null) continue
-        ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, kind: d.kind, _sort: d.sort_order ?? 0 })
+        ;(dimMap[ln] ??= []).push({ name: d.name, detail: d.detail, kind: d.kind, progress: d.progress_pct ?? 0, _sort: d.sort_order ?? 0 })
       }
       for (const ln of Object.keys(dimMap)) {
         dimMap[Number(ln)].sort((a, b) => a._sort - b._sort)
