@@ -640,7 +640,8 @@ export default function HomePage() {
               <Card>
                 {bonusTasks.length > 0
                   ? bonusTasks.map((t, i) => (
-                      <TaskRow key={i} name={t.name} detail={t.detail} dim last={i === bonusTasks.length - 1} />
+                      <TaskRow key={i} name={t.name} detail={t.detail} dim last={i === bonusTasks.length - 1}
+                        done={doneKeys.includes(`bonus-${i}`)} onClick={() => toggleTask(`bonus-${i}`)} />
                     ))
                   : <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>—</div>}
               </Card>
