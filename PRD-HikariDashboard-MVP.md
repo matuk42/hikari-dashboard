@@ -291,10 +291,11 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Pár vět kontextu z vault souboru (sen.md)
 - Doporučení Hikari: "Japonština N3 do 1.9.2027 — jsi na 23%, potřebuješ +15 karet/den"
 
-**Progress výpočet (AI):**
-- Hikari počítá z: habits (které dimenze pokrývají) + HOPE dat + splněných milníků
-- Matyáš nepřidává % ručně — Hikari odhaduje sám
-- Velké milníky (autoškola složena, DofE bronz) → Matyáš potvrdí v dashboardu
+**Progress výpočet (AI) — IMPLEMENTOVÁNO 17.6 (Gemini, on-demand):**
+- Gemini (`calcMilestonePct`) odhaduje % u jednotlivých milníků L3/L4/L5 + layer-% L2 holisticky; layer-% L3/L4/L5 = průměr jejich milníkových %.
+- Kontext = `gatherVaultState` (plán měsíce/týdne + poslední dokončené reviews + denní feedbacky) + habits/streaky/HOPE/paměť. Matyáš % nepřidává ručně.
+- Spouští se přes „Přepočítej Hikari" (ne v 6:00 cronu — milníky se mění pomalu). Milníky/dimenze samotné = živě z vaultu (sync).
+- Velké milníky (autoškola, DofE) → Matyáš potvrdí v dashboardu (zatím přes odškrtání habits/úkolů; explicit confirm UI = budoucí).
 
 **Supabase tabulky:** `cascade_layers` · `cascade_dimensions` · `cascade_milestones` · `cascade_chips` — viz `supabase/migrations/001_init.sql` doména D.
 
