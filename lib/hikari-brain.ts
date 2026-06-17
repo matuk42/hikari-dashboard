@@ -742,6 +742,7 @@ export async function runMorningCron(
       todayHabits,
       vaultState,
       taskState,
+      nowLabel,
     })
   } catch (e) {
     briefError = e instanceof Error ? e.message : String(e)
