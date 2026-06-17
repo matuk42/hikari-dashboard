@@ -289,19 +289,28 @@ function ChipDetail({ chip, onClose }: { chip: Chip; onClose: () => void }) {
   )
 }
 
-// One milestone row: marker + name + truncated detail. minWidth:0 enables ellipsis.
+// One milestone row: marker + name + truncated detail, plus Gemini % (+ thin bar)
+// once computed. Before the first on-demand calc all % are 0 → clean list, no bars.
+// minWidth:0 enables ellipsis on the detail line.
 function VaultDimRow({ d }: { d: Dimension }) {
+  const pct = d.progress > 0 ? d.progress : null
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
       <span style={{ color: 'rgba(245,158,11,0.45)', fontSize: 11, lineHeight: 1.5, flexShrink: 0 }}>›</span>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>{d.name}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4, flex: 1, minWidth: 0 }}>{d.name}</div>
+          {pct != null && (
+            <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.6)', fontWeight: 600, flexShrink: 0 }}>{pct}%</span>
+          )}
+        </div>
         {d.detail && (
           <div style={{
             fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{d.detail}</div>
         )}
+        {pct != null && <div style={{ marginTop: 5 }}><ProgressBar value={pct} height={3} /></div>}
       </div>
     </div>
   )
