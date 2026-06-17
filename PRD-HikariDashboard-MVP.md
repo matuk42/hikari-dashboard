@@ -1,5 +1,7 @@
 # PRD — Hikari Dashboard MVP
-**Verze:** 2.1 | **Datum:** 2026-06-01 | **Autor:** Matyáš + Claude
+**Verze:** 2.2 | **Datum:** 2026-06-17 | **Autor:** Matyáš + Claude
+
+> **v2.2 changelog (2026-06-17, session 4):** Cascade % je AI-počítané — milníková % L3/L4/L5 + layer-% L2–L5 odhaduje **Gemini** (model `gemini-2.5-flash`, ne Claude) on-demand přes „Přepočítej Hikari", z kontextu složeného z **hierarchie vault reviewů** (`gatherVaultState`: plán měsíce/týdne + poslední dokončené reviews + denní feedbacky). Týden/měsíc % už **nejsou** z habitů (habit-% zůstává jen jako vstup + živý štítek). Denní úkoly na home jdou **odškrtnout** (klik → přeškrtne; `ai_daily_brief.done_keys`, migrace 006). Ranní brief dostává kontext aktuálního stavu z reviewů + odškrtnutých úkolů + **aktuálního času** (nehodnotí ráno nesplněné jako selhání). Pozn.: AI vrstva běží na **Gemini**, ne Claude (PRD §13 to ještě uvádí jako Claude — realita je Gemini).
 
 > **v2.1 changelog:** Konflikt workflow (dashboard wins, voice flag), vault delivery přes Git, Hikari paměť hybrid plnění, plné Supabase schéma (6 domén), business modul fázovaně, single-user MVP s RLS, implementační pořadí W23–W27.
 
