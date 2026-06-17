@@ -469,7 +469,20 @@ function LayerCard({ layer }: { layer: Layer }) {
               </div>
             )}
 
-            {/* Layers 3-5: live vault milestones — clean list (no per-milestone %).
+            {/* Live habit-adherence badge (L4 month / L5 week) — the deterministic
+                "are you in rhythm?" signal, separate from the Gemini milestone %. */}
+            {layer.habitPct != null && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12,
+                fontSize: 11, color: 'rgba(255,255,255,0.4)',
+              }}>
+                <span>{layer.habitLabel ?? 'habity'}:</span>
+                <span style={{ color: 'rgba(245,158,11,0.7)', fontWeight: 600 }}>{layer.habitPct}%</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>splněno</span>
+              </div>
+            )}
+
+            {/* Layers 3-5: live vault milestones with Gemini % (bars appear once computed).
                 Grouped into Hlavní / Vedlejší / Bonus when the dims carry a kind (weekly L5). */}
             {layer.dimensions && layer.dimsFromVault && (
               <VaultDimList dims={layer.dimensions} />
