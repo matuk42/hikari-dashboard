@@ -313,6 +313,7 @@ export default function HomePage() {
     mainTasks: FALLBACK_MAIN,
     sideTasks: [],
     bonusTasks: [],
+    doneKeys: [],
   })
 
   useEffect(() => {
