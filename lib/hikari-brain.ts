@@ -291,51 +291,7 @@ Odpověz POUZE čistým JSON (česky, s diakritikou):
 }
 cascade_nudge a reasoning musí být bohaté a osobní, ne generické.`
 
-  const body = JSON.stringify({
-    contents:         [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature:      0.8,
-      maxOutputTokens:  4096,
-      // Force structured output (no markdown fences, always valid JSON)
-      responseMimeType: 'application/json',
-      // 2.5-flash "thinking" eats the token budget before the answer; for a
-      // bounded structured task we don't need it. Disabling avoids truncation.
-      thinkingConfig:   { thinkingBudget: 0 },
-    },
-  })
-
-  // Retry transient errors (503 overloaded, 429 rate-limit) with backoff —
-  // the daily cron shouldn't fail just because the free tier was momentarily busy.
-  let res: Response | null = null
-  for (let attempt = 0; attempt < 3; attempt++) {
-    res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        // Bypass Next.js's patched fetch cache: it round-trips the body through
-        // a string layer that mangled UTF-8 Czech diacritics into CP1250 mojibake
-        // ("Matyáš" → "MatyĂˇĹˇ"). no-store keeps the raw bytes intact.
-        cache:   'no-store',
-      }
-    )
-    if (res.ok) break
-    if (res.status !== 503 && res.status !== 429) break   // non-transient → stop
-    if (attempt < 2) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
-  }
-
-  if (!res || !res.ok) throw new Error(`Gemini HTTP ${res?.status}: ${res ? await res.text() : 'no response'}`)
-
-  // Decode bytes explicitly as UTF-8 rather than trusting res.json()/res.text(),
-  // which under Next.js can fall back to the system codepage on Windows.
-  const buf  = await res.arrayBuffer()
-  const text = new TextDecoder('utf-8').decode(buf)
-  const json = JSON.parse(text) as {
-    candidates?: Array<{ content: { parts: Array<{ text: string }> } }>
-  }
-  const raw   = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-  const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  const clean = await geminiGenerate(prompt, apiKey, { temperature: 0.8 })
   return JSON.parse(clean) as BriefData
 }
 
