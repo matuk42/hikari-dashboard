@@ -266,7 +266,7 @@ JAK MLUVÍŠ:
 
 4 PILÍŘE (filtr každého rozhodnutí): příroda · jeden blízký člověk · svoboda cestovat · nezávislost (vlastní příjem, žádné fixní místo).
 
-DATA NA DNES (${dayName} ${ctx.today}):
+DATA NA DNES (${dayName} ${ctx.today}, právě je ${ctx.nowLabel}):
 - Habits: ${habitsStr}
 - Splnění habits tento týden: ${ctx.weekPct}%
 - Streaky: ${topStreaks}
