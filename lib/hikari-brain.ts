@@ -504,8 +504,8 @@ TVRDÁ DATA:
 KONTEXT Z PAMĚTI:
 ${memStr}
 
-POSLEDNÍ DENNÍ FEEDBACKY (kvalitativní signál o reálném pokroku):
-${feedbackStr}
+AKTUÁLNÍ STAV Z VAULTU (plány měsíce/týdne = cíle · poslední DOKONČENÉ reviews + denní feedbacky = skutečný pokrok):
+${vaultState || '(nedostupné)'}
 
 MILNÍKY K OHODNOCENÍ (klíč: název — detail):
 ${grouped}
