@@ -584,6 +584,49 @@ Odpověz POUZE čistým JSON (žádný text navíc):
   return { dims: dimsUpdated, layers: layersUpdated, error: null }
 }
 
+// ─── Yesterday's daily-task completion (signal for the brief) ───────────────────
+// Reads yesterday's ai_daily_brief tasks + done_keys (set by home click-to-strike)
+// and summarizes "splněno hlavní 2/3 · …" + names the undone main tasks. Degrades
+// to '' before migration 006 (no done_keys column) — select errors → no row.
+
+type DbTask = { title?: string; name?: string }
+
+async function summarizeYesterdayTasks(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string
+): Promise<string> {
+  const yDate = shiftDays(today, -1)
+  const { data: yb } = await db.from('ai_daily_brief')
+    .select('hlavni, vedlejsi, bonus, done_keys')
+    .eq('profile_id', profileId).eq('date', yDate).maybeSingle()
+  if (!yb) return ''
+
+  const done = new Set((yb.done_keys as string[] | null) ?? [])
+  const groups: Array<[string, string, DbTask[]]> = [
+    ['hlavní',   'hlavni',   (yb.hlavni   as DbTask[] | null) ?? []],
+    ['vedlejší', 'vedlejsi', (yb.vedlejsi as DbTask[] | null) ?? []],
+    ['bonus',    'bonus',    (yb.bonus    as DbTask[] | null) ?? []],
+  ]
+
+  const parts: string[] = []
+  const undoneMain: string[] = []
+  for (const [label, prefix, arr] of groups) {
+    if (!arr.length) continue
+    const d = arr.filter((_, i) => done.has(`${prefix}-${i}`)).length
+    parts.push(`${label} ${d}/${arr.length}`)
+    if (prefix === 'hlavni') {
+      arr.forEach((t, i) => { if (!done.has(`hlavni-${i}`)) undoneMain.push(t.title ?? t.name ?? '') })
+    }
+  }
+  if (!parts.length) return ''
+
+  let s = `Včera (${yDate}) splněno: ${parts.join(' · ')}.`
+  const um = undoneMain.filter(Boolean)
+  if (um.length) s += ` Nesplněné hlavní: ${um.join(', ')}.`
+  return s
+}
+
 // ─── Main cron orchestrator ───────────────────────────────────────────────────
 
 export async function runMorningCron(
