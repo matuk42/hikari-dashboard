@@ -698,8 +698,10 @@ export default function CascadePage() {
             }}>
               <span style={{ fontSize: 13 }}>📊</span>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-                {hasReal ? (
-                  <>Týden a měsíc <span style={{ color: 'rgba(245,158,11,0.7)' }}>počítá Hikari</span> z habitů. Rok a 5 let zatím odhad.</>
+                {hasMilestonePct ? (
+                  <>Týden a měsíc <span style={{ color: 'rgba(245,158,11,0.7)' }}>počítá Hikari</span> z habitů, milníky a rok/5 let <span style={{ color: 'rgba(245,158,11,0.7)' }}>odhaduje Gemini</span> z dat a feedbacků.</>
+                ) : hasReal ? (
+                  <>Týden a měsíc <span style={{ color: 'rgba(245,158,11,0.7)' }}>počítá Hikari</span> z habitů. Milníky a rok/5 let odhadne přes „Přepočítej Hikari".</>
                 ) : (
                   <>% jsou <span style={{ color: 'rgba(245,158,11,0.7)' }}>odhad</span> — Hikari spočítá přesně s AI cronem.</>
                 )}
