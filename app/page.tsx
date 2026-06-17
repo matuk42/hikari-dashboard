@@ -629,7 +629,8 @@ export default function HomePage() {
               <Card>
                 {sideTasks.length > 0
                   ? sideTasks.map((t, i) => (
-                      <TaskRow key={i} name={t.name} detail={t.detail} last={i === sideTasks.length - 1} />
+                      <TaskRow key={i} name={t.name} detail={t.detail} last={i === sideTasks.length - 1}
+                        done={doneKeys.includes(`vedlejsi-${i}`)} onClick={() => toggleTask(`vedlejsi-${i}`)} />
                     ))
                   : <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>—</div>}
               </Card>
