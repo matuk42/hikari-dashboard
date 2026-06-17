@@ -210,10 +210,10 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 | Business stats | Placeholder (budoucnost) |
 | Chat s Hikari | Placeholder (budoucnost) |
 
-**Úkoly — AI chování:**
-- Hikari navrhuje úkoly automaticky na základě cascade + habits + HOPE dat
-- Uživatel může úkol upravit → vedle úkolu se zobrazí ⚡ ikonka → kliknutím zobrazíš Hikariho názor na změnu
-- Úkoly jsou seřazeny podle priority (bez konkrétních časů)
+**Úkoly — chování (aktualizováno 16.–17.6):**
+- Denní úkoly (hlavní/vedlejší/bonus) **píše Matyáš** v `logs/mentor-feedback/` (soubor dne D = plán pro D+1), vault-sync je načte do `ai_daily_brief`. Gemini je už NEgeneruje (dělá jen mentorský nudge+reasoning).
+- **Odškrtnutí klikem** (17.6): klik na úkol → přeškrtne + zešedne, stav v `ai_daily_brief.done_keys` (přežije sync). Gemini čte splnění (dnes/včera) jako signál do briefu.
+- Úkoly seřazené podle priority (bez konkrétních časů). (`⚡ názor na změnu` = budoucí V2.)
 
 **Časová osa — logika:**
 - Počítá se z きぼう dat (30 dní) → detekce kdy je energie/soustředění nejvyšší
