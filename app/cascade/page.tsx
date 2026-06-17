@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { OfflineBadge } from '@/app/components/OfflineBadge'
 import { supabase } from '@/lib/supabase'
+import { adherencePct, elapsedDays, isoMondayOf } from '@/lib/cascade-pct'
 
 // ─── Vault data (baked from 2nd_brain/wiki/cile/cascade/sen.md + prijem.md) ──
 
