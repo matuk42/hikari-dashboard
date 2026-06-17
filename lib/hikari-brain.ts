@@ -700,6 +700,10 @@ export async function runMorningCron(
     try { vaultState = (await gatherVaultState(ghToken, today)).text } catch { /* degrade silently */ }
   }
 
+  // Yesterday's daily-task completion (home click-to-strike) — a signal for the nudge.
+  let yesterdayTasks = ''
+  try { yesterdayTasks = await summarizeYesterdayTasks(db, profileId, today) } catch { /* degrade */ }
+
   // 4 — Gemini brief
   const t0 = Date.now()
   let brief: BriefData | null = null
