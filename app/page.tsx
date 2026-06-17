@@ -599,17 +599,25 @@ export default function HomePage() {
         <section style={{ marginBottom: 20 }}>
           <SectionLabel>Hlavní úkoly</SectionLabel>
           <Card>
-            {mainTasks.map((t, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < mainTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,158,11,0.6)', minWidth: 16, paddingTop: 1 }}>{i + 1}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35 }}>{t.name}</div>
-                  {t.detail && (
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3 }}>{t.detail}</div>
-                  )}
+            {mainTasks.map((t, i) => {
+              const key  = `hlavni-${i}`
+              const done = doneKeys.includes(key)
+              return (
+                <div
+                  key={i}
+                  onClick={() => toggleTask(key)}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < mainTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', cursor: 'pointer', opacity: done ? 0.5 : 1, transition: 'opacity 0.15s ease' }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,158,11,0.6)', minWidth: 16, paddingTop: 1 }}>{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, textDecoration: done ? 'line-through' : 'none' }}>{t.name}</div>
+                    {t.detail && (
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', lineHeight: 1.4, marginTop: 3, textDecoration: done ? 'line-through' : 'none' }}>{t.detail}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </Card>
         </section>
 
