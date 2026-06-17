@@ -452,7 +452,7 @@ Odpověz POUZE čistým JSON (žádný text navíc):
 
   // 5 — Gemini (low temperature → stable, data-grounded estimates)
   const t0 = Date.now()
-  let parsed: { milestones?: Record<string, number>; layer_5let?: number; layer_rok?: number }
+  let parsed: { milestones?: Record<string, number>; layer_5let?: number }
   try {
     const clean = await geminiGenerate(prompt, apiKey, { temperature: 0.3 })
     parsed = JSON.parse(clean)
