@@ -510,7 +510,8 @@ export async function runMorningCron(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
   today: string,
-  trigger: 'cron' | 'button' = 'cron'
+  trigger: 'cron' | 'button' = 'cron',
+  withMilestones = false
 ): Promise<CronResult> {
 
   // 1 — Streaks
