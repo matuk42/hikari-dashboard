@@ -166,6 +166,7 @@ interface BriefCtx {
   hopeYest:        { mood: number; energy: number; hope: number } | null
   memory:          string[]
   todayHabits:     { done: string[]; undone: string[]; total: number }
+  vaultState:      string
 }
 
 // Shared Gemini call: structured-JSON generation with transient-error retry and
