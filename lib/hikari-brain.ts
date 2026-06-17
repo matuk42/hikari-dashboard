@@ -717,6 +717,15 @@ export async function runMorningCron(
     taskState = segs.join(' | ')
   } catch { /* degrade */ }
 
+  // Local (Prague) time of day — so the mentor doesn't scold unfinished habits/tasks
+  // in the morning (the day isn't over). Server runs UTC; convert explicitly.
+  const nowH = Number(new Intl.DateTimeFormat('en-GB',
+    { timeZone: 'Europe/Prague', hour: '2-digit', hourCycle: 'h23' }).format(new Date()))
+  const hhmm = new Intl.DateTimeFormat('cs-CZ',
+    { timeZone: 'Europe/Prague', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())
+  const phase = nowH < 11 ? 'ráno' : nowH < 17 ? 'odpoledne' : nowH < 22 ? 'večer' : 'noc'
+  const nowLabel = `${hhmm} (${phase})`
+
   // 4 — Gemini brief
   const t0 = Date.now()
   let brief: BriefData | null = null
