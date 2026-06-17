@@ -518,13 +518,13 @@ function LayerCard({ layer }: { layer: Layer }) {
 // when the AI calc lands; this page intentionally renders the curated copy,
 // which carries richer chips (detail + Hikari note) than the DB can hold.
 
-// Which layers carry cron-computed (real) %: L4 month + L5 week, from habit logs.
-// L2/L3 stay curated estimates until milestone-based calc lands.
-const REAL_PCT_LAYERS = new Set([4, 5])
+// Layer % (the big number) is Gemini-computed for L2–L5 once the on-demand
+// milestone calc has run: L3/L4/L5 = mean of their milestone %s, L2 = holistic.
+// Until then any layer falls back to its curated estimate (used > 0 from DB).
+// L4/L5 also show a separate live habit-adherence badge (deterministic, daily).
 
-// Layers whose milestone LIST is the live vault (synced + rolled over each period).
-// Rendered as a clean name list (no per-milestone % — that's a future Gemini calc).
-// L1 (chips) + L2 (5 let) stay curated; L2 is set once via chat, not auto-parsed.
+// Layers whose milestone LIST is the live vault (synced + rolled over each period),
+// now carrying Gemini per-milestone %. L1 (chips) + L2 (5 let) stay curated.
 const VAULT_DIM_LAYERS = new Set([3, 4, 5])
 
 type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
