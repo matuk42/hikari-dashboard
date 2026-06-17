@@ -270,6 +270,7 @@ DATA NA DNES (${dayName} ${ctx.today}):
 - Splnění habits tento týden: ${ctx.weekPct}%
 - Streaky: ${topStreaks}
 - HOPE poslední záznam: ${hopeStr}
+- Včerejší denní úkoly: ${ctx.yesterdayTasks || 'nezaznamenáno'}
 
 Týdenní priority (z plánu ve vaultu):
 ${prios}
