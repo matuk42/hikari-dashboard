@@ -295,6 +295,214 @@ cascade_nudge a reasoning musí být bohaté a osobní, ne generické.`
   return JSON.parse(clean) as BriefData
 }
 
+// ─── Cascade milestone % (Gemini, on-demand only) ──────────────────────────────
+// Per-milestone progress for L3 (year) / L4 (month) / L5 (week) + an overall
+// layer % for L2 (5 years) and L3 (year). Heavier than the daily brief, so this
+// runs ONLY from the "Přepočítej Hikari" button, never the 6:00 cron. Context =
+// dashboard data (habits, streaks, week/month %, HOPE, memory) + the last few
+// mentor-feedback files pulled from the vault (qualitative progress signal).
+
+const GH_REPO   = 'matuk42/2nd-brain'
+const GH_BRANCH = 'master'
+
+async function ghFetchRaw(path: string, token: string): Promise<string | null> {
+  const url = `https://api.github.com/repos/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3.raw' },
+    cache:   'no-store',
+  })
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`GitHub HTTP ${res.status} for ${path}`)
+  const buf = await res.arrayBuffer()
+  return new TextDecoder('utf-8').decode(buf)   // UTF-8 explicit (Windows CP1250 guard)
+}
+
+function isoDaysAgoFrom(today: string, n: number): string {
+  const d = new Date(`${today}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - n)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Last `want` mentor-feedback files, scanning up to `scanBack` days back. */
+async function recentFeedbacks(token: string, today: string, want = 5, scanBack = 12): Promise<string[]> {
+  const out: string[] = []
+  for (let i = 1; i <= scanBack && out.length < want; i++) {
+    const date = isoDaysAgoFrom(today, i)
+    try {
+      const md = await ghFetchRaw(`logs/mentor-feedback/${date}-feedback.md`, token)
+      if (md) out.push(`### Feedback ${date}\n${md.trim()}`)
+    } catch { /* skip a bad fetch, keep collecting */ }
+  }
+  return out
+}
+
+export interface MilestoneResult {
+  dims:   number
+  layers: number
+  error:  string | null
+}
+
+export async function calcMilestonePct(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string,
+  cascade: { week: number; month: number }
+): Promise<MilestoneResult> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) return { dims: 0, layers: 0, error: 'GEMINI_API_KEY missing' }
+  const token = process.env.GITHUB_TOKEN ?? ''
+
+  // 1 — cascade layers (L2–L5) + their dimensions
+  const { data: layers } = await db.from('cascade_layers')
+    .select('id, layer, description, deadline')
+    .eq('profile_id', profileId).eq('tree', 'sen').in('layer', [2, 3, 4, 5])
+  if (!layers?.length) return { dims: 0, layers: 0, error: 'no cascade layers' }
+
+  const layerInfo: Record<number, { id: string; deadline: string | null; description: string | null }> = {}
+  const layerNumById: Record<string, number> = {}
+  for (const l of layers) {
+    layerInfo[l.layer as number] = {
+      id: l.id as string, deadline: l.deadline as string | null, description: l.description as string | null,
+    }
+    layerNumById[l.id as string] = l.layer as number
+  }
+
+  const { data: dimRows } = await db.from('cascade_dimensions')
+    .select('id, layer_id, name, detail, sort_order')
+    .in('layer_id', layers.map(l => l.id as string))
+
+  // Per-milestone scoring is for L3/L4/L5 only — L2's dimensions are curated in
+  // the UI (not rendered from DB), so for L2 we estimate the layer % alone.
+  const PER_DIM = new Set([3, 4, 5])
+  const items = (dimRows ?? [])
+    .filter(d => PER_DIM.has(layerNumById[d.layer_id as string]))
+    .sort((a, b) => ((a.sort_order as number) ?? 0) - ((b.sort_order as number) ?? 0))
+    .map((d, i) => ({
+      key:    `m${i}`,
+      id:     d.id as string,
+      layer:  layerNumById[d.layer_id as string],
+      name:   d.name as string,
+      detail: (d.detail as string | null) ?? '',
+    }))
+  if (!items.length) return { dims: 0, layers: 0, error: 'no milestones to score' }
+
+  // 2 — dashboard context
+  const [streakRows, habitRows, hopeRows, memRows] = await Promise.all([
+    db.from('streaks_cache').select('habit_id, current_streak').gt('current_streak', 0),
+    db.from('habits').select('id, name, category').eq('profile_id', profileId).neq('category', 'retired'),
+    db.from('hope_logs').select('date, mood, energy, hope').eq('profile_id', profileId)
+      .order('date', { ascending: false }).limit(7),
+    db.from('hikari_memory').select('content').eq('profile_id', profileId).eq('status', 'active').limit(6),
+  ])
+
+  const nameById: Record<string, string> = {}
+  for (const h of habitRows.data ?? []) nameById[h.id as string] = h.name as string
+
+  const topStreaks = (streakRows.data ?? [])
+    .map(r => ({ name: nameById[r.habit_id as string] ?? '', streak: r.current_streak as number }))
+    .filter(s => s.name).sort((a, b) => b.streak - a.streak).slice(0, 6)
+    .map(s => `${s.name}: ${s.streak} dní`).join(' · ') || 'žádné'
+
+  const habitNames = (habitRows.data ?? [])
+    .filter(h => h.category !== 'graduated').map(h => h.name as string).join(', ') || '(žádné)'
+
+  const hope = hopeRows.data ?? []
+  const hopeStr = hope.length
+    ? `poslední (${hope[0].date}): mood ${hope[0].mood} · energy ${hope[0].energy} · hope ${hope[0].hope}`
+      + ` · 7d průměr energy ${(hope.reduce((s, r) => s + (r.energy as number), 0) / hope.length).toFixed(1)}`
+    : 'nezaznamenáno'
+
+  const memStr = (memRows.data ?? []).map(m => `- ${m.content as string}`).join('\n') || '(prázdné)'
+
+  // 3 — recent feedbacks (vault) — graceful if no token / none found
+  const feedbacks   = token ? await recentFeedbacks(token, today, 5) : []
+  const feedbackStr = feedbacks.length ? feedbacks.join('\n\n---\n\n') : '(nedostupné)'
+
+  // 4 — milestone listing grouped by layer (with each layer's deadline for calibration)
+  const layerHeader: Record<number, string> = {
+    3: `L3 — ROK (deadline ${layerInfo[3]?.deadline ?? '2027-09-01'})`,
+    4: `L4 — MĚSÍC (${layerInfo[4]?.description ?? ''}, deadline ${layerInfo[4]?.deadline ?? ''})`,
+    5: `L5 — TÝDEN (${layerInfo[5]?.description ?? ''}, deadline ${layerInfo[5]?.deadline ?? ''})`,
+  }
+  const grouped = [3, 4, 5].map(ln => {
+    const its = items.filter(i => i.layer === ln)
+    if (!its.length) return ''
+    return `\n${layerHeader[ln]}:\n`
+      + its.map(i => `  ${i.key}: ${i.name}${i.detail ? ` — ${i.detail}` : ''}`).join('\n')
+  }).filter(Boolean).join('\n')
+
+  const prompt = `Jsi Hikari — analytický mozek Matyáše (16, SPŠOA Bruntál). Teď NEMENTORUJEŠ — STŘÍZLIVĚ odhaduješ procento splnění u každého cascade milníku z tvrdých dat a deníkových feedbacků. Matyáš míří k location-independent příjmu a svobodě žít sen (Japonsko, výpravy, příroda, tvorba). Dnes je ${today}.
+
+TVRDÁ DATA:
+- Trackované habits: ${habitNames}
+- Splnění habits: tento týden ${cascade.week}% · tento měsíc ${cascade.month}%
+- Aktivní streaky: ${topStreaks}
+- HOPE: ${hopeStr}
+
+KONTEXT Z PAMĚTI:
+${memStr}
+
+POSLEDNÍ DENNÍ FEEDBACKY (kvalitativní signál o reálném pokroku):
+${feedbackStr}
+
+MILNÍKY K OHODNOCENÍ (klíč: název — detail):
+${grouped}
+
+ÚKOL:
+Pro KAŽDÝ milník odhadni realistické % splnění (0–100) vzhledem k jeho deadline a aktuálnímu stavu. Buď konzervativní a opřený o data — když pro milník nemáš signál, drž nízko. Týdenní (L5) a měsíční (L4) milníky hodnoť vůči jejich krátkému horizontu; roční (L3) vůči 1.9.2027. Dále odhadni CELKOVÉ % pro vrstvu „5 let" (věk 21, 2031) a vrstvu „rok" (1.9.2027) jako vážený obraz pokroku napříč dimenzemi.
+
+Odpověz POUZE čistým JSON (žádný text navíc):
+{
+  "milestones": { "m0": 0, "m1": 0, "...": "0-100 pro všechny klíče výše" },
+  "layer_5let": 0,
+  "layer_rok": 0
+}`
+
+  // 5 — Gemini (low temperature → stable, data-grounded estimates)
+  const t0 = Date.now()
+  let parsed: { milestones?: Record<string, number>; layer_5let?: number; layer_rok?: number }
+  try {
+    const clean = await geminiGenerate(prompt, apiKey, { temperature: 0.3 })
+    parsed = JSON.parse(clean)
+  } catch (e) {
+    const err = e instanceof Error ? e.message : String(e)
+    await db.from('ai_invocations').insert({
+      profile_id: profileId, trigger: 'button', purpose: 'cascade_milestones',
+      model: GEMINI_MODEL, duration_ms: Date.now() - t0, success: false, error: err,
+    })
+    return { dims: 0, layers: 0, error: err }
+  }
+
+  // 6 — write back (clamp 0–100, round)
+  const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)))
+
+  let dimsUpdated = 0
+  for (const it of items) {
+    const pct = parsed.milestones?.[it.key]
+    if (pct == null) continue
+    const { error } = await db.from('cascade_dimensions')
+      .update({ progress_pct: clamp(pct), updated_at: new Date().toISOString() })
+      .eq('id', it.id)
+    if (!error) dimsUpdated++
+  }
+
+  let layersUpdated = 0
+  for (const [ln, val] of [[2, parsed.layer_5let], [3, parsed.layer_rok]] as Array<[number, number | undefined]>) {
+    if (val == null || !layerInfo[ln]) continue
+    const { error } = await db.from('cascade_layers')
+      .update({ progress_pct: clamp(val), updated_at: new Date().toISOString() })
+      .eq('id', layerInfo[ln].id)
+    if (!error) layersUpdated++
+  }
+
+  await db.from('ai_invocations').insert({
+    profile_id: profileId, trigger: 'button', purpose: 'cascade_milestones',
+    model: GEMINI_MODEL, duration_ms: Date.now() - t0, success: true, error: null,
+  })
+
+  return { dims: dimsUpdated, layers: layersUpdated, error: null }
+}
+
 // ─── Main cron orchestrator ───────────────────────────────────────────────────
 
 export async function runMorningCron(
