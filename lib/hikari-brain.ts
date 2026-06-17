@@ -480,10 +480,6 @@ export async function calcMilestonePct(
 
   const memStr = (memRows.data ?? []).map(m => `- ${m.content as string}`).join('\n') || '(prázdné)'
 
-  // 3 — recent feedbacks (vault) — graceful if no token / none found
-  const feedbacks   = token ? await recentFeedbacks(token, today, 5) : []
-  const feedbackStr = feedbacks.length ? feedbacks.join('\n\n---\n\n') : '(nedostupné)'
-
   // 4 — milestone listing grouped by layer (with each layer's deadline for calibration)
   const layerHeader: Record<number, string> = {
     3: `L3 — ROK (deadline ${layerInfo[3]?.deadline ?? '2027-09-01'})`,
