@@ -62,7 +62,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 1. **Dotáhnout AI brain (cron jádro + denní úkoly hotové):**
    - **Detekce vzorů** ("úterý low energy", "les → +HOPE") — Gemini nad nimi reasonuje z paměti, ale není automatický pattern-detection zápis do DB.
    - **Živá energetická osa** z HOPE dat (teď statická — cron nepíše `energy_blocks`).
-   - **Cascade milníková % přes Gemini** (rozhodnuto 16.6.) — Gemini čte vault (deníky/feedbacky/potřebné soubory) + data z dashboardu a počítá % u jednotlivých milníků L3/L4/L5 (teď skrytá, jen čistý seznam). Náhrada za hardcoded odhady. Rok/5 let layer-% taky.
+   - ~~**Cascade milníková % přes Gemini**~~ ✅ HOTOVO 17.6. (on-demand tlačítkem, viz session 4). Možné dotažení: rozšířit kontext o deníky (teď jen feedbacky), nebo přidat L2 per-dim % (teď L2 jen layer-%, dimenze kurátované v UI).
 2. **Drobnosti:**
    - Auto-sync cron (Ne 22:00) místo jen ručního tlačítka.
    - Energy obrázek v kibou — kdyby chtěl něco jiného než blesk.
