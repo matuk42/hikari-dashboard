@@ -621,9 +621,22 @@ export async function runMorningCron(
     }, { onConflict: 'profile_id,date' })
   }
 
+  // 5 — Cascade milestone % (on-demand only — the "Přepočítej Hikari" button).
+  // Skipped by the daily 6:00 cron: milestones move slowly and this is a heavier
+  // call (reads vault feedbacks + scores every milestone).
+  let milestones: MilestoneResult | undefined
+  if (withMilestones) {
+    try {
+      milestones = await calcMilestonePct(db, profileId, today, cascade)
+    } catch (e) {
+      milestones = { dims: 0, layers: 0, error: e instanceof Error ? e.message : String(e) }
+    }
+  }
+
   return {
     streaks,
     cascade,
     brief: brief ? 'generated' : { error: briefError },
+    ...(milestones ? { milestones } : {}),
   }
 }
