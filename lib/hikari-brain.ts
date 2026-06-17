@@ -11,9 +11,10 @@ export interface BriefData {
 }
 
 export interface CronResult {
-  streaks:  { updated: number; errors: string[] }
-  cascade:  { week: number; month: number; errors: string[] }
-  brief:    'generated' | { error: string | null }
+  streaks:    { updated: number; errors: string[] }
+  cascade:    { week: number; month: number; errors: string[] }
+  brief:      'generated' | { error: string | null }
+  milestones?: MilestoneResult
 }
 
 // ─── Admin client (bypasses RLS — server-side only) ───────────────────────────
