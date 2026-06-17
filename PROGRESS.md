@@ -55,7 +55,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 
 ## ⚠️ Háčky / co vědět
 - **Migrace 003 + 004 aplikované**. 004 = `kind`/`detail`/`sort_order` na `cascade_dimensions`. Bez ní sync běží přes fallback (insert bez nových sloupců) ale home pak nezobrazí Vedlejší/Bonus. Další migrace → říct Matyášovi ať spustí SQL v Supabase před deployem.
-- **Migrace 005 — SPUSTIT v Supabase** (`ALTER TABLE ai_daily_brief ALTER COLUMN hlavni DROP NOT NULL`). Bez ní cron (který už nepíše úkoly) selže na NOT NULL při insertu řádku jen s nudge/reasoning. Po migraci ťuknout **Sync s vaultem** → načte dnešní denní úkoly.
+- **Migrace 003 + 004 + 005 aplikované.** 005 = `ALTER TABLE ai_daily_brief ALTER COLUMN hlavni DROP NOT NULL` (spuštěno 17.6.) — cron teď může vložit řádek jen s nudge/reasoning. Po ní ťuknout **Sync s vaultem** → načte dnešní denní úkoly.
 - **CSP je jen v kódu** (`next.config.ts`). Nesmí být druhá ve Vercel dashboardu (kombinovaly by se restriktivně).
 - **Týdenní priority** — Vercel server běží UTC, kolem půlnoci CEST se může lišit ISO týden o 1 oproti autorovi. Proto **rollover** zkouší 6 týdnů zpět — sync nepadne když ti chybí soubor aktuálního týdne, použije poslední existující. Layer 5 description (`weekLabelFromFile`) odráží skutečně načtený týden.
 - **Streak se přestaví z `habit_logs` při otevření `/habits`** (`rebuildStreaksFromLogs`, self-healing) + v ranním cronu — oba sdílí `lib/streak-core.ts`. `bumpStreak` dělá jen okamžité `±1` při toggle, autoritativní hodnota je rebuild.
