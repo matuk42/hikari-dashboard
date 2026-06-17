@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { streakFromDates } from './streak-core'
+import { adherencePct, elapsedDays, isoMondayOf } from './cascade-pct'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
