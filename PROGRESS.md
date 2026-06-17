@@ -74,6 +74,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 
 ## ⚠️ Háčky / co vědět
 - **Migrace 003 + 004 aplikované**. 004 = `kind`/`detail`/`sort_order` na `cascade_dimensions`. Bez ní sync běží přes fallback (insert bez nových sloupců) ale home pak nezobrazí Vedlejší/Bonus. Další migrace → říct Matyášovi ať spustí SQL v Supabase před deployem.
+- **Migrace 006 — SPUSTIT v Supabase** (`ALTER TABLE ai_daily_brief ADD COLUMN IF NOT EXISTS done_keys TEXT[] NOT NULL DEFAULT '{}'`). Bez ní odškrtávání denních úkolů na home tiše nefunguje (klik se vrátí zpět). Vše ostatní funguje dál.
 - **Migrace 003 + 004 + 005 aplikované.** 005 = `ALTER TABLE ai_daily_brief ALTER COLUMN hlavni DROP NOT NULL` (spuštěno 17.6.) — cron teď může vložit řádek jen s nudge/reasoning. Po ní ťuknout **Sync s vaultem** → načte dnešní denní úkoly.
 - **CSP je jen v kódu** (`next.config.ts`). Nesmí být druhá ve Vercel dashboardu (kombinovaly by se restriktivně).
 - **Týdenní priority** — Vercel server běží UTC, kolem půlnoci CEST se může lišit ISO týden o 1 oproti autorovi. Proto **rollover** zkouší 6 týdnů zpět — sync nepadne když ti chybí soubor aktuálního týdne, použije poslední existující. Layer 5 description (`weekLabelFromFile`) odráží skutečně načtený týden.
