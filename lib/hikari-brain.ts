@@ -101,14 +101,11 @@ export async function recalcStreaks(
   return { updated, errors }
 }
 
-// ─── Cascade % from habits ────────────────────────────────────────────────────
-
-function isoMonday(today: string): string {
-  const d = new Date(`${today}T12:00:00Z`)
-  const dow = d.getDay() || 7           // Sun→7 Mon→1 … Sat→6
-  d.setDate(d.getDate() - (dow - 1))    // rewind to Monday
-  return d.toISOString().slice(0, 10)
-}
+// ─── Cascade habit-adherence % (input to the milestone calc) ────────────────────
+// Week/month habit completion ratio. NOTE: this is no longer written to the L4/L5
+// layer progress_pct (those now come from the Gemini milestone calc, like rok/5let).
+// It still feeds the Gemini prompt as a signal, and drives the live "habity X%"
+// badge on /cascade (recomputed client-side via the same lib/cascade-pct helpers).
 
 export async function calcCascadePct(
   db: ReturnType<typeof createAdminClient>,
