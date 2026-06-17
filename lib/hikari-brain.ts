@@ -465,24 +465,39 @@ Odpověz POUZE čistým JSON (žádný text navíc):
     return { dims: 0, layers: 0, error: err }
   }
 
-  // 6 — write back (clamp 0–100, round)
+  // 6 — write back (clamp 0–100, round). Per-milestone % → dimensions; layer %
+  // for týden/měsíc/rok = mean of that layer's milestone %s (so the top number
+  // summarizes the bars below it); 5 let = Gemini's holistic estimate.
   const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)))
 
+  const byLayer: Record<number, { sum: number; cnt: number }> = {}
   let dimsUpdated = 0
   for (const it of items) {
     const pct = parsed.milestones?.[it.key]
     if (pct == null) continue
+    const v = clamp(pct)
     const { error } = await db.from('cascade_dimensions')
-      .update({ progress_pct: clamp(pct), updated_at: new Date().toISOString() })
+      .update({ progress_pct: v, updated_at: new Date().toISOString() })
       .eq('id', it.id)
     if (!error) dimsUpdated++
+    const acc = (byLayer[it.layer] ??= { sum: 0, cnt: 0 })
+    acc.sum += v; acc.cnt++
   }
 
+  const mean = (ln: number): number | undefined =>
+    byLayer[ln]?.cnt ? Math.round(byLayer[ln].sum / byLayer[ln].cnt) : undefined
+
   let layersUpdated = 0
-  for (const [ln, val] of [[2, parsed.layer_5let], [3, parsed.layer_rok]] as Array<[number, number | undefined]>) {
+  const layerVals: Array<[number, number | undefined]> = [
+    [2, parsed.layer_5let == null ? undefined : clamp(parsed.layer_5let)],
+    [3, mean(3)],
+    [4, mean(4)],
+    [5, mean(5)],
+  ]
+  for (const [ln, val] of layerVals) {
     if (val == null || !layerInfo[ln]) continue
     const { error } = await db.from('cascade_layers')
-      .update({ progress_pct: clamp(val), updated_at: new Date().toISOString() })
+      .update({ progress_pct: val, updated_at: new Date().toISOString() })
       .eq('id', layerInfo[ln].id)
     if (!error) layersUpdated++
   }
