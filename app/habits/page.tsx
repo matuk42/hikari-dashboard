@@ -874,6 +874,8 @@ export default function HabitsPage() {
         localStorage.setItem(LS_HABIT_LIST, JSON.stringify(dbHabits))
       }
 
+      loadRetiredHabits(pid).then(setArchived).catch(() => {})
+
       const ids = (dbHabits ?? []).map(h => h.id)
       const [dbStates, dbStreaks] = await Promise.all([
         loadTodayStates(ids, dateKey).catch(() => ({ done: new Set<string>(), rest: new Set<string>() })),
