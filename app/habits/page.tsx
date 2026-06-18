@@ -905,34 +905,45 @@ export default function HabitsPage() {
     ).then(() => localStorage.removeItem(pendingKey))
   }, [isOnline, profileId, habitsFromDb, dateKey])
 
-  // Optimistic toggle + offline queue
+  // Optimistic 3-state cycle (none → done → rest → none) + offline queue
   const toggle = (id: string) => {
-    const nowDone = !done.has(id)
-    const next = new Set(done)
-    if (nowDone) next.add(id); else next.delete(id)
-    setDone(next)
-    localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...next]))
+    const cur: ToggleState = done.has(id) ? 'done' : rest.has(id) ? 'rest' : 'none'
+    const next: ToggleState = cur === 'none' ? 'done' : cur === 'done' ? 'rest' : 'none'
 
-    setStreakMap(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] ?? 0) + (nowDone ? 1 : -1)),
-    }))
+    // Optimistic local state (one set membership at a time)
+    const nextDone = new Set(done); const nextRest = new Set(rest)
+    nextDone.delete(id); nextRest.delete(id)
+    if (next === 'done') nextDone.add(id)
+    else if (next === 'rest') nextRest.add(id)
+    setDone(nextDone); setRest(nextRest)
+    localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...nextDone]))
+    localStorage.setItem(`hikari_rest_${dateKey}`, JSON.stringify([...nextRest]))
+
+    // Streak delta: +1 entering done, −1 leaving done, 0 otherwise (rest is skipped)
+    const delta = next === 'done' ? 1 : cur === 'done' ? -1 : 0
+    if (delta !== 0) {
+      setStreakMap(prev => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }))
+    }
 
     // No DB habit row yet (offline, logged out, or pre-sync fallback) → queue
     if (!profileId || !habitsFromDb || !isOnline) {
       const pendingKey = `hikari_habits_pending_${dateKey}`
-      const pending = JSON.parse(localStorage.getItem(pendingKey) ?? '{}') as Record<string, 'done' | 'fail'>
-      pending[id] = nowDone ? 'done' : 'fail'
+      const pending = JSON.parse(localStorage.getItem(pendingKey) ?? '{}') as Record<string, ToggleState>
+      pending[id] = next
       localStorage.setItem(pendingKey, JSON.stringify(pending))
       return
     }
 
-    supabase.from('habit_logs').upsert(
-      { habit_id: id, date: dateKey, status: nowDone ? 'done' : 'fail', source: 'dashboard' },
-      { onConflict: 'habit_id,date' }
-    ).then(async ({ error }) => {
-      if (error) { console.error('habit_logs upsert error:', error); return }
-      const newStreak = await bumpStreak(id, nowDone, dateKey)
+    const op = next === 'none'
+      ? supabase.from('habit_logs').delete().eq('habit_id', id).eq('date', dateKey)
+      : supabase.from('habit_logs').upsert(
+          { habit_id: id, date: dateKey, status: next, source: 'dashboard' },
+          { onConflict: 'habit_id,date' }
+        )
+    op.then(async ({ error }) => {
+      if (error) { console.error('habit_logs toggle error:', error); return }
+      if (delta === 0) return
+      const newStreak = await applyStreakDelta(id, delta, next === 'done' ? dateKey : null)
       setStreakMap(prev => ({ ...prev, [id]: newStreak }))
     })
   }
