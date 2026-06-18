@@ -340,12 +340,62 @@ export default function HistoryPage() {
           </Link>
         </header>
 
-        {/* Mode selector: Vše + per-habit chips */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 18, scrollbarWidth: 'none' }}>
-          <ModeChip label="Vše" active={mode === 'all'} onClick={() => { setMode('all'); setSelectedDay(null) }} />
-          {habits.map(h => (
-            <ModeChip key={h.id} label={h.name} active={mode === h.id} onClick={() => { setMode(h.id); setSelectedDay(null) }} />
-          ))}
+        {/* Mode selector: "Vše" + a dropdown that opens a habit list over the calendar */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 18, position: 'relative', zIndex: 30 }}>
+          <ModeChip label="Vše" active={mode === 'all'} onClick={() => { setMode('all'); setSelectedDay(null); setDropdownOpen(false) }} />
+
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                cursor: 'pointer', fontSize: 12, fontWeight: mode !== 'all' ? 600 : 500,
+                padding: '6px 12px', borderRadius: 99,
+                background: mode !== 'all' ? 'rgba(245,158,11,0.14)' : 'rgba(255,255,255,0.04)',
+                border: mode !== 'all' ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                color: mode !== 'all' ? '#F59E0B' : 'rgba(255,255,255,0.45)',
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {mode === 'all' ? 'Vyber habit' : habitName(mode)}
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" style={{ width: 14, height: 14, flexShrink: 0, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {dropdownOpen && (
+              <>
+                {/* tap-outside catcher */}
+                <div onClick={() => setDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6, zIndex: 50,
+                  background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
+                  padding: 6, maxHeight: 320, overflowY: 'auto',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                }}>
+                  {habits.length === 0 ? (
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0, padding: '8px 10px' }}>Žádné habity</p>
+                  ) : habits.map(h => (
+                    <button
+                      key={h.id}
+                      onClick={() => { setMode(h.id); setSelectedDay(null); setDropdownOpen(false) }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer',
+                        fontSize: 13, fontWeight: mode === h.id ? 600 : 500,
+                        padding: '9px 10px', borderRadius: 8, border: 'none',
+                        background: mode === h.id ? 'rgba(245,158,11,0.14)' : 'transparent',
+                        color: mode === h.id ? '#F59E0B' : 'rgba(255,255,255,0.78)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {h.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div style={{ position: 'relative' }}>
