@@ -837,6 +837,7 @@ export default function HabitsPage() {
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
   const [dataLoaded, setDataLoaded] = useState(false)
   const [editMode, setEditMode] = useState(false)
+  const [archived, setArchived] = useState<{ id: string; name: string }[]>([])
   // null = closed; { habit } = edit existing; { habit: null } = add new
   const [editor, setEditor] = useState<null | { habit: Habit | null }>(null)
 
