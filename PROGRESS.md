@@ -136,6 +136,6 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - `node scripts/check-anki.mjs` — diagnostika konkrétního habitu (Anki): habits + streaks_cache + posledních ~15 logů.
 
 ## 📌 Stav modulů vs PRD (W23–W27)
-Hotovo: Habits, kibou, Cascade UI + **AI cascade % (milníky L3/L4/L5 + layer L2–L5 přes Gemini, on-demand)**, Vault sync (ruční) + denní úkoly z mentor-feedbacku + **odškrtávání úkolů na home**, login, onboarding, PWA, Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + Gemini nudge/reasoning s vault-state + čas + task-state kontextem)**, **živá energetická osa z きぼう dat (18.6.)**.
-Chybí: automatická detekce vzorů (zápis do DB), konflikt workflow (CLI ↔ Supabase), auto-sync cron (Ne 22:00), /history, /calculator.
+Hotovo: Habits, kibou, Cascade UI + **AI cascade % (milníky L3/L4/L5 + layer L2–L5 přes Gemini, on-demand)**, Vault sync (ruční) + denní úkoly z mentor-feedbacku + **odškrtávání úkolů na home**, login, onboarding, PWA, Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + Gemini nudge/reasoning s vault-state + čas + task-state kontextem)**, **živá energetická osa z きぼう dat (18.6.)**, **/history kalendářní heat-mapa (18.6. session 6)**.
+Chybí: automatická detekce vzorů (zápis do DB), konflikt workflow (CLI ↔ Supabase), auto-sync cron (Ne 22:00), /calculator.
 **Migrace:** všechny aplikované (003/004/005/006). Žádné otevřené.
