@@ -963,6 +963,18 @@ export default function HabitsPage() {
                 OFFLINE
               </span>
             )}
+            {!editMode && (
+              <Link
+                href="/history"
+                aria-label="Historie"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" style={{ width: 14, height: 14 }}>
+                  <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </Link>
+            )}
             {editMode ? (
               <button
                 onClick={() => setEditMode(false)}
