@@ -649,6 +649,46 @@ function LegendDot({ color, label, dashed }: { color: string; label: string; das
   )
 }
 
+function EditRow({ name, status, onClick }: { name: string; status: Status | undefined; onClick: () => void }) {
+  const isDone = status === 'done'
+  const isRest = status === 'rest'
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+        background: 'transparent', border: 'none', cursor: 'pointer', padding: '7px 0',
+      }}
+      aria-label={isDone ? `${name}: označit jako rest` : isRest ? `${name}: odznačit` : `${name}: splnit`}
+    >
+      <span style={{
+        flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+        border: isDone ? '2px solid #F59E0B' : isRest ? '2px solid rgba(245,158,11,0.5)' : '2px solid rgba(255,255,255,0.15)',
+        background: isDone ? '#F59E0B' : isRest ? 'rgba(245,158,11,0.32)' : 'transparent',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s ease',
+      }}>
+        {isDone && (
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 12, height: 12 }}>
+            <path d="M5 13l4 4L19 7" stroke="#080808" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+        {isRest && (
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 10, height: 10 }}>
+            <path d="M6 6l12 12M18 6L6 18" stroke="rgba(245,158,11,0.95)" strokeWidth="2.6" strokeLinecap="round" />
+          </svg>
+        )}
+      </span>
+      <span style={{
+        fontSize: 13, fontWeight: 500,
+        color: isDone ? 'rgba(255,255,255,0.5)' : isRest ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.85)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {name}
+      </span>
+    </button>
+  )
+}
+
 function SummaryStat({ value, label }: { value: number; label: string }) {
   return (
     <div style={{ flex: 1, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
