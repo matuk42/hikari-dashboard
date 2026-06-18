@@ -167,7 +167,8 @@ function DayCell({ day, color, dashed, isToday, isFuture, selected, onClick }: {
       disabled={isFuture}
       style={{
         position: 'relative', aspectRatio: '1', borderRadius: 8,
-        background: isFuture ? FUTURE_CELL : color,
+        backgroundColor: isFuture ? FUTURE_CELL : color,
+        backgroundImage: dashed && !isFuture ? REST_GRID : undefined,
         border: selected
           ? '1.5px solid #F59E0B'
           : dashed
