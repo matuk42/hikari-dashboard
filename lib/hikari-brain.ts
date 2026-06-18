@@ -149,6 +149,80 @@ export async function calcCascadePct(
   return { week, month, errors }
 }
 
+// ─── Energy blocks from HOPE history ─────────────────────────────────────────
+// Computes expected energy level per time-block per day-of-week from the last
+// 30 days of hope_logs. Uses a circadian base curve (weights 0–1) scaled by the
+// day's historical average vs. BASELINE=7. DELETE + INSERT (no unique constraint).
+
+const BASE_CURVE: Array<{ hourStart: number; hourEnd: number; weight: number }> = [
+  { hourStart: 6,  hourEnd: 8,  weight: 0.35 },
+  { hourStart: 8,  hourEnd: 10, weight: 0.90 },
+  { hourStart: 10, hourEnd: 12, weight: 0.85 },
+  { hourStart: 12, hourEnd: 14, weight: 0.55 },
+  { hourStart: 14, hourEnd: 16, weight: 0.50 },
+  { hourStart: 16, hourEnd: 18, weight: 0.70 },
+  { hourStart: 18, hourEnd: 20, weight: 0.38 },
+  { hourStart: 20, hourEnd: 22, weight: 0.25 },
+]
+
+export async function calcEnergyBlocks(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string
+): Promise<{ written: number; error: string | null }> {
+  const cutoff = new Date(`${today}T12:00:00Z`)
+  cutoff.setDate(cutoff.getDate() - 30)
+
+  const { data: logs, error: lErr } = await db.from('hope_logs')
+    .select('date, energy')
+    .eq('profile_id', profileId)
+    .gte('date', cutoff.toISOString().slice(0, 10))
+    .lte('date', today)
+
+  if (lErr) return { written: 0, error: lErr.message }
+  if (!logs?.length) return { written: 0, error: 'no hope data' }
+
+  // Group by JS day_of_week (0=Sun … 6=Sat — same as DB schema)
+  const byDow: Record<number, number[]> = {}
+  for (const log of logs) {
+    const dow = new Date(`${log.date as string}T12:00:00Z`).getDay()
+    ;(byDow[dow] ??= []).push(log.energy as number)
+  }
+
+  const overallAvg = logs.reduce((s, l) => s + (l.energy as number), 0) / logs.length
+  const BASELINE = 7.0
+
+  const rows: Array<{
+    profile_id: string; day_of_week: number; hour_start: number; hour_end: number;
+    level: string; confidence: number; sample_size: number; updated_at: string
+  }> = []
+
+  for (let dow = 0; dow < 7; dow++) {
+    const vals = byDow[dow]
+    const dayAvg = vals?.length ? vals.reduce((s, v) => s + v, 0) / vals.length : overallAvg
+    const scale = dayAvg / BASELINE
+    const sampleSize = vals?.length ?? 0
+    const confidence = Math.min(sampleSize / 4, 1.0)
+
+    for (const b of BASE_CURVE) {
+      const scaled = b.weight * scale
+      const level = scaled >= 0.65 ? 'high' : scaled >= 0.40 ? 'mid' : 'low'
+      rows.push({
+        profile_id: profileId, day_of_week: dow,
+        hour_start: b.hourStart, hour_end: b.hourEnd,
+        level, confidence, sample_size: sampleSize,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  // No unique constraint on the table — safe to DELETE + INSERT
+  await db.from('energy_blocks').delete().eq('profile_id', profileId)
+  const { error: iErr } = await db.from('energy_blocks').insert(rows)
+  if (iErr) return { written: 0, error: iErr.message }
+  return { written: rows.length, error: null }
+}
+
 // ─── Gemini brief ─────────────────────────────────────────────────────────────
 
 // Pinned concrete model (not a "-latest" alias — those get removed without
