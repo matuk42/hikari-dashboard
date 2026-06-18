@@ -1123,7 +1123,7 @@ export default function HabitsPage() {
                 <SectionLabel>Aktivní</SectionLabel>
                 <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
                   {groups.active.map(h => (
-                    <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
+                    <HabitRow key={h.id} habit={h} state={done.has(h.id) ? 'done' : rest.has(h.id) ? 'rest' : 'none'} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
                   ))}
                 </div>
               </section>
@@ -1135,7 +1135,7 @@ export default function HabitsPage() {
                 <SectionLabel>Testovací</SectionLabel>
                 <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
                   {groups.trialSolo.map(h => (
-                    <HabitRow key={h.id} habit={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
+                    <HabitRow key={h.id} habit={h} state={done.has(h.id) ? 'done' : rest.has(h.id) ? 'rest' : 'none'} onToggle={() => toggle(h.id)} liveStreak={streakMap[h.id]} editMode={editMode} onEdit={() => setEditor({ habit: h })} />
                   ))}
                 </div>
               </section>
