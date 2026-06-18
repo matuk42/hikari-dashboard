@@ -506,10 +506,13 @@ function NavArrow({ dir, onClick, disabled }: { dir: 'prev' | 'next'; onClick: (
   )
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <span style={{ width: 12, height: 12, borderRadius: 3, background: color, border: '1px solid rgba(255,255,255,0.04)' }} />
+      <span style={{
+        width: 12, height: 12, borderRadius: 3, background: color,
+        border: dashed ? `1px dashed ${REST_BORDER}` : '1px solid rgba(255,255,255,0.04)',
+      }} />
       {label}
     </span>
   )
