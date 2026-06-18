@@ -17,12 +17,11 @@ function HikariRefreshButton() {
     try {
       const res = await fetch('/api/hikari/refresh', { method: 'POST' })
       const data = await res.json() as { ok?: boolean; brief?: string | { error: string | null }; error?: string }
-      if (data.ok && data.brief === 'generated') {
+      if (data.ok) {
         setState('ok')
-        setMsg('Brief vygenerován ✓')
-      } else if (data.ok) {
-        setState('ok')
-        setMsg('Streaky přepočítány ✓')
+        setMsg(data.brief === 'generated' ? 'Brief vygenerován ✓' : 'Přepočítáno ✓')
+        // Reload so fresh brief + energy blocks appear (data fetched once on mount)
+        setTimeout(() => window.location.reload(), 800)
       } else {
         setState('error')
         setMsg(data.error ?? 'Chyba')
