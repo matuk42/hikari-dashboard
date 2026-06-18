@@ -471,7 +471,7 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 - [ ] Auto-sync z vaultu (Vercel cron Ne 22:00)
 - [ ] Auto-retire habits (denní cron checking end_date)
 - [ ] Hodnotící zprávy balíčků (30.6. Imunita, 3.7. Fyzička)
-- [ ] Historie kalendář (`/history`)
+- [x] Historie kalendář (`/history`) — **hotovo 18.6**: měsíční heat-mapa, režim Vše/per-habit, klik na den → detail, čte `habit_logs`
 - [x] Cascade progress AI výpočet — **hotovo 17.6**: Gemini počítá milníková % L3/L4/L5 + layer % L2–L5 z vault reviewů, on-demand (viz v2.2 changelog)
 - [x] Odškrtávání denních úkolů na home (klik → přeškrtne, `done_keys`, migrace 006) — hotovo 17.6
 - [ ] ⚡ Hikari názor na změnu úkolu
