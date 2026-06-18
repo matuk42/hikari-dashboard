@@ -55,22 +55,24 @@ export async function recalcStreaks(
   cutoff.setDate(cutoff.getDate() - 400)
 
   const { data: logs, error: lErr } = await db.from('habit_logs')
-    .select('habit_id, date')
+    .select('habit_id, date, status')
     .in('habit_id', ids)
     .gte('date', cutoff.toISOString().slice(0, 10))
-    .eq('status', 'done')
+    .in('status', ['done', 'rest'])
 
   if (lErr) {
     errors.push(`habit_logs fetch: ${lErr.message}`)
     return { updated, errors }
   }
 
-  // Group by habit
+  // Group done + rest dates by habit (rest days are skipped in the streak walk)
   const byHabit = new Map<string, string[]>()
+  const restByHabit = new Map<string, string[]>()
   for (const l of logs ?? []) {
-    const a = byHabit.get(l.habit_id as string) ?? []
+    const target = l.status === 'rest' ? restByHabit : byHabit
+    const a = target.get(l.habit_id as string) ?? []
     a.push(l.date as string)
-    byHabit.set(l.habit_id as string, a)
+    target.set(l.habit_id as string, a)
   }
 
   // Fetch existing best streaks once
