@@ -594,7 +594,7 @@ export default function HistoryPage() {
           <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
             <SummaryStat value={summary.totalDone} label="odškrtnutí" />
             <SummaryStat value={summary.activeDays} label="aktivních dní" />
-            <SummaryStat value={summary.bestDay} label="nejlepší den" />
+            <SummaryStat value={summary.bestDay} label="nejlepší den" sub={summary.bestDate ? shortDate(summary.bestDate) : undefined} />
           </div>
         )}
 
