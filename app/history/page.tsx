@@ -479,7 +479,7 @@ export default function HistoryPage() {
                       isToday={dISO === today}
                       isFuture={isFuture}
                       selected={selectedDay === dISO}
-                      onClick={() => setSelectedDay(d => d === dISO ? null : dISO)}
+                      onClick={() => { setEditingDay(false); setSelectedDay(d => d === dISO ? null : dISO) }}
                     />
                   )
                 })}
