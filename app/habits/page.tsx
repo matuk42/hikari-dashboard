@@ -534,11 +534,13 @@ function WaterTracker({ profileId, isOnline }: { profileId: string | null; isOnl
 
 // ─── Habit row ────────────────────────────────────────────────────────────────
 
-function HabitRow({ habit, done, onToggle, liveStreak, editMode, onEdit }: {
-  habit: Habit; done: boolean; onToggle: () => void; liveStreak?: number
+function HabitRow({ habit, state, onToggle, liveStreak, editMode, onEdit }: {
+  habit: Habit; state: ToggleState; onToggle: () => void; liveStreak?: number
   editMode?: boolean; onEdit?: () => void
 }) {
   const displayStreak = liveStreak !== undefined ? liveStreak : habit.streak
+  const isDone = state === 'done'
+  const isRest = state === 'rest'
   return (
     <div
       className="flex items-center gap-3 py-3 border-b last:border-0"
@@ -563,16 +565,25 @@ function HabitRow({ habit, done, onToggle, liveStreak, editMode, onEdit }: {
           onClick={onToggle}
           style={{
             flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
-            border: done ? '2px solid #F59E0B' : '2px solid rgba(255,255,255,0.15)',
-            background: done ? '#F59E0B' : 'transparent',
+            border: isDone ? '2px solid #F59E0B'
+              : isRest ? '2px solid rgba(245,158,11,0.5)'
+              : '2px solid rgba(255,255,255,0.15)',
+            background: isDone ? '#F59E0B'
+              : isRest ? 'rgba(245,158,11,0.32)'
+              : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s ease', cursor: 'pointer',
           }}
-          aria-label={done ? 'Odznačit' : 'Splnit'}
+          aria-label={isDone ? 'Označit jako rest day' : isRest ? 'Odznačit' : 'Splnit'}
         >
-          {done && (
+          {isDone && (
             <svg viewBox="0 0 24 24" fill="none" style={{ width: 13, height: 13 }}>
               <path d="M5 13l4 4L19 7" stroke="#080808" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          {isRest && (
+            <svg viewBox="0 0 24 24" fill="none" style={{ width: 11, height: 11 }}>
+              <path d="M6 6l12 12M18 6L6 18" stroke="rgba(245,158,11,0.95)" strokeWidth="2.6" strokeLinecap="round" />
             </svg>
           )}
         </button>
@@ -581,10 +592,10 @@ function HabitRow({ habit, done, onToggle, liveStreak, editMode, onEdit }: {
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontSize: 14, fontWeight: 500, margin: 0,
-          color: done ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.88)',
+          color: isDone ? 'rgba(255,255,255,0.28)' : isRest ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.88)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           transition: 'color 0.15s',
-          textDecorationLine: done ? 'line-through' : 'none',
+          textDecorationLine: isDone ? 'line-through' : 'none',
           textDecorationColor: 'rgba(255,255,255,0.2)',
         }}>
           {habit.packCode && <span style={{ color: '#F59E0B', opacity: 0.5, marginRight: 4, fontSize: 11 }}>{habit.packCode}</span>}
@@ -593,7 +604,12 @@ function HabitRow({ habit, done, onToggle, liveStreak, editMode, onEdit }: {
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: '2px 0 0' }}>{habit.serves}</p>
       </div>
 
-      <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+        {isRest && (
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.06em', color: 'rgba(245,158,11,0.6)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 5, padding: '1px 5px' }}>
+            REST
+          </span>
+        )}
         {displayStreak > 0 && (
           <span style={{ fontSize: 15, fontWeight: 700, color: '#F59E0B', lineHeight: 1 }}>
             {displayStreak}<span style={{ fontSize: 10, fontWeight: 400, color: 'rgba(245,158,11,0.55)', marginLeft: 1 }}>×</span>
