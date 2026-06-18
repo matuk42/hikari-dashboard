@@ -305,6 +305,39 @@ export default function HistoryPage() {
 
   const habitName = useCallback((id: string) => habits.find(h => h.id === id)?.name ?? '?', [habits])
 
+  // Recompute streaks from logs after retrospective edits (debounced — a burst of
+  // toggles triggers one rebuild). Authoritative streak logic lives in lib/streak.
+  const scheduleStreakRebuild = useCallback(() => {
+    if (rebuildTimer.current) clearTimeout(rebuildTimer.current)
+    rebuildTimer.current = setTimeout(() => {
+      rebuildStreaksFromLogs(habits.map(h => ({ id: h.id, mandatory: h.mandatory })), today).catch(() => {})
+    }, 1500)
+  }, [habits, today])
+
+  // Retrospectively cycle a habit's status for a given date: none → done → rest → none.
+  // Optimistic local update (+ month cache) then persist; 'none' deletes the row.
+  const cycleLog = useCallback(async (habitId: string, date: string) => {
+    const cur = logs.find(l => l.habit_id === habitId && l.date === date)?.status
+    const next: 'done' | 'rest' | null = cur === 'done' ? 'rest' : cur === 'rest' ? null : 'done'
+
+    const updated = logs.filter(l => !(l.habit_id === habitId && l.date === date))
+    if (next) updated.push({ habit_id: habitId, date, status: next })
+    setLogs(updated)
+    cache.current.set(monthKey, updated)
+
+    try {
+      if (next === null) {
+        await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('date', date)
+      } else {
+        await supabase.from('habit_logs').upsert(
+          { habit_id: habitId, date, status: next, source: 'dashboard' },
+          { onConflict: 'habit_id,date' }
+        )
+      }
+      scheduleStreakRebuild()
+    } catch { /* optimistic state stays; next month refetch reconciles */ }
+  }, [logs, monthKey, scheduleStreakRebuild])
+
   // Build the calendar grid (leading blanks + day cells).
   const grid = useMemo(() => {
     const lead = firstWeekdayMonFirst(view.year, view.month)
