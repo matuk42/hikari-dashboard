@@ -57,6 +57,12 @@ function formatCzDay(isoStr: string): string {
   return `${dow} ${d}. ${MONTHS_CZ[m - 1]}`
 }
 
+/** Short "14.6." form for inline labels. */
+function shortDate(isoStr: string): string {
+  const [, m, d] = isoStr.split('-').map(Number)
+  return `${d}.${m}.`
+}
+
 // ─── Heat color ───────────────────────────────────────────────────────────────
 
 const EMPTY_CELL = 'rgba(255,255,255,0.045)'
