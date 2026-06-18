@@ -17,8 +17,9 @@ body {
   box-sizing: border-box;
 }
 
-/* Hide scrollbars everywhere (scroll still works) — clean PWA look */
-html {
+/* Hide scrollbars everywhere — page + inner scroll containers like the /history
+   habit dropdown (scroll still works) — clean PWA look */
+* {
   scrollbar-width: none;        /* Firefox */
   -ms-overflow-style: none;     /* old Edge/IE */
 }
