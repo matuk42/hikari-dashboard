@@ -8,14 +8,19 @@
  * from `today` over the set of 'done' dates.
  *   - mandatory (e.g. autoškola): no grace — a single missed day breaks it.
  *   - others: one rest day forgiven, a second consecutive miss breaks it.
+ *   - explicit rest days (restDates): intentional skips (e.g. a 3×/week habit on
+ *     its off days) — they neither break nor build the streak; the walk skips
+ *     them entirely, so the streak number is preserved across the gap.
  * Today (i === 0) never breaks the streak if not yet done — the day is still open.
  */
 export function streakFromDates(
   doneDates: string[],   // 'done' date strings ("YYYY-MM-DD"), any order
   mandatory: boolean,
-  today: string          // "YYYY-MM-DD"
+  today: string,         // "YYYY-MM-DD"
+  restDates: string[] = []   // 'rest' date strings — skipped (preserve streak)
 ): { streak: number; best: number; lastDone: string | null } {
   const doneSet = new Set(doneDates)
+  const restSet = new Set(restDates)
   let streak    = 0
   let best      = 0
   let graceUsed = false
@@ -26,6 +31,10 @@ export function streakFromDates(
     const d = new Date(`${today}T12:00:00Z`)
     d.setDate(d.getDate() - i)
     const s = d.toISOString().slice(0, 10)
+
+    // Rest day: intentional skip — neither breaks nor builds the streak.
+    if (restSet.has(s)) continue
+
     const isDone = doneSet.has(s)
 
     if (i === 0) {
