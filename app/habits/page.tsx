@@ -626,8 +626,8 @@ function HabitRow({ habit, state, onToggle, liveStreak, editMode, onEdit }: {
 
 // ─── Pack accordion ───────────────────────────────────────────────────────────
 
-function PackSection({ title, subtitle, habits, done, onToggle, streakMap, editMode, onEdit }: {
-  title: string; subtitle: string; habits: Habit[]; done: Set<string>; onToggle: (id: string) => void; streakMap: Record<string, number>
+function PackSection({ title, subtitle, habits, done, rest, onToggle, streakMap, editMode, onEdit }: {
+  title: string; subtitle: string; habits: Habit[]; done: Set<string>; rest: Set<string>; onToggle: (id: string) => void; streakMap: Record<string, number>
   editMode?: boolean; onEdit?: (h: Habit) => void
 }) {
   const [open, setOpen] = useState(false)
