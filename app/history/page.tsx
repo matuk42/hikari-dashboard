@@ -372,14 +372,15 @@ export default function HistoryPage() {
                   const dISO = iso(view.year, view.month, cell.day)
                   const entry = dayData.get(dISO)
                   const isFuture = dISO > today
-                  const color = mode === 'all'
-                    ? overallColor(entry?.done ?? 0, denom)
-                    : habitColor(entry?.byHabit.get(mode))
+                  const cellStyle = mode === 'all'
+                    ? overallCell(entry?.done ?? 0, entry?.rest ?? 0, denom)
+                    : habitCell(entry?.byHabit.get(mode))
                   return (
                     <DayCell
                       key={dISO}
                       day={cell.day}
-                      color={color}
+                      color={cellStyle.color}
+                      dashed={cellStyle.dashed}
                       isToday={dISO === today}
                       isFuture={isFuture}
                       selected={selectedDay === dISO}
