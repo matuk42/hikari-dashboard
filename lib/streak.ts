@@ -54,7 +54,8 @@ export async function rebuildStreaksFromLogs(
 
   for (const h of habits) {
     const dates = byHabit.get(h.id) ?? []
-    const { streak, best, lastDone } = streakFromDates(dates, mandatoryById[h.id], today)
+    const restDates = restByHabit.get(h.id) ?? []
+    const { streak, best, lastDone } = streakFromDates(dates, mandatoryById[h.id], today, restDates)
     out[h.id] = streak
     const finalBest = Math.max(best, prevBest[h.id] ?? 0)
 
