@@ -113,23 +113,20 @@ function VaultSyncButton() {
   )
 }
 
-// ─── Static data (hardcoded until V2) ────────────────────────────────────────
+// ─── Energy axis ─────────────────────────────────────────────────────────────
 
-const ENERGY_BLOCKS = [
-  { label: '6–8', level: 'low' },
-  { label: '8–10', level: 'high' },
-  { label: '10–12', level: 'high' },
-  { label: '12–14', level: 'mid' },
-  { label: '14–16', level: 'mid' },
-  { label: '16–18', level: 'high' },
-  { label: '18–20', level: 'low' },
-  { label: '20–22', level: 'low' },
-] as const
+const BLOCK_LABELS = ['6–8', '8–10', '10–12', '12–14', '14–16', '16–18', '18–20', '20–22']
+
+// Fallback when energy_blocks not yet computed by cron
+const FALLBACK_ENERGY: Array<{ level: 'low' | 'mid' | 'high' }> = [
+  { level: 'low' }, { level: 'high' }, { level: 'high' }, { level: 'mid' },
+  { level: 'mid' }, { level: 'high' }, { level: 'low' },  { level: 'low' },
+]
 
 const ENERGY_COLOR: Record<string, string> = {
   high: '#22c55e',
-  mid: '#eab308',
-  low: '#ef4444',
+  mid:  '#eab308',
+  low:  '#ef4444',
 }
 
 // Fallback shown only when the weekly vault file is missing or unparseable.
