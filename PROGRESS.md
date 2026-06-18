@@ -4,11 +4,23 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-18 (session 5)
+**Poslední aktualizace:** 2026-06-18 (session 6)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (18.6. session 5)
+## ✅ VYŘEŠENO tuto session (18.6. session 6)
+
+**1. `/history` — kalendářní heat-mapa habits (V2) — POSTAVENO.**
+- **Co:** Nová stránka `app/history/page.tsx` — měsíční kalendářní mřížka (Po–Ne, týdny v řádcích) s heat-mapou splněných habits. Navigace ‹ › mezi měsíci, budoucnost zamčená (nelze za aktuální měsíc).
+- **Dva režimy** (chip selektor nahoře): **„Vše"** = intenzita zlaté podle počtu odškrtnutých habitů daný den (4 buckety dle `done/denom`, `denom = max(počet aktivních habitů, nejlepší den měsíce)` — vyřešení rostoucího habit setu). **Per-habit** = sémantické barvy: zlatá=splněno, červená=nesplněno (`fail`), tlumená zlatá=`partial`, šedá=žádný log.
+- **Klik na den** → detail panel: režim „Vše" vypíše splněné/nesplněné habity toho dne; per-habit režim ukáže stav. **Měsíční souhrn** (odškrtnutí / aktivních dní / nejlepší den) jen v režimu „Vše". Legenda dle režimu.
+- **Data:** čte `habit_logs` (`habit_id, date, status`) pro viditelný měsíc (`gte/lte` na `date`), habity přes `loadHabitsLite` (non-retired). **Per-month cache** (`useRef<Map>`) → navigace tam/zpět nerefetchuje. LS fast-path na `profile_id`. Skeleton během načítání. Luffy silueta opacity 0.05 (dle PRD pro /history).
+- **Vstup:** ikonka kalendáře v hlavičce `/habits` (vedle edit tlačítka) → `Link href="/history"`. Z `/history` zpět odkazy na `/` (光) a `/habits`.
+- Build + TypeScript čisté, `/history` ve route listu jako statická.
+
+---
+
+## ✅ VYŘEŠENO dříve (18.6. session 5)
 
 **1. Živá energetická osa z きぼう dat — POSTAVENO.**
 - **Co:** Home screen má živou osu energie (ne statické hardcoded hodnoty). Cron počítá `energy_blocks` z posledních 30 dní hope_logs → 56 řádků (7 dní × 8 bloků). UI čte bloky pro dnešní day_of_week a zobrazuje je s indikátorem aktuálního času.
