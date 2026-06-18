@@ -407,7 +407,7 @@ export default function HistoryPage() {
             ) : (
               <>
                 <LegendDot color="rgba(245,158,11,0.90)" label="splněno" />
-                <LegendDot color="rgba(239,68,68,0.50)" label="nesplněno" />
+                <LegendDot color={REST_FILL} label="rest" dashed />
                 <LegendDot color={EMPTY_CELL} label="nic" />
               </>
             )}
