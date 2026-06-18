@@ -16,6 +16,19 @@
 - **UI (`app/page.tsx`):** `currentHour` state (client-only, aktualizuje se každou minutu, začíná -1 aby nedošlo k hydration mismatch). Aktivní blok = `Math.floor((hour - 6) / 2)`. Minulé bloky: opacity 0.15, aktivní: opacity 1.0 + scaleY(1.28) + glow shadow + zlatý pulzní bod nad ním, budoucí: opacity 0.5. Fallback na statické hodnoty když energy_blocks prázdné (před prvním cronem). Status text rozlišuje live vs. fallback.
 - **Migrace 006 potvrzena spuštěná** (done_keys sloupec — Matyáš potvrdil začátkem session 5).
 
+**2. Gemini hallucination "dnes máš dvě jízdy" — OPRAVENO.**
+- **Příčina:** Gemini viděl v týdenních prioritách (cascade L5) detail `"2× sezení"` a přeložil ho jako "dnes máš dvě jízdy" — zaměnil týdenní frekvenci s dnešním plánem.
+- **Fix:** Přidána instrukce do Gemini promptu: týdenní priority popisují záměry pro CELÝ TÝDEN, ne pro konkrétní den. `"2× sezení"` = týdenní frekvence, NE dnešní počet. Nikdy nepřepisovat na dnešní plán.
+
+**3. „Přepočítej Hikari" nyní načte stránku znovu.**
+- **Příčina:** Data (brief, energy_blocks) se načítají jednou při mountu — po přepočítání byly v DB nová data, ale stránka je neviděla bez manuálního refreshe.
+- **Fix:** Po úspěšném `/api/hikari/refresh` se udělá `window.location.reload()` (po 800ms, stejný pattern jako VaultSync).
+- **Workflow:** Odškrtej úkoly → pak zmáčkni „Přepočítej Hikari" → stránka se načte čerstvě se správným briefem i energetickou osou.
+
+**4. Hikari vždy čte včerejší feedback — OPRAVENO.**
+- **Příčina:** V pondělí platí `lastWeekEnd = neděle (včera)`. Smyčka denních feedbacků měla podmínku `date <= lastWeekEnd` → v pondělí hned na prvním kroku (`neděle <= neděle`) vyskočila. Neděle (včerejší feedback) se přeskočila.
+- **Fix:** Změna `<=` na `<` v `gatherVaultState` — den přesně na hranici prochází. Pondělí teď dostane neděli (včera) a zastaví se na sobotě. Ostatní dny nezměněny.
+
 ---
 
 ## ✅ VYŘEŠENO dříve (17.6. session 4)
