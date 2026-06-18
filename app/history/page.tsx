@@ -61,9 +61,13 @@ const EMPTY_CELL = 'rgba(255,255,255,0.045)'
 const FUTURE_CELL = 'transparent'
 
 // Rest day = intentional skip (e.g. a 3×/week habit on its off days). Rendered as
-// a dimmer gold than "done" + a dashed border, so it reads as "ok, but not a win".
+// a dimmer gold than "done" + a dashed border + a fine gold grid, so it reads as
+// "ok, but not a win" and is unmistakable from a plain done/empty cell.
 const REST_FILL = 'rgba(245,158,11,0.13)'
 const REST_BORDER = 'rgba(245,158,11,0.5)'
+const REST_GRID =
+  'repeating-linear-gradient(0deg, rgba(245,158,11,0.34) 0, rgba(245,158,11,0.34) 1px, transparent 1px, transparent 5px),' +
+  'repeating-linear-gradient(90deg, rgba(245,158,11,0.34) 0, rgba(245,158,11,0.34) 1px, transparent 1px, transparent 5px)'
 
 interface CellStyle { color: string; dashed: boolean }
 
