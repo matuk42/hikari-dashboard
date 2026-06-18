@@ -108,6 +108,7 @@ async function loadHabitsLite(profileId: string): Promise<HabitLite[]> {
   return (data ?? [])
     .filter(h => h.category !== 'retired')
     .map(h => ({ id: h.id as string, name: h.name as string }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'cs'))
 }
 
 async function loadMonthLogs(habitIds: string[], first: string, last: string): Promise<LogRow[]> {
