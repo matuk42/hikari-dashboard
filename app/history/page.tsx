@@ -308,15 +308,15 @@ export default function HistoryPage() {
     if (!selectedDay) return null
     const entry = dayData.get(selectedDay)
     const done: string[] = []
-    const fail: string[] = []
+    const rest: string[] = []
     if (entry) {
       for (const [hid, st] of entry.byHabit) {
         if (st === 'done') done.push(habitName(hid))
-        else if (st === 'fail') fail.push(habitName(hid))
+        else if (st === 'rest') rest.push(habitName(hid))
       }
     }
-    done.sort(); fail.sort()
-    return { done, fail }
+    done.sort(); rest.sort()
+    return { done, rest }
   }, [selectedDay, dayData, habitName])
 
   return (
