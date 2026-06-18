@@ -65,9 +65,9 @@ const FUTURE_CELL = 'transparent'
 // "ok, but not a win" and is unmistakable from a plain done/empty cell.
 const REST_FILL = 'rgba(245,158,11,0.13)'
 const REST_BORDER = 'rgba(245,158,11,0.5)'
+// Diagonal hatch (šikmé čáry) — the classic "rest / skipped" texture.
 const REST_GRID =
-  'repeating-linear-gradient(0deg, rgba(245,158,11,0.34) 0, rgba(245,158,11,0.34) 1px, transparent 1px, transparent 5px),' +
-  'repeating-linear-gradient(90deg, rgba(245,158,11,0.34) 0, rgba(245,158,11,0.34) 1px, transparent 1px, transparent 5px)'
+  'repeating-linear-gradient(45deg, rgba(245,158,11,0.40) 0, rgba(245,158,11,0.40) 1.5px, transparent 1.5px, transparent 6px)'
 
 interface CellStyle { color: string; dashed: boolean }
 
