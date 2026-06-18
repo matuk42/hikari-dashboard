@@ -153,8 +153,8 @@ function CalendarSkeleton() {
 
 // ─── Day cell ─────────────────────────────────────────────────────────────────
 
-function DayCell({ day, color, isToday, isFuture, selected, onClick }: {
-  day: number; color: string; isToday: boolean; isFuture: boolean
+function DayCell({ day, color, dashed, isToday, isFuture, selected, onClick }: {
+  day: number; color: string; dashed: boolean; isToday: boolean; isFuture: boolean
   selected: boolean; onClick: () => void
 }) {
   return (
@@ -166,9 +166,11 @@ function DayCell({ day, color, isToday, isFuture, selected, onClick }: {
         background: isFuture ? FUTURE_CELL : color,
         border: selected
           ? '1.5px solid #F59E0B'
-          : isToday
-            ? '1.5px solid rgba(245,158,11,0.45)'
-            : '1px solid rgba(255,255,255,0.04)',
+          : dashed
+            ? `1.5px dashed ${REST_BORDER}`
+            : isToday
+              ? '1.5px solid rgba(245,158,11,0.45)'
+              : '1px solid rgba(255,255,255,0.04)',
         cursor: isFuture ? 'default' : 'pointer',
         display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
         padding: 4, transition: 'background 0.2s ease, border-color 0.15s ease',
