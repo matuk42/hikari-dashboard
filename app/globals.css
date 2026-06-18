@@ -17,6 +17,17 @@ body {
   box-sizing: border-box;
 }
 
+/* Hide scrollbars everywhere (scroll still works) — clean PWA look */
+html {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* old Edge/IE */
+}
+*::-webkit-scrollbar {          /* Chrome / Safari / WebKit */
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 /* Skeleton loading pulse */
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 0.3; }
