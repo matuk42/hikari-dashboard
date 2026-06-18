@@ -475,10 +475,12 @@ async function gatherVaultState(token: string, today: string): Promise<{ text: s
   for (const w of [...weeks].reverse()) add(`Týdenní review ${w.wk}`, `weekly/${w.wk}`, w.md)
 
   // 4 — daily feedbacks after the last completed week (chronological). Bound 12 days.
+  // Strict < (not <=) so the day exactly at lastWeekEnd (Sunday) is still included —
+  // on Monday that's yesterday, which would otherwise be silently skipped.
   const days: Array<{ date: string; md: string }> = []
   for (let i = 1; i <= 12; i++) {
     const date = shiftDays(today, -i)
-    if (lastWeekEnd && date <= lastWeekEnd) break
+    if (lastWeekEnd && date < lastWeekEnd) break
     const md = await ghFetchRaw(`logs/mentor-feedback/${date}-feedback.md`, token)
     if (md) days.push({ date, md })
   }
