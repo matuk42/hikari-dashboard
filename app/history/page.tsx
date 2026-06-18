@@ -285,12 +285,13 @@ export default function HistoryPage() {
     let totalDone = 0
     let activeDays = 0
     let bestDay = 0
-    for (const v of dayData.values()) {
+    let bestDate: string | null = null
+    for (const [date, v] of dayData) {
       totalDone += v.done
       if (v.done > 0) activeDays++
-      bestDay = Math.max(bestDay, v.done)
+      if (v.done > bestDay) { bestDay = v.done; bestDate = date }
     }
-    return { totalDone, activeDays, bestDay }
+    return { totalDone, activeDays, bestDay, bestDate }
   }, [dayData])
 
   const goPrev = () => {
