@@ -701,7 +701,7 @@ function SummaryStat({ value, label, sub }: { value: number; label: string; sub?
     <div style={{ position: 'relative', flex: 1, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>{label}</div>
-      {sub && <div style={{ position: 'absolute', left: 0, right: 0, bottom: 3, fontSize: 8, color: 'rgba(255,255,255,0.18)', lineHeight: 1 }}>{sub}</div>}
+      {sub && <div style={{ position: 'absolute', left: 0, right: 0, bottom: 6, fontSize: 8, color: 'rgba(255,255,255,0.18)', lineHeight: 1 }}>{sub}</div>}
     </div>
   )
 }
