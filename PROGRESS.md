@@ -166,6 +166,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - `node scripts/streak-dryrun.mjs` — porovná `current_streak` v cache vs. přepočet z logů (nic nezapisuje).
 - `node scripts/streak-apply.mjs` — jednorázově přepočítá streaky z logů a zapíše do `streaks_cache` (best zachová).
 - `node scripts/check-anki.mjs` — diagnostika konkrétního habitu (Anki): habits + streaks_cache + posledních ~15 logů.
+- `node scripts/check-rest.mjs` — všechny `rest` logy + 20 nejnovějších habit_logs + replika /history fetchu (ověří rest days proti DB).
 
 ## 📌 Stav modulů vs PRD (W23–W27)
 Hotovo: Habits (+ **rest days 3-stav**, **archiv/obnovení**), kibou, Cascade UI + **AI cascade % (milníky L3/L4/L5 + layer L2–L5 přes Gemini, on-demand)**, Vault sync (ruční) + denní úkoly z mentor-feedbacku + **odškrtávání úkolů na home**, login, onboarding, PWA (**SW auto-update**), Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + Gemini nudge/reasoning s vault-state + čas + task-state kontextem)**, **živá energetická osa z きぼう dat**, **/history kalendářní heat-mapa (+ rest šrafování, dropdown výběr, retrospektivní doplnění, souhrn)**.
