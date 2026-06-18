@@ -724,6 +724,9 @@ export async function runMorningCron(
   // Still computed here: it feeds the Gemini prompt and the brief context below.
   const cascade = await calcCascadePct(db, profileId, today)
 
+  // 2b — Energy blocks (cheap, no AI — derive from HOPE history)
+  await calcEnergyBlocks(db, profileId, today)
+
   // 3 — Build Gemini context
   const [profileHabits, streakRows, weekDimRow, hopeRow, memRows] = await Promise.all([
     db.from('habits').select('id, name, category').eq('profile_id', profileId).neq('category', 'retired'),
