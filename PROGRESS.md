@@ -4,11 +4,21 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-17 (session 4)
+**Poslední aktualizace:** 2026-06-18 (session 5)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (17.6. session 4)
+## ✅ VYŘEŠENO tuto session (18.6. session 5)
+
+**1. Živá energetická osa z きぼう dat — POSTAVENO.**
+- **Co:** Home screen má živou osu energie (ne statické hardcoded hodnoty). Cron počítá `energy_blocks` z posledních 30 dní hope_logs → 56 řádků (7 dní × 8 bloků). UI čte bloky pro dnešní day_of_week a zobrazuje je s indikátorem aktuálního času.
+- **Algoritmus (`calcEnergyBlocks` v `lib/hikari-brain.ts`):** Bázová cirkadiánní křivka (váhy 0.25–0.90 pro 8 bloků 6–22h) × (průměrná energie dne v týdnu / BASELINE 7.0). Práh: ≥0.65 → high, ≥0.40 → mid, <0.40 → low. Zápisuje DELETE + INSERT (56 řádků). Spouští se v každém `runMorningCron` jako krok 2b (levný, bez AI).
+- **UI (`app/page.tsx`):** `currentHour` state (client-only, aktualizuje se každou minutu, začíná -1 aby nedošlo k hydration mismatch). Aktivní blok = `Math.floor((hour - 6) / 2)`. Minulé bloky: opacity 0.15, aktivní: opacity 1.0 + scaleY(1.28) + glow shadow + zlatý pulzní bod nad ním, budoucí: opacity 0.5. Fallback na statické hodnoty když energy_blocks prázdné (před prvním cronem). Status text rozlišuje live vs. fallback.
+- **Migrace 006 potvrzena spuštěná** (done_keys sloupec — Matyáš potvrdil začátkem session 5).
+
+---
+
+## ✅ VYŘEŠENO dříve (17.6. session 4)
 
 **1. Migrace 005 spuštěna** — `ai_daily_brief.hlavni` už není NOT NULL. Ranní cron může vložit řádek jen s nudge/reasoning bez pádu.
 
