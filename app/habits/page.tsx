@@ -1150,7 +1150,7 @@ export default function HabitsPage() {
                     <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={groups.imunita} done={done} rest={rest} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
                   )}
                   {groups.fyzicka.length > 0 && (
-                    <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
+                    <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} rest={rest} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
                   )}
                 </div>
               </section>
