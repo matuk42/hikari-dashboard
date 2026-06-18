@@ -599,23 +599,66 @@ export default function HomePage() {
         )}
 
         {/* ── Energie — časová osa ── */}
-        <section style={{ marginBottom: 20 }}>
-          <SectionLabel>Energie dnes</SectionLabel>
-          <Card style={{ position: 'relative', overflow: 'hidden', padding: '16px 14px 12px' }}>
-            <LuffySilhouette opacity={0.06} height={120} />
-            <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4 }}>
-              {ENERGY_BLOCKS.map(b => (
-                <div key={b.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: '100%', height: 36, borderRadius: 6, background: ENERGY_COLOR[b.level], opacity: 0.55 }} />
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', lineHeight: 1, textAlign: 'center' }}>{b.label}</span>
+        {(() => {
+          const isLive = data.energyBlocks !== null
+          const blocks = (isLive ? data.energyBlocks! : FALLBACK_ENERGY)
+            .map((b, i) => ({ ...b, label: BLOCK_LABELS[i] }))
+          // Current block index: 0–7 for hours 6–22, -1 outside that range
+          const activeIdx = currentHour >= 6 && currentHour < 22
+            ? Math.floor((currentHour - 6) / 2)
+            : -1
+
+          return (
+            <section style={{ marginBottom: 20 }}>
+              <SectionLabel>Energie dnes</SectionLabel>
+              <Card style={{ position: 'relative', overflow: 'hidden', padding: '20px 14px 12px' }}>
+                <LuffySilhouette opacity={0.06} height={120} />
+                <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4 }}>
+                  {blocks.map((b, i) => {
+                    const isCurrent = i === activeIdx
+                    const isPast    = activeIdx >= 0 && i < activeIdx
+                    return (
+                      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative' }}>
+                        {/* Golden dot above current block */}
+                        {isCurrent && (
+                          <div style={{
+                            position: 'absolute', top: -10, left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 5, height: 5, borderRadius: '50%',
+                            background: '#F59E0B',
+                            boxShadow: '0 0 6px #F59E0B, 0 0 14px #F59E0B50',
+                          }} />
+                        )}
+                        <div style={{
+                          width: '100%', height: 36, borderRadius: 6,
+                          background: ENERGY_COLOR[b.level],
+                          opacity: isPast ? 0.15 : isCurrent ? 1.0 : 0.5,
+                          boxShadow: isCurrent ? `0 0 12px ${ENERGY_COLOR[b.level]}80, 0 0 24px ${ENERGY_COLOR[b.level]}30` : 'none',
+                          transform: isCurrent ? 'scaleY(1.28)' : 'scaleY(1)',
+                          transformOrigin: 'bottom',
+                          transition: 'opacity 0.4s, transform 0.4s, box-shadow 0.4s',
+                        }} />
+                        <span style={{
+                          fontSize: 8,
+                          color: isCurrent ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)',
+                          fontWeight: isCurrent ? 600 : 400,
+                          lineHeight: 1, textAlign: 'center',
+                        }}>
+                          {b.label}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
-            <div style={{ position: 'relative', zIndex: 1, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 10, fontStyle: 'italic', textAlign: 'center' }}>
-              Hikari sbírá data — rozvrh se zpřesní za 7 dní きぼう záznamy
-            </div>
-          </Card>
-        </section>
+                <div style={{ position: 'relative', zIndex: 1, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 10, fontStyle: 'italic', textAlign: 'center' }}>
+                  {isLive
+                    ? '● živá osa z きぼう záznamy · aktualizuje ranní cron'
+                    : 'Hikari sbírá data — rozvrh se zpřesní za 7 dní きぼう záznamy'}
+                </div>
+              </Card>
+            </section>
+          )
+        })()}
 
         {/* ── Hlavní úkoly ── */}
         <section style={{ marginBottom: 20 }}>
