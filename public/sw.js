@@ -1,5 +1,5 @@
-const CACHE = 'hikari-v3'
-const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/login', '/icon-192.png', '/icon.png']
+const CACHE = 'hikari-v4'
+const PRECACHE = ['/', '/habits', '/cascade', '/kibou', '/history', '/login', '/icon-192.png', '/icon.png']
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -25,11 +25,20 @@ self.addEventListener('fetch', e => {
   if (url.hostname.includes('supabase') || url.pathname.startsWith('/auth')) return
   // Skip: RSC payloads — client renders from already-loaded JS
   if (url.searchParams.has('_rsc')) return
-  // Skip: Next.js static chunks — let browser's HTTP cache handle immutable assets
+  // Skip: Next.js static chunks — immutable hashed assets, browser HTTP cache handles them
   if (url.pathname.startsWith('/_next/static/')) return
 
+  const isNav = e.request.mode === 'navigate'
+
+  // Page navigations bypass the HTTP cache (no-store) so a fresh deploy is picked
+  // up the moment the app is reopened — no manual restart. Everything else stays
+  // plain network-first. Both fall back to the runtime cache when offline.
+  const netFetch = isNav
+    ? fetch(url.pathname + url.search, { cache: 'no-store', credentials: 'same-origin' })
+    : fetch(e.request)
+
   e.respondWith(
-    fetch(e.request)
+    netFetch
       .then(res => {
         if (res.ok) {
           const clone = res.clone()
@@ -40,7 +49,7 @@ self.addEventListener('fetch', e => {
       .catch(async () => {
         const cached = await caches.match(e.request, { ignoreSearch: true, ignoreVary: true })
         if (cached) return cached
-        if (e.request.mode === 'navigate') {
+        if (isNav) {
           const shell = await caches.match('/', { ignoreVary: true })
           if (shell) return shell
         }
