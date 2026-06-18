@@ -829,11 +829,13 @@ export default function HabitsPage() {
   useEffect(() => {
     const lsList = localStorage.getItem(LS_HABIT_LIST)
     const lsDone = localStorage.getItem(`hikari_habits_${dateKey}`)
+    const lsRest = localStorage.getItem(`hikari_rest_${dateKey}`)
     const lsPid  = localStorage.getItem(LS_PROFILE_ID)
     const lsSmap = localStorage.getItem(LS_STREAK_MAP)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lsList) { try { const l = JSON.parse(lsList) as Habit[]; if (l.length) { setHabits(l); setHabitsFromDb(true) } } catch {} }
     if (lsDone) { try { setDone(new Set(JSON.parse(lsDone))) } catch {} }
+    if (lsRest) { try { setRest(new Set(JSON.parse(lsRest))) } catch {} }
     if (lsPid)  { setProfileId(lsPid) }
     if (lsSmap) { try { setStreakMap(JSON.parse(lsSmap)) } catch {} }
     if (lsList) { setDataLoaded(true) }
