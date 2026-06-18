@@ -515,7 +515,8 @@ function LegendDot({ color, label, dashed }: { color: string; label: string; das
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       <span style={{
-        width: 12, height: 12, borderRadius: 3, background: color,
+        width: 12, height: 12, borderRadius: 3, backgroundColor: color,
+        backgroundImage: dashed ? REST_GRID : undefined,
         border: dashed ? `1px dashed ${REST_BORDER}` : '1px solid rgba(255,255,255,0.04)',
       }} />
       {label}
