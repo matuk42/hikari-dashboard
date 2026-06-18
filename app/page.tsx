@@ -446,6 +446,13 @@ export default function HomePage() {
         .select('done_keys').eq('profile_id', profileId).eq('date', dateKey).maybeSingle()
       const doneKeys = (dkRes.data?.done_keys as string[] | null) ?? []
 
+      // Energy blocks — 8 rows for today's day_of_week (populated by morning cron)
+      type EnergyRow = { hour_start: number; hour_end: number; level: 'low' | 'mid' | 'high' }
+      const energyRaw = (energyRes as { data: EnergyRow[] | null }).data ?? []
+      const energyBlocks = energyRaw.length === 8
+        ? energyRaw.map(r => ({ hourStart: r.hour_start, hourEnd: r.hour_end, level: r.level }))
+        : null
+
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
         habitsTotal:  trackableIds.length,
@@ -462,6 +469,7 @@ export default function HomePage() {
         aiNudge:       brief?.cascade_nudge ?? null,
         aiReasoning:   brief?.reasoning     ?? null,
         aiGeneratedAt: brief?.generated_at  ?? null,
+        energyBlocks,
       })
     }).catch(() => {})
   }, [dateKey])
