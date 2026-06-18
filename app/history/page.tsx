@@ -512,10 +512,45 @@ export default function HistoryPage() {
         {/* Selected day detail */}
         {selectedDay && (
           <div style={{ marginTop: 20, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 16px' }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B', margin: '0 0 10px', textTransform: 'capitalize' }}>
-              {formatCzDay(selectedDay)}
-            </p>
-            {mode === 'all' ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B', margin: 0, textTransform: 'capitalize' }}>
+                {formatCzDay(selectedDay)}
+              </p>
+              <button
+                onClick={() => setEditingDay(e => !e)}
+                style={{
+                  flexShrink: 0, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                  padding: '4px 10px', borderRadius: 99,
+                  background: editingDay ? 'rgba(245,158,11,0.16)' : 'rgba(255,255,255,0.05)',
+                  border: editingDay ? '1px solid rgba(245,158,11,0.45)' : '1px solid rgba(255,255,255,0.1)',
+                  color: editingDay ? '#F59E0B' : 'rgba(255,255,255,0.55)',
+                }}
+              >
+                {editingDay ? 'Hotovo' : 'Upravit'}
+              </button>
+            </div>
+
+            {editingDay ? (
+              habits.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>Žádné habity k doplnění.</p>
+              ) : (
+                <div>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', margin: '0 0 6px' }}>
+                    Klikni na habit: nic → splněno → rest → nic
+                  </p>
+                  <div>
+                    {habits.map(h => (
+                      <EditRow
+                        key={h.id}
+                        name={h.name}
+                        status={dayData.get(selectedDay)?.byHabit.get(h.id)}
+                        onClick={() => cycleLog(h.id, selectedDay)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : mode === 'all' ? (
               selectedDetail && (selectedDetail.done.length || selectedDetail.rest.length) ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selectedDetail.done.length > 0 && (
