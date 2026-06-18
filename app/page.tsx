@@ -384,7 +384,7 @@ export default function HomePage() {
       const allHabitIds = allHabits.map(h => h.id)
       const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
 
-      const [logsRes, maxStreakRes, weekLayerRes, briefRes] = await Promise.all([
+      const [logsRes, maxStreakRes, weekLayerRes, briefRes, energyRes] = await Promise.all([
         trackableIds.length > 0
           ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
               .in('habit_id', trackableIds).eq('date', dateKey).eq('status', 'done')
@@ -407,6 +407,12 @@ export default function HomePage() {
           .select('hlavni, vedlejsi, bonus, cascade_nudge, reasoning, generated_at')
           .eq('profile_id', profileId).eq('date', dateKey)
           .maybeSingle(),
+        // Energy blocks for today's day_of_week (computed by morning cron)
+        supabase.from('energy_blocks')
+          .select('hour_start, hour_end, level')
+          .eq('profile_id', profileId)
+          .eq('day_of_week', new Date().getDay())
+          .order('hour_start', { ascending: true }),
       ])
 
       const topStreak = (maxStreakRes as { data: { habit_id: string; current_streak: number } | null }).data
