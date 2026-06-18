@@ -4,11 +4,31 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-18 (session 6)
+**Poslední aktualizace:** 2026-06-18 (session 7)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (18.6. session 6)
+## ⚠️ SPUSTIT V SUPABASE (než budou rest days fungovat)
+**Migrace `007_habit_rest_day.sql`** — `ALTER TYPE habit_status ADD VALUE IF NOT EXISTS 'rest';`
+Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spustit SQL v Supabase. Zbytek (kód) je nasazený přes auto-push.
+
+---
+
+## ✅ VYŘEŠENO tuto session (18.6. session 7)
+
+**1. Rest days — 3-stavový cyklus habitu napříč celým systémem — POSTAVENO.**
+- **Cyklus na `/habits`:** klik cykluje **prázdný → ✅ splněno → ✕ rest day → prázdný**. Rest = vyplněný kroužek (tlumená zlatá `0.32`) s **křížkem** místo fajfky + štítek `REST` vpravo. Odznačení (rest → prázdný) = smaže řádek v `habit_logs`. **`fail` status se už nezapisuje** — nesplněný den = prostě absence řádku.
+- **Smysl:** habity typu „3× týdně" — ostatní dny označím jako rest. Rest **nenaruší streak ani ho nezvýší** — streak-walk ho přeskočí (číslo se zachová přes mezeru).
+- **Streak jádro (`lib/streak-core.ts`):** `streakFromDates` má nový param `restDates[]` — rest dny se ve walku `continue`-ují (ani nelámou, ani nestaví). Mandatory/grace logika beze změny.
+- **Obě rebuild cesty** (`lib/streak.ts` klient + `lib/hikari-brain.ts` cron) teď fetchují `.in('status', ['done','rest'])` a předávají rest dates do jádra. `done`/`rest` se grupují zvlášť.
+- **`/habits` toggle:** optimistický 3-stav (dva disjunktní Set-y `done`/`rest` + LS klíče `hikari_habits_*` a `hikari_rest_*`). Streak delta: `+1` při vstupu do done, `−1` při odchodu z done, `0` jinak (rest se nepočítá). `totalCount` vyřazuje rest z denominátoru (rest den ≠ nesplněno).
+- **`/history`:** **červená (`fail`) pryč** — fail i nezaškrtnuto = prázdná buňka. Rest day = **čárkovaný border** (`dashed`, zlatá `0.5`) + **tlumená zlatá výplň** (`0.13`, méně viditelná než splněno `0.90`). Platí v per-habit i „Vše" režimu (pure-rest den = dashed). Legenda per-habit: splněno / rest (čárkovaně) / nic. Detail panel: „Vše" ukazuje SPLNĚNO + REST sekce; per-habit text rozlišuje `✕ rest day (nezapočítá se)`.
+- **Migrace 007** přidává `'rest'` do enumu `habit_status` (⚠️ spustit, viz výš).
+- Build + TypeScript čisté, všechny routy ve výpisu.
+
+---
+
+## ✅ VYŘEŠENO dříve (18.6. session 6)
 
 **1. `/history` — kalendářní heat-mapa habits (V2) — POSTAVENO.**
 - **Co:** Nová stránka `app/history/page.tsx` — měsíční kalendářní mřížka (Po–Ne, týdny v řádcích) s heat-mapou splněných habits. Navigace ‹ › mezi měsíci, budoucnost zamčená (nelze za aktuální měsíc).
