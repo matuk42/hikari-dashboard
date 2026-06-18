@@ -815,6 +815,7 @@ export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [habitsFromDb, setHabitsFromDb] = useState(false)
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [rest, setRest] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
   const [streakMap, setStreakMap] = useState<Record<string, number>>({})
   const [dataLoaded, setDataLoaded] = useState(false)
