@@ -26,6 +26,13 @@ Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spu
 - **Migrace 007** přidává `'rest'` do enumu `habit_status` (spuštěno v Supabase 18.6. — rest days fungují živě, ověřeno proti DB `scripts/check-rest.mjs`).
 - **UI doladění `/history` (18.6.):** rest buňka má navíc **diagonální šrafování** (`REST_GRID`, šikmé čáry 45°) přes tlumenou výplň — jednoznačně odlišitelná. Výběr habitu přepnut z posuvných chipů na **„Vše" + rozbalovací tlačítko**: klik rozjede seznam habitů dolů přes kalendář (overlay, z-index 50, tap-outside zavře), klik na habit zavře instantně a tlačítko ukáže jméno vybraného habitu. „Vše" je samostatné tlačítko vedle.
 - Build + TypeScript čisté, všechny routy ve výpisu.
+- **Habity v dropdownu řazené A–Z** (`localeCompare(..,'cs')` v `loadHabitsLite`).
+
+**2. Service worker — auto-update bez ručního restartu — OPRAVENO.**
+- **Problém:** Po deployi bylo nutné appku ručně úplně zavřít a otevřít (3× po sobě: rest v history, dropdown, řazení), jinak PWA servírovala starou verzi. Příčina: SW byl sice network-first, ale navigace `fetch(e.request)` respektovala HTTP cache prohlížeče → vracela starou HTML.
+- **Fix (`public/sw.js`, CACHE `v3`→`v4`):** navigace (`mode==='navigate'`) teď fetchuje s `cache: 'no-store'` → HTML stránky vždy čerstvé ze sítě (offline fallback na runtime cache zůstává). `/history` přidán do PRECACHE. Ostatní requesty beze změny (network-first).
+- **Fix (`app/sw-register.tsx`):** po deployi nový SW přes `skipWaiting`+`clients.claim` převezme řízení → `controllerchange` → stránka se **jednou sama přenačte**. Guard: jen při updatu (existoval controller), ne při prvním installu, ne víc než jednou. `reg.update()` na každém loadu aktivně kontroluje novou verzi.
+- **Výsledek:** reopen appky po deployi = čerstvá verze sama; když appka zůstane otevřená přes deploy (a změní se `sw.js`, tj. bump CACHE) = auto-reload. Pozn.: auto-reload „za běhu" se spustí jen když se změní `sw.js` — u běžné code-only změny stačí reopen (no-store navigace zařídí čerstvost).
 
 ---
 
