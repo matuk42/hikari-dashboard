@@ -23,7 +23,8 @@ Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spu
 - **Obě rebuild cesty** (`lib/streak.ts` klient + `lib/hikari-brain.ts` cron) teď fetchují `.in('status', ['done','rest'])` a předávají rest dates do jádra. `done`/`rest` se grupují zvlášť.
 - **`/habits` toggle:** optimistický 3-stav (dva disjunktní Set-y `done`/`rest` + LS klíče `hikari_habits_*` a `hikari_rest_*`). Streak delta: `+1` při vstupu do done, `−1` při odchodu z done, `0` jinak (rest se nepočítá). `totalCount` vyřazuje rest z denominátoru (rest den ≠ nesplněno).
 - **`/history`:** **červená (`fail`) pryč** — fail i nezaškrtnuto = prázdná buňka. Rest day = **čárkovaný border** (`dashed`, zlatá `0.5`) + **tlumená zlatá výplň** (`0.13`, méně viditelná než splněno `0.90`). Platí v per-habit i „Vše" režimu (pure-rest den = dashed). Legenda per-habit: splněno / rest (čárkovaně) / nic. Detail panel: „Vše" ukazuje SPLNĚNO + REST sekce; per-habit text rozlišuje `✕ rest day (nezapočítá se)`.
-- **Migrace 007** přidává `'rest'` do enumu `habit_status` (⚠️ spustit, viz výš).
+- **Migrace 007** přidává `'rest'` do enumu `habit_status` (spuštěno v Supabase 18.6. — rest days fungují živě, ověřeno proti DB `scripts/check-rest.mjs`).
+- **UI doladění `/history` (18.6.):** rest buňka má navíc **diagonální šrafování** (`REST_GRID`, šikmé čáry 45°) přes tlumenou výplň — jednoznačně odlišitelná. Výběr habitu přepnut z posuvných chipů na **„Vše" + rozbalovací tlačítko**: klik rozjede seznam habitů dolů přes kalendář (overlay, z-index 50, tap-outside zavře), klik na habit zavře instantně a tlačítko ukáže jméno vybraného habitu. „Vše" je samostatné tlačítko vedle.
 - Build + TypeScript čisté, všechny routy ve výpisu.
 
 ---
