@@ -30,6 +30,13 @@ Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spu
 - **Retrospektivní doplnění habitů (18.6.):** v `/history` má detail vybraného dne tlačítko **„Upravit"** → rozbalí seznam všech aktivních habitů s 3-stavovým cyklem (nic → splněno → rest → nic), zapisuje do `habit_logs` pro to datum (upsert / delete u `none`). Pro dny bez internetu / zpětné doplnění. Optimistický update `logs` + month cache → heat-mapa se hned překreslí. Streaky se přepočítají přes `rebuildStreaksFromLogs` (debounce 1.5s; `loadHabitsLite` proto teď načítá i `mandatory`). Budoucí dny zamčené (nelze vybrat). Komponenta `EditRow` (fajfka/křížek jako na `/habits`).
 - **Scrollbar skrytý globálně** (`globals.css`: `scrollbar-width:none` + `::-webkit-scrollbar{display:none}` na `*`) — hlavní stránka i vnitřní scrolly (dropdown). Scroll funguje dál.
 
+**3. Archiv habitů + obnovení — POSTAVENO (`/habits`).**
+- **Smazání habitu = archivace** (už dřív): `retireHabit` → `category='retired'`, habit + logy + streaky zůstanou v DB, jen se skryje ze všech zobrazení (`dbToHabits` filtruje retired, cron `.neq('category','retired')`).
+- **Nově obnovení:** v **edit módu** (✎) nová sekce **„Archiv"** dole — seznam retired habitů (A–Z) + tlačítko **„↩ Obnovit"**. `unretireHabit` → `category='active'`. `loadRetiredHabits` načítá archiv (v hlavním load effectu + po každém CRUD přes `reloadHabits`). `handleRestoreHabit` → unretire + reload.
+- **Háček:** archivace přepíše původní kategorii na `'retired'` → původní skupina se ztratí, obnovený habit jde do **Aktivní**. Balíčkové (`pack` kolona netknutá) se vrátí do svého balíčku. Skupinu lze po obnovení přepnout v editoru. (Lossless restore by chtěl uložit původní kategorii před archivací — zatím neřešeno, nestálo to za migraci.)
+
+**Rozhodnutí 18.6.:** „Hodnotící zprávy balíčků" (Graduate/Retire návrhy na konci balíčku) **se nebudou dělat** — odstraněno z PRD checklistu.
+
 **2. Service worker — auto-update bez ručního restartu — OPRAVENO.**
 - **Problém:** Po deployi bylo nutné appku ručně úplně zavřít a otevřít (3× po sobě: rest v history, dropdown, řazení), jinak PWA servírovala starou verzi. Příčina: SW byl sice network-first, ale navigace `fetch(e.request)` respektovala HTTP cache prohlížeče → vracela starou HTML.
 - **Fix (`public/sw.js`, CACHE `v3`→`v4`):** navigace (`mode==='navigate'`) teď fetchuje s `cache: 'no-store'` → HTML stránky vždy čerstvé ze sítě (offline fallback na runtime cache zůstává). `/history` přidán do PRECACHE. Ostatní requesty beze změny (network-first).
