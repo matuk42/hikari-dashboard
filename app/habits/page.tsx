@@ -192,6 +192,23 @@ async function retireHabit(habitId: string): Promise<string | null> {
   return error ? error.message : null
 }
 
+/** Restore an archived habit. The original category is lost on archive, so it comes
+ * back as 'active' (pack habits land back in their pack via the untouched pack column);
+ * the group can be re-picked in the editor afterwards. Logs/streaks were preserved. */
+async function unretireHabit(habitId: string): Promise<string | null> {
+  const { error } = await supabase.from('habits').update({ category: 'active' }).eq('id', habitId)
+  return error ? error.message : null
+}
+
+/** Light list of archived (retired) habits for the restore UI. */
+async function loadRetiredHabits(profileId: string): Promise<{ id: string; name: string }[]> {
+  const { data } = await supabase.from('habits')
+    .select('id, name').eq('profile_id', profileId).eq('category', 'retired')
+  return (data ?? [])
+    .map(h => ({ id: h.id as string, name: h.name as string }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'cs'))
+}
+
 /**
  * Live habit list from the DB (the source of truth once vault sync has run).
  * Tolerates pack/pack_code being absent (migration 003 not applied) by retrying
