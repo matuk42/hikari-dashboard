@@ -8,13 +8,8 @@
 
 ---
 
-## ⚠️ SPUSTIT V SUPABASE (než budou rest days fungovat)
-**Migrace `007_habit_rest_day.sql`** — `ALTER TYPE habit_status ADD VALUE IF NOT EXISTS 'rest';`
-Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spustit SQL v Supabase. Zbytek (kód) je nasazený přes auto-push.
-
----
-
 ## ✅ VYŘEŠENO tuto session (18.6. session 7)
+*(Migrace 007 `rest` enum spuštěna v Supabase — rest days fungují živě, ověřeno proti DB.)*
 
 **1. Rest days — 3-stavový cyklus habitu napříč celým systémem — POSTAVENO.**
 - **Cyklus na `/habits`:** klik cykluje **prázdný → ✅ splněno → ✕ rest day → prázdný**. Rest = vyplněný kroužek (tlumená zlatá `0.32`) s **křížkem** místo fajfky + štítek `REST` vpravo. Odznačení (rest → prázdný) = smaže řádek v `habit_logs`. **`fail` status se už nezapisuje** — nesplněný den = prostě absence řádku.
