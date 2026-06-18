@@ -17,6 +17,7 @@ type Status = 'done' | 'fail' | 'partial' | 'unknown' | 'rest'
 interface HabitLite {
   id: string
   name: string
+  mandatory: boolean
 }
 
 interface LogRow {
