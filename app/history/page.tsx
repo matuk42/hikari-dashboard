@@ -421,7 +421,7 @@ export default function HistoryPage() {
               {formatCzDay(selectedDay)}
             </p>
             {mode === 'all' ? (
-              selectedDetail && (selectedDetail.done.length || selectedDetail.fail.length) ? (
+              selectedDetail && (selectedDetail.done.length || selectedDetail.rest.length) ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selectedDetail.done.length > 0 && (
                     <div>
@@ -429,10 +429,10 @@ export default function HistoryPage() {
                       <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>{selectedDetail.done.join(' · ')}</p>
                     </div>
                   )}
-                  {selectedDetail.fail.length > 0 && (
+                  {selectedDetail.rest.length > 0 && (
                     <div>
-                      <p style={{ fontSize: 10, color: 'rgba(239,68,68,0.7)', margin: '0 0 4px', fontWeight: 600 }}>NESPLNĚNO ({selectedDetail.fail.length})</p>
-                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>{selectedDetail.fail.join(' · ')}</p>
+                      <p style={{ fontSize: 10, color: 'rgba(245,158,11,0.45)', margin: '0 0 4px', fontWeight: 600 }}>REST ({selectedDetail.rest.length})</p>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>{selectedDetail.rest.join(' · ')}</p>
                     </div>
                   )}
                 </div>
@@ -444,7 +444,7 @@ export default function HistoryPage() {
                 {habitName(mode)} — {
                   (() => {
                     const st = dayData.get(selectedDay)?.byHabit.get(mode)
-                    return st === 'done' ? '✓ splněno' : st === 'fail' ? '✗ nesplněno' : st === 'partial' ? '~ částečně' : 'žádný záznam'
+                    return st === 'done' ? '✓ splněno' : st === 'rest' ? '✕ rest day (nezapočítá se)' : st === 'partial' ? '~ částečně' : 'žádný záznam'
                   })()
                 }
               </p>
