@@ -358,6 +358,8 @@ ${ctx.vaultState || '(nedostupné)'}
 
 POZOR NA ČAS: právě je ${ctx.nowLabel}. Habity i denní úkoly se plní celý den — pokud je ráno/dopoledne, NEHODNOŤ dnešní nesplněné habity/úkoly jako selhání (den teprve začal, je normální že je ještě 0/X). Dnešní splnění hodnoť kriticky až večer; jinak se opírej o VČEREJŠEK, streaky a dlouhodobé vzory. Co je dnes ještě nesplněné = nasměruj, nehubuj.
 
+POZOR NA TÝDENNÍ PRIORITY: Týdenní priority (níže) popisují záměry pro CELÝ TÝDEN — ne pro dnešní den. Pokud vidíš u priority detail jako "2× sezení" nebo "3×/týden", jde o týdenní frekvenci, NE o dnešní počet. Nikdy nepřepisuj týdenní frekvenci jako dnešní plán ("dnes máš dvě jízdy" z "2× sezení" je chyba). Dnešní konkrétní plán je výhradně v sekci odškrtnutých denních úkolů.
+
 ÚKOL — vytvoř ranní mentorskou zprávu na DNES. Konkrétní, ne obecné rady. Propojuj tečky: odkazuj na streaky, dnešní stav habits, vzory, týdenní priority, a hlavně na to, co posouvá sen. Když něco vázne, pojmenuj to přímo s důkazem z dat. (Konkrétní seznam denních úkolů NEgeneruj — ty si Matyáš píše sám; tvoje role je mentorský pohled a propojení.)
 
 Odpověz POUZE čistým JSON (česky, s diakritikou):
