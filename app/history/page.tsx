@@ -205,6 +205,7 @@ export default function HistoryPage() {
   const [logs, setLogs] = useState<LogRow[]>([])
   const [loaded, setLoaded] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   // Per-month log cache so navigating back and forth doesn't refetch.
   const cache = useRef<Map<string, LogRow[]>>(new Map())
