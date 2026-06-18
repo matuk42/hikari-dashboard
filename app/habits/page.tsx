@@ -887,19 +887,20 @@ export default function HabitsPage() {
     const pendingKey = `hikari_habits_pending_${dateKey}`
     const raw = localStorage.getItem(pendingKey)
     if (!raw) return
-    const pending = JSON.parse(raw) as Record<string, 'done' | 'fail'>
+    const pending = JSON.parse(raw) as Record<string, ToggleState>
     const entries = Object.entries(pending)
     if (!entries.length) return
 
+    // Persist queued target states. 'none' deletes the row; done/rest upsert it.
+    // Streaks are not bumped here — rebuildStreaksFromLogs corrects them on next load.
     Promise.all(
-      entries.map(([id, status]) =>
-        supabase.from('habit_logs')
-          .upsert({ habit_id: id, date: dateKey, status, source: 'dashboard' }, { onConflict: 'habit_id,date' })
-          .then(async ({ error }) => {
-            if (error) return
-            const real = await bumpStreak(id, status === 'done', dateKey)
-            setStreakMap(prev => ({ ...prev, [id]: real }))
-          })
+      entries.map(([id, st]) =>
+        st === 'none'
+          ? supabase.from('habit_logs').delete().eq('habit_id', id).eq('date', dateKey)
+          : supabase.from('habit_logs').upsert(
+              { habit_id: id, date: dateKey, status: st, source: 'dashboard' },
+              { onConflict: 'habit_id,date' }
+            )
       )
     ).then(() => localStorage.removeItem(pendingKey))
   }, [isOnline, profileId, habitsFromDb, dateKey])
