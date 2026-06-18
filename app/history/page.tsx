@@ -247,13 +247,14 @@ export default function HistoryPage() {
 
   // Per-day aggregates for the visible month.
   const dayData = useMemo(() => {
-    // date → { doneCount, statusByHabit }
-    const map = new Map<string, { done: number; byHabit: Map<string, Status> }>()
+    // date → { doneCount, restCount, statusByHabit }
+    const map = new Map<string, { done: number; rest: number; byHabit: Map<string, Status> }>()
     for (const l of logs) {
       let entry = map.get(l.date)
-      if (!entry) { entry = { done: 0, byHabit: new Map() }; map.set(l.date, entry) }
+      if (!entry) { entry = { done: 0, rest: 0, byHabit: new Map() }; map.set(l.date, entry) }
       entry.byHabit.set(l.habit_id, l.status)
       if (l.status === 'done') entry.done++
+      else if (l.status === 'rest') entry.rest++
     }
     return map
   }, [logs])
