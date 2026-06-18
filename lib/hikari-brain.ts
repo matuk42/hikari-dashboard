@@ -84,7 +84,8 @@ export async function recalcStreaks(
   for (const h of habits) {
     const id = h.id as string
     const dates = byHabit.get(id) ?? []
-    const { streak, best, lastDone } = streakFromDates(dates, !!h.mandatory, today)
+    const restDates = restByHabit.get(id) ?? []
+    const { streak, best, lastDone } = streakFromDates(dates, !!h.mandatory, today, restDates)
     const finalBest = Math.max(best, existingBest[id] ?? 0)
 
     const { error } = await db.from('streaks_cache').upsert({
