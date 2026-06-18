@@ -328,7 +328,17 @@ export default function HomePage() {
     sideTasks: [],
     bonusTasks: [],
     doneKeys: [],
+    energyBlocks: null,
   })
+
+  // Current hour — set client-side only to avoid hydration mismatch.
+  // -1 = before mount (no block highlighted). Updates every minute.
+  const [currentHour, setCurrentHour] = useState(-1)
+  useEffect(() => {
+    setCurrentHour(new Date().getHours())
+    const t = setInterval(() => setCurrentHour(new Date().getHours()), 60_000)
+    return () => clearInterval(t)
+  }, [])
 
   useEffect(() => {
     // LS fast path — synchronous, before first async tick
