@@ -217,11 +217,23 @@ async function loadHabits(profileId: string): Promise<Habit[] | null> {
   return dbToHabits(rows)
 }
 
-async function loadTodayDone(ids: string[], date: string): Promise<Set<string>> {
-  if (!ids.length) return new Set()
+// Daily state of a habit. The checkbox cycles none → done → rest → none.
+// 'rest' = an intentional skip (e.g. a 3×/week habit on its off days): it neither
+// breaks the streak nor builds it. Un-checking (rest → none) deletes the log row,
+// so there is no 'fail' state any more — a missed day is simply the absence of a row.
+type ToggleState = 'none' | 'done' | 'rest'
+
+async function loadTodayStates(ids: string[], date: string): Promise<{ done: Set<string>; rest: Set<string> }> {
+  const done = new Set<string>()
+  const rest = new Set<string>()
+  if (!ids.length) return { done, rest }
   const { data } = await supabase.from('habit_logs')
     .select('habit_id, status').in('habit_id', ids).eq('date', date)
-  return new Set((data ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string))
+  for (const l of data ?? []) {
+    if (l.status === 'done') done.add(l.habit_id as string)
+    else if (l.status === 'rest') rest.add(l.habit_id as string)
+  }
+  return { done, rest }
 }
 
 /**
