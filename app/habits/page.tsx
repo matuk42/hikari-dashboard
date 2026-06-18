@@ -981,8 +981,11 @@ export default function HabitsPage() {
     setEditor(null)
   }
 
+  // Rest days are intentional skips → drop them from today's denominator so the
+  // "X/Y" counter reflects only the habits actually due today (a 3×/week habit on
+  // its off day shouldn't read as a miss).
   const doneCount = groups.trackable.filter(h => done.has(h.id)).length
-  const totalCount = groups.trackable.length
+  const totalCount = groups.trackable.filter(h => !rest.has(h.id)).length
   const allDone = doneCount === totalCount && totalCount > 0
 
   // Hero: habit with the highest current streak (streaks_cache, else baseline)
