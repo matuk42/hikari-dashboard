@@ -1002,6 +1002,12 @@ export default function HabitsPage() {
     setEditor(null)
   }
 
+  const handleRestoreHabit = async (id: string) => {
+    const err = await unretireHabit(id)
+    if (err) return
+    await reloadHabits()
+  }
+
   // Rest days are intentional skips → drop them from today's denominator so the
   // "X/Y" counter reflects only the habits actually due today (a 3×/week habit on
   // its off day shouldn't read as a miss).
