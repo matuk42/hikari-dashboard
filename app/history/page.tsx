@@ -60,6 +60,13 @@ function formatCzDay(isoStr: string): string {
 const EMPTY_CELL = 'rgba(255,255,255,0.045)'
 const FUTURE_CELL = 'transparent'
 
+// Rest day = intentional skip (e.g. a 3×/week habit on its off days). Rendered as
+// a dimmer gold than "done" + a dashed border, so it reads as "ok, but not a win".
+const REST_FILL = 'rgba(245,158,11,0.13)'
+const REST_BORDER = 'rgba(245,158,11,0.5)'
+
+interface CellStyle { color: string; dashed: boolean }
+
 /** Overall mode: gold intensity by fraction of habits done that day. */
 function overallColor(doneCount: number, denom: number): string {
   if (doneCount <= 0) return EMPTY_CELL
@@ -70,13 +77,20 @@ function overallColor(doneCount: number, denom: number): string {
   return 'rgba(245,158,11,0.92)'
 }
 
-/** Per-habit mode: semantic color by that day's status. */
-function habitColor(status: Status | undefined): string {
+/** Overall mode cell: gold intensity by done count; pure-rest days read as dashed. */
+function overallCell(done: number, rest: number, denom: number): CellStyle {
+  if (done > 0) return { color: overallColor(done, denom), dashed: false }
+  if (rest > 0) return { color: REST_FILL, dashed: true }
+  return { color: EMPTY_CELL, dashed: false }   // fail / nothing → empty (no red)
+}
+
+/** Per-habit mode cell: semantic style by that day's status. No 'fail' color any more. */
+function habitCell(status: Status | undefined): CellStyle {
   switch (status) {
-    case 'done': return 'rgba(245,158,11,0.90)'
-    case 'partial': return 'rgba(245,158,11,0.42)'
-    case 'fail': return 'rgba(239,68,68,0.50)'
-    default: return EMPTY_CELL
+    case 'done': return { color: 'rgba(245,158,11,0.90)', dashed: false }
+    case 'partial': return { color: 'rgba(245,158,11,0.42)', dashed: false }
+    case 'rest': return { color: REST_FILL, dashed: true }
+    default: return { color: EMPTY_CELL, dashed: false }   // fail / unknown / none → empty
   }
 }
 
