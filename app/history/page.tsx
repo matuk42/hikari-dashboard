@@ -209,9 +209,12 @@ export default function HistoryPage() {
   const [loaded, setLoaded] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [editingDay, setEditingDay] = useState(false)
 
   // Per-month log cache so navigating back and forth doesn't refetch.
   const cache = useRef<Map<string, LogRow[]>>(new Map())
+  // Debounced streak rebuild after retrospective edits.
+  const rebuildTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const monthKey = `${view.year}-${view.month}`
   const isCurrentMonth = view.year === now.getFullYear() && view.month === now.getMonth()
