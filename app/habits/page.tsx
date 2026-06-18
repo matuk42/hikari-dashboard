@@ -243,18 +243,21 @@ async function loadTodayStates(ids: string[], date: string): Promise<{ done: Set
  */
 
 /**
- * Apply a single ±1 streak change while preserving the vault-seeded baseline and
- * the all-time best. Shared by the optimistic toggle and the offline flush so
- * both paths keep the same semantics.
+ * Apply an optimistic ±N streak delta while preserving the vault-seeded baseline
+ * and the all-time best. Authoritative value is always the rebuild on next load
+ * (rebuildStreaksFromLogs) — this just keeps the number snappy on toggle.
+ *   none → done : +1 (sets last_completed_date)
+ *   done → rest : −1 (the day was counted, now it's skipped)
+ *   rest → none :  0 (rest never counted → no change; caller skips this write)
  */
-async function bumpStreak(habitId: string, nowDone: boolean, date: string): Promise<number> {
+async function applyStreakDelta(habitId: string, delta: number, completedDate: string | null): Promise<number> {
   const { data: cached } = await supabase.from('streaks_cache')
     .select('current_streak, best_streak').eq('habit_id', habitId).maybeSingle()
-  const newStreak = Math.max(0, (cached?.current_streak ?? 0) + (nowDone ? 1 : -1))
+  const newStreak = Math.max(0, (cached?.current_streak ?? 0) + delta)
   const newBest = Math.max(newStreak, cached?.best_streak ?? 0)
   await supabase.from('streaks_cache').upsert({
     habit_id: habitId, current_streak: newStreak, best_streak: newBest,
-    ...(nowDone ? { last_completed_date: date } : {}), updated_at: new Date().toISOString(),
+    ...(completedDate ? { last_completed_date: completedDate } : {}), updated_at: new Date().toISOString(),
   }, { onConflict: 'habit_id' })
   return newStreak
 }
