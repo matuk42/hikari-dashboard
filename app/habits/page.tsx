@@ -857,8 +857,8 @@ export default function HabitsPage() {
       }
 
       const ids = (dbHabits ?? []).map(h => h.id)
-      const [dbDone, dbStreaks] = await Promise.all([
-        loadTodayDone(ids, dateKey).catch(() => new Set<string>()),
+      const [dbStates, dbStreaks] = await Promise.all([
+        loadTodayStates(ids, dateKey).catch(() => ({ done: new Set<string>(), rest: new Set<string>() })),
         // Rebuild streaks from logs (self-healing) before showing them
         rebuildStreaksFromLogs(dbHabits ?? [], dateKey).catch(() => ({} as Record<string, number>)),
       ])
@@ -867,10 +867,15 @@ export default function HabitsPage() {
         setStreakMap(dbStreaks)
         localStorage.setItem(LS_STREAK_MAP, JSON.stringify(dbStreaks))
       }
-      setDone(prev => {
-        const merged = new Set([...prev, ...dbDone])
-        localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...merged]))
-        return merged
+      // DB is authoritative for today's states (a row may have been deleted on
+      // another device) → replace rather than merge, so un-checks propagate.
+      setDone(() => {
+        localStorage.setItem(`hikari_habits_${dateKey}`, JSON.stringify([...dbStates.done]))
+        return dbStates.done
+      })
+      setRest(() => {
+        localStorage.setItem(`hikari_rest_${dateKey}`, JSON.stringify([...dbStates.rest]))
+        return dbStates.rest
       })
       setDataLoaded(true)
     }).catch(err => { console.error(err); setDataLoaded(true) })
