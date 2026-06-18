@@ -699,11 +699,9 @@ function EditRow({ name, status, onClick }: { name: string; status: Status | und
 function SummaryStat({ value, label, sub }: { value: number; label: string; sub?: string }) {
   return (
     <div style={{ flex: 1, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>
-        {value}
-        {sub && <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}> · {sub}</span>}
-      </div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>{label}</div>
+      {sub && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginTop: 2, lineHeight: 1 }}>{sub}</div>}
     </div>
   )
 }
