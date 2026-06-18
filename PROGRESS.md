@@ -27,6 +27,8 @@ Bez ní zápis rest dne do `habit_logs` spadne (enum nezná hodnotu `rest`). Spu
 - **UI doladění `/history` (18.6.):** rest buňka má navíc **diagonální šrafování** (`REST_GRID`, šikmé čáry 45°) přes tlumenou výplň — jednoznačně odlišitelná. Výběr habitu přepnut z posuvných chipů na **„Vše" + rozbalovací tlačítko**: klik rozjede seznam habitů dolů přes kalendář (overlay, z-index 50, tap-outside zavře), klik na habit zavře instantně a tlačítko ukáže jméno vybraného habitu. „Vše" je samostatné tlačítko vedle.
 - Build + TypeScript čisté, všechny routy ve výpisu.
 - **Habity v dropdownu řazené A–Z** (`localeCompare(..,'cs')` v `loadHabitsLite`).
+- **Retrospektivní doplnění habitů (18.6.):** v `/history` má detail vybraného dne tlačítko **„Upravit"** → rozbalí seznam všech aktivních habitů s 3-stavovým cyklem (nic → splněno → rest → nic), zapisuje do `habit_logs` pro to datum (upsert / delete u `none`). Pro dny bez internetu / zpětné doplnění. Optimistický update `logs` + month cache → heat-mapa se hned překreslí. Streaky se přepočítají přes `rebuildStreaksFromLogs` (debounce 1.5s; `loadHabitsLite` proto teď načítá i `mandatory`). Budoucí dny zamčené (nelze vybrat). Komponenta `EditRow` (fajfka/křížek jako na `/habits`).
+- **Scrollbar skrytý globálně** (`globals.css`: `scrollbar-width:none` + `::-webkit-scrollbar{display:none}` na `*`) — hlavní stránka i vnitřní scrolly (dropdown). Scroll funguje dál.
 
 **2. Service worker — auto-update bez ručního restartu — OPRAVENO.**
 - **Problém:** Po deployi bylo nutné appku ručně úplně zavřít a otevřít (3× po sobě: rest v history, dropdown, řazení), jinak PWA servírovala starou verzi. Příčina: SW byl sice network-first, ale navigace `fetch(e.request)` respektovala HTTP cache prohlížeče → vracela starou HTML.
