@@ -1203,6 +1203,39 @@ export default function HabitsPage() {
               </section>
             )}
 
+            {/* Archiv — smazané (retired) habity, lze obnovit (jen v edit módu) */}
+            {editMode && archived.length > 0 && (
+              <section style={{ marginTop: 20 }}>
+                <SectionLabel>Archiv</SectionLabel>
+                <div style={{ background: '#0e0e0e', borderRadius: 14, padding: '0 16px' }}>
+                  {archived.map((h, i) => (
+                    <div
+                      key={h.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                        padding: '11px 0',
+                        borderBottom: i === archived.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {h.name}
+                      </span>
+                      <button
+                        onClick={() => handleRestoreHabit(h.id)}
+                        style={{
+                          flexShrink: 0, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                          padding: '5px 12px', borderRadius: 99,
+                          background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.4)', color: '#F59E0B',
+                        }}
+                      >
+                        ↩ Obnovit
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <div style={{ textAlign: 'center', padding: '24px 24px 48px', opacity: 0.5 }}>
               <p style={{ fontSize: 13, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
                 &ldquo;If you give up, you&rsquo;re going to regret it forever.&rdquo;
