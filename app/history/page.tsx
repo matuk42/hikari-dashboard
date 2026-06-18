@@ -11,7 +11,7 @@ const LS_PROFILE_ID = 'hikari_profile_id'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Status = 'done' | 'fail' | 'partial' | 'unknown'
+type Status = 'done' | 'fail' | 'partial' | 'unknown' | 'rest'
 
 interface HabitLite {
   id: string
