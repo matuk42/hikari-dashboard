@@ -105,11 +105,11 @@ function habitCell(status: Status | undefined): CellStyle {
 async function loadHabitsLite(profileId: string): Promise<HabitLite[]> {
   const { data } = await supabase
     .from('habits')
-    .select('id, name, category')
+    .select('id, name, category, mandatory')
     .eq('profile_id', profileId)
   return (data ?? [])
     .filter(h => h.category !== 'retired')
-    .map(h => ({ id: h.id as string, name: h.name as string }))
+    .map(h => ({ id: h.id as string, name: h.name as string, mandatory: !!h.mandatory }))
     .sort((a, b) => a.name.localeCompare(b.name, 'cs'))
 }
 
