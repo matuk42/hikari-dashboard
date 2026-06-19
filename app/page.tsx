@@ -397,6 +397,7 @@ interface HomeData {
   aiGeneratedAt: string | null
   energyBlocks: Array<{ hourStart: number; hourEnd: number; level: 'low' | 'mid' | 'high' }> | null
   proposals: Proposal[]
+  speaking: Speaking | null
 }
 
 const FALLBACK_STREAK = 45
