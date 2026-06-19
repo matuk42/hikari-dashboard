@@ -220,10 +220,13 @@ function Card({ children, style }: { children: ReactNode; style?: CSSProperties 
 
 // ─── Hikari Brief (collapsible) ───────────────────────────────────────────────
 
-function HikariBriefCard({ nudge, reasoning, generatedAt }: {
+function HikariBriefCard({ nudge, reasoning, generatedAt, speaking }: {
   nudge: string | null; reasoning: string | null; generatedAt: string | null
+  speaking: Speaking | null
 }) {
   const [open, setOpen] = useState(false)
+  const hasSpeaking = !!speaking && (speaking.fillers.length > 0 || speaking.principles.length > 0)
+  const hasBrief = !!(nudge || reasoning)
 
   return (
     <Card style={{ position: 'relative', overflow: 'hidden' }}>
