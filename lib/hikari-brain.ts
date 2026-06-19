@@ -722,8 +722,9 @@ async function summarizeDayTasks(
 // only if there are new candidates): Gemini judges causal meaningfulness USING the
 // same vault context as the brief (gatherVaultState), rephrases survivors in mentor
 // voice, and we write kept→'proposed', dropped→'archived'. The numbers stay the
-// code's — Gemini may not change them. Bounded cost: each unique pattern is scored
-// by Gemini exactly once, then remembered.
+// code's — Gemini may not change them. Bounded cost: a pattern is scored at most
+// once per 7 days (user-decided refs never again; AI-archived refs reconsidered
+// weekly as data grows).
 
 export interface PatternResult {
   candidates: number
