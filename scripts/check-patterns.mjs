@@ -4,12 +4,9 @@
 // Spuštění: node scripts/check-patterns.mjs
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
-import { register } from 'node:module'
-import { pathToFileURL } from 'node:url'
+// Node 24 strips TypeScript types nativně → lib/pattern-detect.ts jde importovat přímo.
+import { detectAllPatterns } from '../lib/pattern-detect.ts'
 
-// Umožní importovat .ts knihovnu detekce přímo (Node 22+ s --experimental-strip-types
-// to zvládne sám; fallback: zkopírovaná logika by se rozešla). Použijeme tsx loader
-// pokud je k dispozici, jinak spadneme na ruční odhad přes API níže.
 const env = Object.fromEntries(
   readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
     .split('\n').filter(l => l.includes('=')).map(l => {
