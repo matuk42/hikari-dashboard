@@ -283,6 +283,91 @@ function HikariBriefCard({ nudge, reasoning, generatedAt }: {
   )
 }
 
+// ─── Hikari proposed rules ("Hikari navrhuje pravidlo") ───────────────────────
+// Auto-detected patterns (lib/pattern-detect + Gemini curation) land in
+// hikari_memory as status='proposed'. Matyáš approves → 'active' (feeds future AI)
+// or rejects → 'rejected'. Shown only when at least one proposal exists.
+
+type Proposal = { id: string; content: string; type: string; confidence: number | null }
+
+function ProposalCard({ items }: { items: Proposal[] }) {
+  const [list, setList] = useState(items)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  async function act(id: string, action: 'approve' | 'reject') {
+    setBusy(id)
+    const prev = list
+    setList(l => l.filter(p => p.id !== id))   // optimistic
+    try {
+      const res = await fetch('/api/hikari/memory', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ id, action }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setList(prev)   // revert
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  if (!list.length) return null
+
+  return (
+    <section style={{ marginBottom: 20 }}>
+      <SectionLabel>Hikari navrhuje pravidlo</SectionLabel>
+      <Card style={{ padding: 0 }}>
+        {list.map((p, i) => (
+          <div key={p.id} style={{
+            padding: '12px 14px',
+            borderBottom: i < list.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            opacity: busy === p.id ? 0.4 : 1, transition: 'opacity 0.15s',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(245,158,11,0.55)' }}>
+                {p.type === 'preference' ? 'preference' : 'vzor'}
+              </span>
+              {p.confidence != null && (
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>
+                  · jistota {Math.round(p.confidence * 100)}%
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.45, marginBottom: 10 }}>
+              {p.content}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => act(p.id, 'approve')}
+                disabled={busy === p.id}
+                style={{
+                  flex: 1, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.35)',
+                  borderRadius: 8, color: 'rgba(34,197,94,0.85)', fontSize: 12, padding: '6px 0',
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Přijmout
+              </button>
+              <button
+                onClick={() => act(p.id, 'reject')}
+                disabled={busy === p.id}
+                style={{
+                  flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '6px 0',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ Zamítnout
+              </button>
+            </div>
+          </div>
+        ))}
+      </Card>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type PriorityKind = 'main' | 'side' | 'bonus'
