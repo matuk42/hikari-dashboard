@@ -423,6 +423,7 @@ export default function HomePage() {
     loaded: false,
     energyBlocks: null,
     proposals: [],
+    speaking: null,
   })
 
   // Current hour — set client-side only to avoid hydration mismatch.
