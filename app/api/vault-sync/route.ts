@@ -825,20 +825,32 @@ export async function POST() {
         errors.push(`ℹ️ Denní priority: chybí ${fbPath} (dnešní úkoly nenačteny)`)
       } else {
         synced.push(fbPath)
+        // Both daily tasks and speaking feedback come from the same file. Build one
+        // upsert payload (disjoint columns) so each is written independently.
+        const payload: Record<string, unknown> = { profile_id: pid, date: todayISO }
+
         const parsed = parseDailyPriorities(fb)
         if (!parsed) {
           errors.push(`ℹ️ Denní priority: '### Priority' sekce chybí v ${fbPath}`)
         } else if (!parsed.hlavni.length && !parsed.vedlejsi.length && !parsed.bonus.length) {
           errors.push(`ℹ️ Denní priority: sekce nalezena ale prázdná v ${fbPath}`)
         } else {
-          const { error } = await db.from('ai_daily_brief').upsert({
-            profile_id: pid,
-            date:       todayISO,
-            hlavni:     parsed.hlavni,
-            vedlejsi:   parsed.vedlejsi,
-            bonus:      parsed.bonus,
-          }, { onConflict: 'profile_id,date' })
-          if (error) errors.push(`daily priorities upsert: ${error.message}`)
+          payload.hlavni = parsed.hlavni
+          payload.vedlejsi = parsed.vedlejsi
+          payload.bonus = parsed.bonus
+        }
+
+        // Speaking feedback (migration 008: ai_daily_brief.speaking JSONB). Defensive:
+        // if the column is missing the upsert below would fail, so only attach when
+        // we actually parsed something and let the whole payload carry it.
+        const speaking = parseSpeaking(fb)
+        if (speaking) payload.speaking = speaking
+        else errors.push(`ℹ️ Řečnický feedback: sekce chybí/prázdná v ${fbPath}`)
+
+        if (payload.hlavni || payload.speaking) {
+          const { error } = await db.from('ai_daily_brief').upsert(
+            payload, { onConflict: 'profile_id,date' })
+          if (error) errors.push(`daily brief upsert: ${error.message}`)
         }
       }
     } catch (e) {
