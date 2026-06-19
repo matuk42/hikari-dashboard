@@ -371,11 +371,12 @@ function dailyGroup(prioSec: string, marker: string): DailyTask[] {
 
 /**
  * Parse the daily priorities section from a mentor-feedback file.
- * Heading wording varies (na zítra / zítřek / dnes / víkend …) so we match any
- * "### Priority" line, then split by the three bold group markers.
+ * Heading wording varies (na zítra / zítřek / dnes / víkend …) AND heading level
+ * varies (## vs ### — newer files use H2), so match a "Priority" heading at any
+ * level H2–H4, then split by the three bold group markers.
  */
 function parseDailyPriorities(md: string): { hlavni: DailyTask[]; vedlejsi: DailyTask[]; bonus: DailyTask[] } | null {
-  const prioLine = md.split('\n').find(l => l.startsWith('### Priority'))
+  const prioLine = md.split('\n').find(l => /^#{2,4}\s+Priority/i.test(l))
   if (!prioLine) return null
   const sec = mdSection(md, prioLine)
   return {
