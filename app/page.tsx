@@ -703,9 +703,9 @@ export default function HomePage() {
         </Link>
 
         {/* ── Hikari Brief (AI nudge) — collapsible ── */}
-        {(aiNudge ?? aiReasoning) && (
+        {(aiNudge ?? aiReasoning ?? speaking) && (
           <section style={{ marginBottom: 20 }}>
-            <HikariBriefCard nudge={aiNudge} reasoning={aiReasoning} generatedAt={aiGeneratedAt} />
+            <HikariBriefCard nudge={aiNudge} reasoning={aiReasoning} generatedAt={aiGeneratedAt} speaking={speaking} />
           </section>
         )}
 
