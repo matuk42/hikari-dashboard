@@ -390,6 +390,7 @@ interface HomeData {
   aiReasoning:   string | null
   aiGeneratedAt: string | null
   energyBlocks: Array<{ hourStart: number; hourEnd: number; level: 'low' | 'mid' | 'high' }> | null
+  proposals: Proposal[]
 }
 
 const FALLBACK_STREAK = 45
