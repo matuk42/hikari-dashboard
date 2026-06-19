@@ -414,6 +414,7 @@ export default function HomePage() {
     bonusTasks: [],
     doneKeys: [],
     energyBlocks: null,
+    proposals: [],
   })
 
   // Current hour — set client-side only to avoid hydration mismatch.
