@@ -765,12 +765,30 @@ export async function proposePatterns(
   const candidates = detectAllPatterns(hope, (logData ?? []) as Array<{ habit_id: string; date: string; status: string }>, habits)
   if (!candidates.length) return empty
 
-  // 2 — dedup against memory (any status → never re-evaluate the same pattern)
+  // 2 — dedup against memory. User-DECIDED rows (proposed/active/rejected) block a
+  // ref forever — never nag about a rejected pattern, never dup a live one. But
+  // AI-ARCHIVED rows (Gemini judged "not worth proposing now") are reconsidered as
+  // data grows — just not more than once per 7 days, so a stable confounder isn't
+  // re-scored on every run while data is still thin.
   const { data: existing } = await db.from('hikari_memory')
-    .select('source_ref').eq('profile_id', profileId).eq('source', 'auto')
-  const seen = new Set((existing ?? []).map(r => r.source_ref as string))
-  const fresh = candidates.filter(c => !seen.has(c.sourceRef))
+    .select('id, source_ref, status, created_at').eq('profile_id', profileId).eq('source', 'auto')
+  const REEVAL_AFTER_MS = 7 * 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const blocked = new Set<string>()
+  for (const r of existing ?? []) {
+    if (r.status !== 'archived') { blocked.add(r.source_ref as string); continue }
+    if (now - new Date(r.created_at as string).getTime() < REEVAL_AFTER_MS) blocked.add(r.source_ref as string)
+  }
+  const fresh = candidates.filter(c => !blocked.has(c.sourceRef))
   if (!fresh.length) return { ...empty, candidates: candidates.length }
+
+  // Clear stale archived rows for the refs we're about to re-evaluate (avoids dup
+  // rows + restarts their 7-day clock). Only archived rows of fresh refs are removed.
+  const freshRefs = new Set(fresh.map(c => c.sourceRef))
+  const staleIds = (existing ?? [])
+    .filter(r => r.status === 'archived' && freshRefs.has(r.source_ref as string))
+    .map(r => r.id as string)
+  if (staleIds.length) await db.from('hikari_memory').delete().in('id', staleIds)
 
   // 3 — Gemini curation (the only AI cost; skipped entirely when nothing is new)
   const apiKey = process.env.GEMINI_API_KEY
