@@ -18,17 +18,6 @@ const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
   auth: { persistSession: false },
 })
 
-// Dynamický import .ts přes tsx (musí být v devDependencies / node_modules)
-let detectAllPatterns
-try {
-  register('tsx/esm', pathToFileURL('./'))
-  ;({ detectAllPatterns } = await import('../lib/pattern-detect.ts'))
-} catch (e) {
-  console.error('Nepodařilo se načíst lib/pattern-detect.ts přes tsx loader:', e.message)
-  console.error('Spusť přes:  npx tsx scripts/check-patterns.mjs')
-  process.exit(1)
-}
-
 const today = new Date()
 const todayISO = today.toISOString().slice(0, 10)
 const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 60)
