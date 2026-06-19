@@ -475,8 +475,8 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 - [x] Odškrtávání denních úkolů na home (klik → přeškrtne, `done_keys`, migrace 006) — hotovo 17.6
 - [ ] ⚡ Hikari názor na změnu úkolu
 - [ ] Zlepšení za měsíc
-- [ ] Hikari memory schvalovací UI (proposed → active workflow)
-- [ ] Automatická detekce vzorů (zápis `hikari_memory` status='proposed') — Gemini nad nimi zatím jen reasonuje, neukládá
+- [x] Hikari memory schvalovací UI (proposed → active workflow) — **hotovo 19.6**: sekce „Hikari navrhuje pravidlo" na home, ✓/✕, `POST /api/hikari/memory`
+- [x] Automatická detekce vzorů (zápis `hikari_memory` status='proposed') — **hotovo 19.6**: hybrid — `lib/pattern-detect.ts` ověří čísla (den-v-týdnu × HOPE, habit→HOPE), Gemini je posoudí s vault kontextem (zahodí konfoundery), zápis `proposed`/`archived`, běží v `runMorningCron` krok 6 s dedupem
 
 ### 🔮 V3 — budoucnost
 - [ ] Chat s Hikari v dashboardu (lokální AI rozhraní místo Claude Code CLI pro běžné věci)
