@@ -17,6 +17,7 @@ export interface CronResult {
   cascade:    { week: number; month: number; errors: string[] }
   brief:      'generated' | { error: string | null }
   milestones?: MilestoneResult
+  patterns?:  PatternResult
 }
 
 // ─── Admin client (bypasses RLS — server-side only) ───────────────────────────
