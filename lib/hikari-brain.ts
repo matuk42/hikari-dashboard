@@ -1017,10 +1017,21 @@ export async function runMorningCron(
     }
   }
 
+  // 6 — Pattern detection → proposed memory. Reuses vaultState. Cheap when nothing
+  // is new (detection is free; Gemini only fires for never-seen candidates), so it's
+  // safe to run on every cron + button press.
+  let patterns: PatternResult | undefined
+  try {
+    patterns = await proposePatterns(db, profileId, today, vaultState)
+  } catch (e) {
+    patterns = { candidates: 0, proposed: 0, archived: 0, aiCall: false, error: e instanceof Error ? e.message : String(e) }
+  }
+
   return {
     streaks,
     cascade,
     brief: brief ? 'generated' : { error: briefError },
     ...(milestones ? { milestones } : {}),
+    ...(patterns ? { patterns } : {}),
   }
 }
