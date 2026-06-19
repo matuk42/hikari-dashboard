@@ -492,7 +492,7 @@ export default function HomePage() {
           .eq('profile_id', profileId).eq('tree', 'sen').eq('layer', 5)
           .maybeSingle(),
         supabase.from('ai_daily_brief')
-          .select('hlavni, vedlejsi, bonus, cascade_nudge, reasoning, generated_at')
+          .select('hlavni, vedlejsi, bonus, cascade_nudge, reasoning, generated_at, speaking')
           .eq('profile_id', profileId).eq('date', dateKey)
           .maybeSingle(),
         // Energy blocks for today's day_of_week (computed by morning cron)
