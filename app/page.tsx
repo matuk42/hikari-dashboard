@@ -571,7 +571,13 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, doneKeys, aiNudge, aiReasoning, aiGeneratedAt } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, doneKeys, loaded, aiNudge, aiReasoning, aiGeneratedAt } = data
+
+  // Before load completes, show the static fallback (avoids a flash of "no tasks").
+  // After load, an empty mainTasks means the vault has no priorities for today —
+  // show an honest empty state instead of misleading hardcoded tasks.
+  const displayMain = mainTasks.length > 0 ? mainTasks : loaded ? [] : FALLBACK_MAIN
+  const showEmptyTasks = loaded && mainTasks.length === 0
 
   // Click a daily task → strike it through. Optimistic; reverts on failure.
   const toggleTask = async (key: string) => {
