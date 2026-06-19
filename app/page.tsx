@@ -279,6 +279,44 @@ function HikariBriefCard({ nudge, reasoning, generatedAt, speaking }: {
                 {reasoning}
               </p>
             )}
+
+            {/* ── Řeč dnes: filler words to avoid + in-the-moment principles ── */}
+            {hasSpeaking && (
+              <div style={{
+                marginTop: hasBrief ? 12 : 0,
+                paddingTop: hasBrief ? 10 : 0,
+                borderTop: hasBrief ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              }}>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+                  🗣 Řeč dnes
+                </div>
+                {speaking!.fillers.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: speaking!.principles.length ? 10 : 0 }}>
+                    {speaking!.fillers.map((f, i) => (
+                      <span key={i} style={{
+                        fontSize: 11, whiteSpace: 'nowrap',
+                        background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)',
+                        borderRadius: 8, padding: '3px 8px',
+                      }}>
+                        <span style={{ color: '#F59E0B' }}>{f.word}</span>
+                        {f.count && <span style={{ color: 'rgba(255,255,255,0.4)' }}> {f.count}</span>}
+                        {f.trend && <span style={{ color: 'rgba(255,255,255,0.4)' }}> {f.trend}</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {speaking!.principles.length > 0 && (
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {speaking!.principles.map((p, i) => (
+                      <li key={i} style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, paddingLeft: 12, position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 0, color: 'rgba(245,158,11,0.5)' }}>·</span>{p}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             {generatedAt && (
               <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', margin: '8px 0 0' }}>
                 {new Date(generatedAt).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}
