@@ -470,7 +470,7 @@ export default function HomePage() {
       const allHabitIds = allHabits.map(h => h.id)
       const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
 
-      const [logsRes, maxStreakRes, weekLayerRes, briefRes, energyRes] = await Promise.all([
+      const [logsRes, maxStreakRes, weekLayerRes, briefRes, energyRes, proposalsRes] = await Promise.all([
         trackableIds.length > 0
           ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
               .in('habit_id', trackableIds).eq('date', dateKey).eq('status', 'done')
