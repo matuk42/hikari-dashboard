@@ -525,7 +525,7 @@ export default function HomePage() {
       // Matyáš in the vault (mentor-feedback), loaded by vault-sync. Stored as
       // {title, detail}; older Gemini rows used {title, project, reason}.
       type DailyTaskRow = { title?: string; name?: string; detail?: string; reason?: string }
-      const brief = (briefRes as { data: { hlavni: DailyTaskRow[] | null; vedlejsi: DailyTaskRow[] | null; bonus: DailyTaskRow[] | null; cascade_nudge: string | null; reasoning: string | null; generated_at: string | null } | null }).data
+      const brief = (briefRes as { data: { hlavni: DailyTaskRow[] | null; vedlejsi: DailyTaskRow[] | null; bonus: DailyTaskRow[] | null; cascade_nudge: string | null; reasoning: string | null; generated_at: string | null; speaking: Speaking | null } | null }).data
       const toItems = (arr: DailyTaskRow[] | null | undefined, kind: PriorityKind): PriorityItem[] =>
         (arr ?? []).map(t => ({ name: t.title ?? t.name ?? '', detail: t.detail ?? t.reason ?? '', kind }))
           .filter(t => t.name)
