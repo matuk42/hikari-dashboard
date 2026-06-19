@@ -386,6 +386,126 @@ function parseDailyPriorities(md: string): { hlavni: DailyTask[]; vedlejsi: Dail
   }
 }
 
+// ─── Speaking feedback (mentor-feedback "Řečnický feedback") ──────────────────
+// Surfaced on the home "Hikari dnes" card as a third block: which filler words to
+// avoid today (+ how often) and the in-the-moment principles to apply while
+// speaking. Source = the SAME yesterday's feedback file the daily tasks come from.
+// Two sub-sections are read: "Filler words" (table OR prose — format varies day to
+// day) and "3 body ke zlepšení" (always a numbered list of principles).
+
+type SpeakingFiller = { word: string; count: string | null; trend: string | null }
+type Speaking = { fillers: SpeakingFiller[]; principles: string[] }
+
+/** Strip backticks/bold and surrounding noise from a filler token. */
+function cleanFillerWord(s: string): string {
+  return s.replace(/[`*]/g, '').trim()
+}
+
+/** Keep a compact "~55×" form; "" if no usable number. */
+function normCount(s: string): string | null {
+  const m = s.match(/~?\s*(\d+)\s*[×x]/)
+  return m ? `~${m[1]}×` : null
+}
+
+/** A short trend hint: 🆕 (new) / ↑ (rising) / ↓ (falling) from free text. */
+function trendHint(s: string): string | null {
+  const t = s.toLowerCase()
+  if (/🆕|nový|novy|nov[áé]|watchlist/.test(t)) return '🆕'
+  if (/roste|nárůst|narust|⚠/.test(t))          return '↑'
+  if (/pokles|klesá|klesa|✅/.test(t))           return '↓'
+  return null
+}
+
+/** A filler is noise if it's the tracked swear-word counter (separate metric) or
+ *  has a zero count — neither is a "say it less" filler to surface. */
+function isUsableFiller(word: string, count: string | null): boolean {
+  if (!word) return false
+  if (/do p\*+/i.test(word)) return false      // tracked swear, counted separately
+  if (count === '~0×') return false
+  return true
+}
+
+/** Parse the "Filler words" sub-section — works for both a markdown table and
+ *  free prose. Returns the dominant fillers (most-said first, capped at 3). */
+function parseFillers(sec: string): SpeakingFiller[] {
+  const out: SpeakingFiller[] = []
+
+  // ── Table form (e.g. | Filler | Počet | Trend | ) ──────────────────────────
+  const rows = mdTable(sec)
+  if (rows.length) {
+    const findKey = (r: Record<string, string>, re: RegExp) => Object.keys(r).find(k => re.test(k))
+    for (const r of rows) {
+      const wk = findKey(r, /filler/i)
+      const ck = findKey(r, /počet|pocet|odhad/i)
+      const tk = findKey(r, /trend/i)
+      const word  = cleanFillerWord(wk ? r[wk] : '')
+      const count = normCount(ck ? r[ck] : '')
+      if (!isUsableFiller(word, count)) continue
+      out.push({ word, count, trend: tk ? trendHint(r[tk]) : null })
+    }
+  }
+
+  // ── Prose form: `token` (~N×, …) anywhere in the section ───────────────────
+  if (!out.length) {
+    const re = /`([^`\n]+)`(?:\*\*)?[^`\n]{0,8}?\(?\s*~?\s*(\d+)\s*[×x]([^`\n)]*)/gu
+    let m: RegExpExecArray | null
+    while ((m = re.exec(sec))) {
+      const word  = cleanFillerWord(m[1])
+      const count = `~${m[2]}×`
+      if (!isUsableFiller(word, count)) continue
+      out.push({ word, count, trend: trendHint(m[3] ?? '') })
+    }
+  }
+
+  // ── Last resort: quoted tokens with no counts at all ───────────────────────
+  if (!out.length) {
+    const re = /`([^`\n]+)`/gu
+    let m: RegExpExecArray | null
+    while ((m = re.exec(sec)) && out.length < 4) {
+      const word = cleanFillerWord(m[1])
+      if (!isUsableFiller(word, null)) continue
+      out.push({ word, count: null, trend: null })
+    }
+  }
+
+  // Dedup by word, prefer most-said (numeric count desc when known), cap 3.
+  const seen = new Set<string>()
+  const uniq = out.filter(f => (seen.has(f.word) ? false : (seen.add(f.word), true)))
+  const num  = (c: string | null) => (c ? parseInt(c.replace(/\D/g, ''), 10) || 0 : -1)
+  uniq.sort((a, b) => num(b.count) - num(a.count))
+  return uniq.slice(0, 3)
+}
+
+/** Parse "3 body ke zlepšení" — numbered list of in-the-moment principles. */
+function parsePrinciples(sec: string): string[] {
+  return sec.split('\n')
+    .filter(l => /^\s*\d+\.\s+/.test(l))
+    .map(l => stripBold(l.replace(/^\s*\d+\.\s+/, '').replace(/`/g, '')).replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .slice(0, 3)
+}
+
+/**
+ * Parse the speaking feedback from a mentor-feedback file. The heading wording is
+ * stable ("Řečnický feedback") but its level varies (H1 in some files, H2 in
+ * others) — and so do its sub-section levels — so match leniently. Returns null
+ * when the section is absent or yields nothing usable.
+ */
+function parseSpeaking(md: string): Speaking | null {
+  const hdr = md.split('\n').find(l => /^#{1,3}\s+Řečnick[ýy] feedback/i.test(l))
+  if (!hdr) return null
+  const sec = mdSection(md, hdr)
+
+  const fillerHdr = sec.split('\n').find(l => /^#{2,4}\s+Filler/i.test(l))
+  const fillers   = fillerHdr ? parseFillers(mdSection(sec, fillerHdr)) : []
+
+  const bodyHdr    = sec.split('\n').find(l => /^#{2,4}\s+\d+\s+bod[ůy]?\s+ke\s+zlep/i.test(l))
+  const principles = bodyHdr ? parsePrinciples(mdSection(sec, bodyHdr)) : []
+
+  if (!fillers.length && !principles.length) return null
+  return { fillers, principles }
+}
+
 // ─── Supabase helpers ─────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
