@@ -373,6 +373,11 @@ function ProposalCard({ items }: { items: Proposal[] }) {
 type PriorityKind = 'main' | 'side' | 'bonus'
 type PriorityItem = { name: string; detail: string; kind: PriorityKind }
 
+// Speaking feedback parsed from the vault (mentor-feedback "Řečnický feedback"),
+// stored in ai_daily_brief.speaking. Surfaced as a third block in "Hikari dnes".
+type SpeakingFiller = { word: string; count: string | null; trend: string | null }
+type Speaking = { fillers: SpeakingFiller[]; principles: string[] }
+
 interface HomeData {
   habitsDone: number
   habitsTotal: number
