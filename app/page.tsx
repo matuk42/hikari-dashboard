@@ -414,6 +414,7 @@ export default function HomePage() {
     sideTasks: [],
     bonusTasks: [],
     doneKeys: [],
+    loaded: false,
     energyBlocks: null,
     proposals: [],
   })
