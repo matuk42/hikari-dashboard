@@ -4,11 +4,25 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-19 (session 8)
+**Poslední aktualizace:** 2026-06-19 (session 9)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (19.6. session 8)
+## ✅ VYŘEŠENO tuto session (19.6. session 9)
+
+**Speaking feedback na home („Hikari dnes" 3. blok) — POSTAVENO.** (Matyášův nápad z 16.+18.6.: *„těžké si pamatovat speaking úkoly přes den; vidět je vícekrát = lepší"*.)
+- **Co:** karta „Hikari dnes" má nově **třetí blok „🗣 Řeč dnes"** (pod nudge + reasoning, v rozkliknutém stavu): (1) **filler slova k hlídání + počty** (chip-y, např. `jo ~55× · eh ~32× · jako ~22×`) a (2) **principy do běžné mluvy** (odrážky z „3 body ke zlepšení", např. „místo jo na konci věty → pauza"). 
+- **Rozhodnutí Matyáše (obsah):** NE cvičení co vyžadují mluvit/nahrávat něco navíc („nahraj 5 vět") — JEN principy aplikovatelné rovnou v mluvě + slova co říká moc a jak často. Proto zdroj principů = **`### 3 body ke zlepšení`** (jsou to principy/pozorování, ne úkoly), NE `### 3 cvičení` (tam jsou i „nahraj" tasky). Slova = **`### Filler words`**.
+- **Zdroj dat:** sekce **Řečnický feedback** v `logs/mentor-feedback/YYYY-MM-DD-feedback.md` — **ten samý včerejší soubor** (`isoDaysAgo(1)`), ze kterého už sync tahá denní úkoly. Žádný fetch navíc, žádný AI call. Časování: soubor ze dne D rozebírá mluvu z D a jeho principy jsou míněné „po příštím záznamu" → home je zobrazí D+1 = přesně den aplikace.
+- **Parser (`parseSpeaking` + helpery v `app/api/vault-sync/route.ts`):** robustní na nekonzistentní formát — **filler sekce je někdy tabulka (18.6, 08.6), jindy próza (17/16/13)**. `parseFillers` zkusí `mdTable` (klíče filler/počet|odhad/trend), pak fallback regex na `` `token` (~N×) `` přes tabulku i prózu, pak poslední fallback = jen quoted tokeny bez počtu. Dedup, řazení podle počtu desc, cap 3. Filtruje tracked sprosté slovo `do p*****` a počet 0. Nadpis „Řečnický feedback" matchne H1 i H2 (liší se napříč soubory), pod-sekce H2–H4. `parsePrinciples` = číslovaný seznam z „3 body", strip bold/backtick, cap 3. Ověřeno dry-runem proti 5 reálným souborům (`/tmp/sp-check.mjs`).
+- **Uložení:** `ai_daily_brief.speaking JSONB` (**migrace 008** — Matyáš spustil 19.6.). Tvar `{fillers:[{word,count,trend}], principles:[...]}`. Zapisuje se ve stejném upsert bloku jako denní úkoly (disjunktní sloupce) — blok přepsán tak, aby speaking prošlo i když denní priority chybí/jsou prázdné. Cron ani task-toggle do sloupce nesahají → přežije přepočet.
+- **UI (`app/page.tsx`, `HikariBriefCard`):** nový prop `speaking`, třetí blok (border-top oddělovač). Filler chip = zlaté slovo + tlumený počet + trend (🆕/↑/↓). Principy = odrážky s tlumenou tečkou. Collapsed teaser: když není nudge ale je speaking, ukáže „🗣 hlídej: jo · eh · jako". Karta se zobrazí i když existuje jen speaking (gate `aiNudge ?? aiReasoning ?? speaking`).
+- **Projeví se** až po deployi → reopen → **Sync s vaultem** (přeparsuje včerejší soubor do `speaking`). Do té doby sloupec prázdný → blok se nezobrazí (graceful). Build + TS čisté.
+- **Drobnost (nedořešeno, edge-case):** v dnech BEZ počtů (17.6) parser ukáže STT-dvojník „dá se říč"/„dá se říct" jako 2 chip-y. Kosmetika, jen když feedback nemá čísla. Případně dedup přes normalizovaný prefix.
+
+---
+
+## ✅ VYŘEŠENO dříve (19.6. session 8)
 
 **Automatická detekce vzorů → návrh pravidla do paměti (PRD priorita #1) — POSTAVENO.**
 - **Smysl:** Hikari sám hledá vzory v datech („v úterý nižší HOPE", „kytara → +HOPE") a nabízí je jako `proposed` pravidlo do `hikari_memory`. Matyáš ✓ přijme (→ `active`, krmí budoucí AI) nebo ✕ zamítne (→ `rejected`). PRD §3.6 / §7.1 krok 3 (dřív „Gemini nad nimi jen reasonuje, nezapisuje").
