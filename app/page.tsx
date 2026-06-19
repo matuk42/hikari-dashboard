@@ -772,14 +772,19 @@ export default function HomePage() {
         <section style={{ marginBottom: 20 }}>
           <SectionLabel>Hlavní úkoly</SectionLabel>
           <Card>
-            {mainTasks.map((t, i) => {
+            {showEmptyTasks ? (
+              <div style={{ padding: '16px 16px', fontSize: 12, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', textAlign: 'center', lineHeight: 1.6 }}>
+                Na dnešek nemáš ve vaultu úkoly.<br />
+                Napiš večerní feedback (<span style={{ color: 'rgba(245,158,11,0.6)' }}>### Priority na zítřek</span>) a dej <span style={{ color: 'rgba(245,158,11,0.6)' }}>Sync s vaultem</span>.
+              </div>
+            ) : displayMain.map((t, i) => {
               const key  = `hlavni-${i}`
               const done = doneKeys.includes(key)
               return (
                 <div
                   key={i}
                   onClick={() => toggleTask(key)}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < mainTasks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', cursor: 'pointer', opacity: done ? 0.5 : 1, transition: 'opacity 0.15s ease' }}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < displayMain.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', cursor: 'pointer', opacity: done ? 0.5 : 1, transition: 'opacity 0.15s ease' }}
                 >
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,158,11,0.6)', minWidth: 16, paddingTop: 1 }}>{i + 1}</span>
                   <div style={{ flex: 1 }}>
