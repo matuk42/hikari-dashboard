@@ -244,10 +244,15 @@ function HikariBriefCard({ nudge, reasoning, generatedAt, speaking }: {
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: open ? 0 : 4 }}>
             Hikari dnes
           </div>
-          {/* Collapsed: one-line teaser of the nudge */}
+          {/* Collapsed: one-line teaser — the nudge, or a speaking hint if no brief */}
           {!open && nudge && (
             <div style={{ fontSize: 12, color: 'rgba(245,158,11,0.7)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {nudge}
+            </div>
+          )}
+          {!open && !nudge && hasSpeaking && (
+            <div style={{ fontSize: 12, color: 'rgba(245,158,11,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              🗣 hlídej: {speaking!.fillers.map(f => f.word).join(' · ') || 'řeč dnes'}
             </div>
           )}
         </div>
