@@ -692,6 +692,11 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* ── Hikari navrhuje pravidlo (proposed memory) ── */}
+        {data.proposals.length > 0 && (
+          <ProposalCard key={data.proposals.map(p => p.id).join(',')} items={data.proposals} />
+        )}
+
         {/* ── Energie — časová osa ── */}
         {(() => {
           const isLive = data.energyBlocks !== null
