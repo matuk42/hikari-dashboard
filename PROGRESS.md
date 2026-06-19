@@ -145,8 +145,8 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 - Google login, onboarding, PWA, CSP.
 
 ## 🧭 Co dál (priorita shora)
-1. **Dotáhnout AI brain (cron jádro + denní úkoly hotové):**
-   - **Detekce vzorů** ("úterý low energy", "les → +HOPE") — Gemini nad nimi reasonuje z paměti, ale není automatický pattern-detection zápis do DB.
+1. **Dotáhnout AI brain (cron jádro + denní úkoly + detekce vzorů hotové):**
+   - ~~**Detekce vzorů**~~ ✅ HOTOVO 19.6. (session 8) — hybrid stat+Gemini, zápis `proposed` do `hikari_memory` + schvalovací UI na home. Možné dotažení: per-vzor re-evaluace když data zesílí (teď 1×/vzor), víc rodin vzorů (nemoc→nároky, víkend pauza), nebo přidat vzory do Gemini brief promptu jako aktivní pravidla.
    - ~~**Živá energetická osa**~~ ✅ HOTOVO 18.6. (session 5) — cron píše `energy_blocks`, home zobrazuje live s current-time indikátorem.
    - ~~**Cascade milníková % přes Gemini**~~ ✅ HOTOVO 17.6. (on-demand tlačítkem, viz session 4). Možné dotažení: rozšířit kontext o deníky (teď jen feedbacky), nebo přidat L2 per-dim % (teď L2 jen layer-%, dimenze kurátované v UI).
 2. **Drobnosti:**
