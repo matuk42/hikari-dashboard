@@ -714,6 +714,149 @@ async function summarizeDayTasks(
   return s
 }
 
+// ─── Pattern detection → proposed memory (deterministic stats + Gemini curation) ──
+// Step 1 (free): lib/pattern-detect finds candidates with VERIFIED numbers (means,
+// deltas). Step 2: drop candidates whose source_ref already exists in hikari_memory
+// (any status — so a once-rejected/archived pattern never comes back). Step 3 (AI,
+// only if there are new candidates): Gemini judges causal meaningfulness USING the
+// same vault context as the brief (gatherVaultState), rephrases survivors in mentor
+// voice, and we write kept→'proposed', dropped→'archived'. The numbers stay the
+// code's — Gemini may not change them. Bounded cost: each unique pattern is scored
+// by Gemini exactly once, then remembered.
+
+export interface PatternResult {
+  candidates: number
+  proposed:   number
+  archived:   number
+  aiCall:     boolean
+  error:      string | null
+}
+
+interface CurationVerdict { ref: string; keep: boolean; content?: string; type?: string }
+
+export async function proposePatterns(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string,
+  vaultState: string,
+): Promise<PatternResult> {
+  const empty: PatternResult = { candidates: 0, proposed: 0, archived: 0, aiCall: false, error: null }
+
+  // 1 — gather inputs (60-day window) and run deterministic detection
+  const cutoff = new Date(`${today}T12:00:00Z`); cutoff.setUTCDate(cutoff.getUTCDate() - 60)
+  const since = cutoff.toISOString().slice(0, 10)
+
+  const [hopeRes, habitRes] = await Promise.all([
+    db.from('hope_logs').select('date, mood, energy, hope')
+      .eq('profile_id', profileId).gte('date', since).lte('date', today),
+    db.from('habits').select('id, name')
+      .eq('profile_id', profileId).neq('category', 'retired'),
+  ])
+  const hope   = (hopeRes.data ?? []) as Array<{ date: string; mood: number; energy: number; hope: number }>
+  const habits = (habitRes.data ?? []) as Array<{ id: string; name: string }>
+  const ids    = habits.map(h => h.id)
+
+  const { data: logData } = ids.length
+    ? await db.from('habit_logs').select('habit_id, date, status')
+        .in('habit_id', ids).gte('date', since).lte('date', today).eq('status', 'done')
+    : { data: [] as Array<{ habit_id: string; date: string; status: string }> }
+
+  const candidates = detectAllPatterns(hope, (logData ?? []) as Array<{ habit_id: string; date: string; status: string }>, habits)
+  if (!candidates.length) return empty
+
+  // 2 — dedup against memory (any status → never re-evaluate the same pattern)
+  const { data: existing } = await db.from('hikari_memory')
+    .select('source_ref').eq('profile_id', profileId).eq('source', 'auto')
+  const seen = new Set((existing ?? []).map(r => r.source_ref as string))
+  const fresh = candidates.filter(c => !seen.has(c.sourceRef))
+  if (!fresh.length) return { ...empty, candidates: candidates.length }
+
+  // 3 — Gemini curation (the only AI cost; skipped entirely when nothing is new)
+  const apiKey = process.env.GEMINI_API_KEY
+  const byRef = new Map(fresh.map(c => [c.sourceRef, c]))
+
+  let verdicts: CurationVerdict[]
+  const t0 = Date.now()
+
+  if (!apiKey) {
+    // No AI available → keep every candidate with its deterministic phrasing.
+    verdicts = fresh.map(c => ({ ref: c.sourceRef, keep: true, content: c.fallbackText, type: c.memType }))
+  } else {
+    const list = fresh.map(c =>
+      `- ref:${c.sourceRef} | ${c.kind === 'dow' ? 'den v týdnu' : 'habit→HOPE'} | Δ=${c.delta} | n=${c.sample} | "${c.fallbackText}"`
+    ).join('\n')
+
+    const prompt = `Jsi Hikari — analytický mozek Matyáše (16). Dostal jsi STATISTICKY OVĚŘENÉ kandidáty na vzory chování (čísla spočítal kód z reálných dat — jsou fakta, NEMĚŇ je). Tvůj úkol: rozhodnout, které jsou KAUZÁLNĚ SMYSLUPLNÉ a stojí za to nabídnout jako pravidlo do paměti — a které jsou jen ZÁMĚNA PŘÍČINY / časový konfounder, a mají se zahodit.
+
+Dnes je ${today}.
+
+POZOR na konfoundery: korelace ≠ příčina. Když data říkají „ve dnech kdy piješ vodu / bereš probiotika je nižší energie", NEZNAMENÁ to, že voda bere energii — spíš jsi ten návyk přidal během slabšího (např. nemocného) období. Takové zahoď (keep:false). Drž si jen vzory, které dávají reálný kauzální smysl a jsou akční (např. konkrétní den v týdnu bývá slabší → naplánovat lehčí program; konkrétní habit reálně zvedá HOPE → chránit ho).
+
+Využij KONTEXT Z VAULTU níže (plány + dokončené reviews + denní feedbacky) — když z něj plyne, proč je korelace zdánlivá, zahoď ji; když ji potvrzuje, ponech a propoj.
+
+KONTEXT Z VAULTU:
+${vaultState || '(nedostupné)'}
+
+KANDIDÁTI:
+${list}
+
+Pro každý kandidát vrať verdikt. U ponechaných (keep:true) napiš `content` = krátké pravidlo česky v Hikariho hlase (1 věta, max ~140 znaků), MUSÍ obsahovat přesně ta čísla z kandidáta (nevymýšlej nová). `type` = "pattern" (pozorovaný vzor) nebo "preference" (něco co Matyášovi prospívá). U zahozených stačí keep:false.
+
+Odpověz POUZE čistým JSON:
+{ "verdicts": [ { "ref": "...", "keep": true, "content": "…", "type": "pattern" }, { "ref": "...", "keep": false } ] }`
+
+    try {
+      const clean = await geminiGenerate(prompt, apiKey, { temperature: 0.4 })
+      const parsed = JSON.parse(clean) as { verdicts?: CurationVerdict[] }
+      verdicts = parsed.verdicts ?? []
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e)
+      await db.from('ai_invocations').insert({
+        profile_id: profileId, trigger: 'cron', purpose: 'pattern_detection',
+        model: GEMINI_MODEL, duration_ms: Date.now() - t0, success: false, error: err,
+      })
+      return { ...empty, candidates: candidates.length, aiCall: true, error: err }
+    }
+  }
+
+  // 4 — write: kept → proposed, evaluated-but-dropped → archived (so never re-asked).
+  // Any fresh candidate with no verdict defaults to archived (Gemini ignored it).
+  const verdictByRef = new Map(verdicts.map(v => [v.ref, v]))
+  const TYPES = new Set(['pattern', 'preference'])
+  const rows = fresh.map((c: PatternCandidate) => {
+    const v = verdictByRef.get(c.sourceRef)
+    const keep = !!v?.keep
+    return {
+      profile_id: profileId,
+      type:       keep && v?.type && TYPES.has(v.type) ? v.type : c.memType,
+      content:    keep ? (v?.content?.trim() || c.fallbackText) : c.fallbackText,
+      source:     'auto',
+      source_ref: c.sourceRef,
+      status:     keep ? 'proposed' : 'archived',
+      confidence: c.confidence,
+      ...(keep ? {} : { rejected_at: new Date().toISOString() }),
+    }
+  })
+
+  const { error: insErr } = await db.from('hikari_memory').insert(rows)
+  const proposed = rows.filter(r => r.status === 'proposed').length
+  const archived = rows.filter(r => r.status === 'archived').length
+
+  await db.from('ai_invocations').insert({
+    profile_id: profileId, trigger: 'cron', purpose: 'pattern_detection',
+    model: apiKey ? GEMINI_MODEL : 'deterministic', duration_ms: Date.now() - t0,
+    success: !insErr, error: insErr?.message ?? null,
+  })
+
+  return {
+    candidates: candidates.length,
+    proposed,
+    archived,
+    aiCall:     !!apiKey,
+    error:      insErr?.message ?? null,
+  }
+}
+
 // ─── Main cron orchestrator ───────────────────────────────────────────────────
 
 export async function runMorningCron(
