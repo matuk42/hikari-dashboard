@@ -565,6 +565,7 @@ export default function HomePage() {
         aiNudge:       brief?.cascade_nudge ?? null,
         aiReasoning:   brief?.reasoning     ?? null,
         aiGeneratedAt: brief?.generated_at  ?? null,
+        speaking:      brief?.speaking      ?? null,
         energyBlocks,
         proposals,
       })
