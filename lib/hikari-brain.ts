@@ -801,7 +801,7 @@ ${vaultState || '(nedostupné)'}
 KANDIDÁTI:
 ${list}
 
-Pro každý kandidát vrať verdikt. U ponechaných (keep:true) napiš `content` = krátké pravidlo česky v Hikariho hlase (1 věta, max ~140 znaků), MUSÍ obsahovat přesně ta čísla z kandidáta (nevymýšlej nová). `type` = "pattern" (pozorovaný vzor) nebo "preference" (něco co Matyášovi prospívá). U zahozených stačí keep:false.
+Pro každý kandidát vrať verdikt. U ponechaných (keep:true) napiš "content" = krátké pravidlo česky v Hikariho hlase (1 věta, max ~140 znaků), MUSÍ obsahovat přesně ta čísla z kandidáta (nevymýšlej nová). "type" = "pattern" (pozorovaný vzor) nebo "preference" (něco co Matyášovi prospívá). U zahozených stačí keep:false.
 
 Odpověz POUZE čistým JSON:
 { "verdicts": [ { "ref": "...", "keep": true, "content": "…", "type": "pattern" }, { "ref": "...", "keep": false } ] }`
