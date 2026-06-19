@@ -386,6 +386,7 @@ interface HomeData {
   sideTasks: PriorityItem[]
   bonusTasks: PriorityItem[]
   doneKeys: string[]
+  loaded: boolean
   aiNudge:       string | null
   aiReasoning:   string | null
   aiGeneratedAt: string | null
