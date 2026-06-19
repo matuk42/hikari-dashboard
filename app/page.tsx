@@ -499,6 +499,11 @@ export default function HomePage() {
           .eq('profile_id', profileId)
           .eq('day_of_week', new Date().getDay())
           .order('hour_start', { ascending: true }),
+        // Hikari's proposed rules awaiting approval (pattern detection → memory)
+        supabase.from('hikari_memory')
+          .select('id, content, type, confidence')
+          .eq('profile_id', profileId).eq('status', 'proposed')
+          .order('confidence', { ascending: false }),
       ])
 
       const topStreak = (maxStreakRes as { data: { habit_id: string; current_streak: number } | null }).data
