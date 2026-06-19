@@ -563,6 +563,7 @@ export default function HomePage() {
         aiReasoning:   brief?.reasoning     ?? null,
         aiGeneratedAt: brief?.generated_at  ?? null,
         energyBlocks,
+        proposals,
       })
     }).catch(() => {})
   }, [dateKey])
