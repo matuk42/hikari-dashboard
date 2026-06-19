@@ -579,7 +579,7 @@ export default function HomePage() {
     }).catch(() => {})
   }, [dateKey])
 
-  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, doneKeys, loaded, aiNudge, aiReasoning, aiGeneratedAt } = data
+  const { habitsDone, habitsTotal, streakValue, streakHabit, hopeToday, weekTitle, weekPriorityCount, mainTasks, sideTasks, bonusTasks, doneKeys, loaded, aiNudge, aiReasoning, aiGeneratedAt, speaking } = data
 
   // Before load completes, show the static fallback (avoids a flash of "no tasks").
   // After load, an empty mainTasks means the vault has no priorities for today —
