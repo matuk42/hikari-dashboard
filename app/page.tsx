@@ -544,6 +544,8 @@ export default function HomePage() {
         ? energyRaw.map(r => ({ hourStart: r.hour_start, hourEnd: r.hour_end, level: r.level }))
         : null
 
+      const proposals = ((proposalsRes as { data: Proposal[] | null }).data ?? []) as Proposal[]
+
       setData({
         habitsDone:   (logsRes as { count: number | null }).count ?? 0,
         habitsTotal:  trackableIds.length,
