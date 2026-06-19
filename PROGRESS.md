@@ -4,11 +4,25 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-18 (session 7)
+**Poslední aktualizace:** 2026-06-19 (session 8)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (18.6. session 7)
+## ✅ VYŘEŠENO tuto session (19.6. session 8)
+
+**Automatická detekce vzorů → návrh pravidla do paměti (PRD priorita #1) — POSTAVENO.**
+- **Smysl:** Hikari sám hledá vzory v datech („v úterý nižší HOPE", „kytara → +HOPE") a nabízí je jako `proposed` pravidlo do `hikari_memory`. Matyáš ✓ přijme (→ `active`, krmí budoucí AI) nebo ✕ zamítne (→ `rejected`). PRD §3.6 / §7.1 krok 3 (dřív „Gemini nad nimi jen reasonuje, nezapisuje").
+- **Hybrid detekce (rozhodnutí Matyáše 19.6.):** **kód spočítá a OVĚŘÍ čísla** (`lib/pattern-detect.ts`, čisté funkce, žádné AI — průměry/delty per den-v-týdnu a done/not-done dny), **Gemini pak ty ověřené kandidáty posoudí SPOLU S vault kontextem** (`gatherVaultState`) — zahodí konfoundery, smysluplné přeformuluje do mentorského tónu. Čísla zůstávají z kódu (Gemini je nesmí měnit).
+- **Proč hybrid a ne čistě AI:** dry-run (`scripts/check-patterns.mjs`) odhalil, že většina syrových kandidátů jsou **zmatené negativní korelace** („pití vody → −1,9 energie" = časový konfounder, ty habity přidány během low-energy období). Gemini s vault kontextem to má zahodit — proto se kandidáti NEdumpují přímo jako návrhy.
+- **Dvě rodiny vzorů** (`detectAllPatterns`): (1) **den v týdnu × HOPE metrika** (energie/nálada/naděje, práh Δ≥1,0, n≥3, jeden nejsilnější metrik per den) → `source_ref=dow-{metric}-{0..6}`; (2) **habit → HOPE metrika** (done vs not-done dny, n≥4 na obou stranách, Δ≥1,0) → `source_ref=habit-{metric}-{habitId}`. Confidence = sample × effect, clamp 0–1. Cap 6 kandidátů/běh.
+- **Napojení (`proposePatterns` v `lib/hikari-brain.ts`):** běží jako **krok 6 v `runMorningCron`** (cron 6:00 i tlačítko, sdílí `vaultState` s briefem). **Dedup:** kandidát, jehož `source_ref` už v `hikari_memory` (source='auto', JAKÝKOLI status) existuje, se přeskočí → **Gemini se na každý unikátní vzor zeptá právě jednou**. Levné: detekce zdarma, **Gemini call jen když je nový kandidát** (jinak 0 AI navíc). Zápis: keep → `proposed`, Gemini-zahozené → `archived` (aby se na ně už neptal). Bez `GEMINI_API_KEY` graceful fallback (ponechá vše s deterministickou frází). Log `ai_invocations` purpose `pattern_detection`.
+- **Schvalovací UI na home (`app/page.tsx`):** sekce **„Hikari navrhuje pravidlo"** (komponenta `ProposalCard`, pod Hikari briefem, jen když existují proposed). Karta = typ (vzor/preference) + jistota % + text pravidla + ✓ Přijmout / ✕ Zamítnout. Optimistický update, revert při chybě. Endpoint **`POST /api/hikari/memory`** `{id, action}` → `active`+`approved_at` / `rejected`+`rejected_at` (jen vlastní profil, jen `proposed`).
+- **Žádná migrace** — `hikari_memory` (source='auto', status='proposed') existuje od 001. Build + TypeScript čisté, `/api/hikari/memory` v route listu.
+- **Stav dat:** dry-run hlásí 6 kandidátů, všechny NOVÉ — do DB se zatím nic nezapsalo. **První „Přepočítej Hikari" je proežene Gemini kurací a naplní proposed.** Ověřovák: `node scripts/check-patterns.mjs` (suchý běh, nic nezapisuje, žádné AI — Node 24 nativně čte `.ts`).
+
+---
+
+## ✅ VYŘEŠENO dříve (18.6. session 7)
 *(Migrace 007 `rest` enum spuštěna v Supabase — rest days fungují živě, ověřeno proti DB.)*
 
 **1. Rest days — 3-stavový cyklus habitu napříč celým systémem — POSTAVENO.**
