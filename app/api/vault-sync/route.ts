@@ -499,7 +499,12 @@ function parseSpeaking(md: string): Speaking | null {
   const fillerHdr = sec.split('\n').find(l => /^#{2,4}\s+Filler/i.test(l))
   const fillers   = fillerHdr ? parseFillers(mdSection(sec, fillerHdr)) : []
 
-  const bodyHdr    = sec.split('\n').find(l => /^#{2,4}\s+\d+\s+bod[ůy]?\s+ke\s+zlep/i.test(l))
+  // Principles source: prefer "3 body ke zlepšení"; since 2026-06-20 some files
+  // drop it and only carry "3 cvičení" (now phrased as in-the-moment principles,
+  // not "record N sentences" tasks) — fall back to that so principles still show.
+  const lines = sec.split('\n')
+  const bodyHdr    = lines.find(l => /^#{2,4}\s+\d+\s+bod[ůy]?\s+ke\s+zlep/i.test(l))
+                  ?? lines.find(l => /^#{2,4}\s+\d+\s+cvičen/i.test(l))
   const principles = bodyHdr ? parsePrinciples(mdSection(sec, bodyHdr)) : []
 
   if (!fillers.length && !principles.length) return null
