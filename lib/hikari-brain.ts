@@ -575,11 +575,12 @@ export async function calcMilestonePct(
 
   // 4 — milestone listing grouped by layer (with each layer's deadline for calibration)
   const layerHeader: Record<number, string> = {
+    2: `L2 — 5 LET (${layerInfo[2]?.description ?? 'věk 21'}, deadline ${layerInfo[2]?.deadline ?? '2031-01-01'})`,
     3: `L3 — ROK (deadline ${layerInfo[3]?.deadline ?? '2027-09-01'})`,
     4: `L4 — MĚSÍC (${layerInfo[4]?.description ?? ''}, deadline ${layerInfo[4]?.deadline ?? ''})`,
     5: `L5 — TÝDEN (${layerInfo[5]?.description ?? ''}, deadline ${layerInfo[5]?.deadline ?? ''})`,
   }
-  const grouped = [3, 4, 5].map(ln => {
+  const grouped = [2, 3, 4, 5].map(ln => {
     const its = items.filter(i => i.layer === ln)
     if (!its.length) return ''
     return `\n${layerHeader[ln]}:\n`
