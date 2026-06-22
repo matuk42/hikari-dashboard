@@ -591,14 +591,16 @@ export default function CascadePage() {
         .eq('profile_id', profile.id).neq('category', 'graduated').neq('category', 'retired')
       const hIds = (hb ?? []).map(h => h.id as string)
       if (hIds.length) {
-        const { data: hlogs } = await supabase.from('habit_logs').select('date')
-          .in('habit_id', hIds).gte('date', monthStart).lte('date', today).eq('status', 'done')
+        const { data: hlogs } = await supabase.from('habit_logs').select('date, status')
+          .in('habit_id', hIds).gte('date', monthStart).lte('date', today).in('status', ['done', 'rest'])
         const weekStart = isoMondayOf(today)
-        const weekDone  = (hlogs ?? []).filter(l => (l.date as string) >= weekStart).length
+        const inWeek    = (l: { date: string }) => (l.date as string) >= weekStart
+        const done      = (hlogs ?? []).filter(l => l.status === 'done')
+        const restLogs  = (hlogs ?? []).filter(l => l.status === 'rest')
         const { week: wd, month: md } = elapsedDays(today)
         setHabitPct({
-          week:  adherencePct(weekDone,             hIds.length, wd),
-          month: adherencePct((hlogs ?? []).length, hIds.length, md),
+          week:  adherencePct(done.filter(inWeek).length, hIds.length, wd, restLogs.filter(inWeek).length),
+          month: adherencePct(done.length,                hIds.length, md, restLogs.length),
         })
       }
     }).catch(() => {})
