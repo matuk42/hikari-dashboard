@@ -674,7 +674,7 @@ Odpověz POUZE čistým JSON (žádný text navíc):
 
   let layersUpdated = 0
   const layerVals: Array<[number, number | undefined]> = [
-    [2, parsed.layer_5let == null ? undefined : clamp(parsed.layer_5let)],
+    [2, mean(2)],
     [3, mean(3)],
     [4, mean(4)],
     [5, mean(5)],
