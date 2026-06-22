@@ -4,11 +4,25 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-22 (session 10)
+**Poslední aktualizace:** 2026-06-22 (session 11)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (22.6. session 10)
+## ✅ VYŘEŠENO tuto session (22.6. session 11)
+
+**Cascade audit + oprava nereálných % (A+B+C) — POSTAVENO.** (Matyáš si všiml: 5 let 45 %, v pondělí „autoškola testy 90 %", celý týden 64 % — „to je moc".)
+- **A — L3 (Rok) byla MRTVÁ vrstva.** DB měla pro L3 **0 milníků**. Příčina: 21.6. jsi ve vaultu přesunul roční cíl ze `sen.md` (`## Roční cíl`, teď jen odkaz) do **`wiki/reviews/yearly/2027.md`** (`### Dimenze a milníky` + příjem `### Milníky`). Sync to nevěděl → `replaceDimensions` mazal a nic nevkládal → L3 % zaseklé na 18 (Gemini ho nepřepočítal, neměl co průměrovat). **Fix (`vault-sync/route.ts`):** nový `FILES.yearly` (`YEARLY_TARGET_YEAR='2027'` konstanta — **ruční bump po 1.9.2027**, nebo později auto-derive z deadlinu), L3 parse čte yearly soubor. Ověřeno dry-runem: vrací 11 dimenzí (10 + Příjem).
+- **B — L2 (5 let) zařazena mezi živé Gemini-skórované vrstvy** (dřív jediná „mimo"). Sync přepnut z `insertNewDimensions` na **`replaceDimensions`** (konec 9 duplicit — 2× Příjem, junk „Otevřené dimenze") + **filtr neměřitelných H3** (`místo (branch`, `otevřené dimenze` přidány do `h3Names` skip). `lib/hikari-brain.ts`: **`PER_DIM={2,3,4,5}`** → Gemini skóruje i L2 dimenze, **layer % = průměr milníků** (konec holistického `layer_5let`, který nesedělo s bary ~8 %). `cascade/page.tsx`: **`VAULT_DIM_LAYERS={2,3,4,5}`** → L2 živě z DB. Kurátované L2 dimenze v `LAYERS` zůstávají jen jako pre-Gemini fallback. Ověřeno: L2 = 6 čistých dimenzí.
+- **C — Týdenní/měsíční % zná ČASOVOU OSU.** `calcMilestonePct` prompt teď dostává den v týdnu + **% uplynulého týdne i měsíce** + zbývající dny. Instrukce: spočítat % REÁLNĚ k cíli kombinací (1) co je hotovo + (2) časové osy. **Kadencové milníky** (testy 5×/den) = cíl je celý týden (7×) → v pondělí NEMŮŽE být 90 %. **Jednorázové/připravenostní** (jízdy, počet karet) = připravenost vůči cíli, může být vysoká i brzy. Cíl: „v polovině" = opravdu ~50 %.
+- **Rollup do vyšších vrstev:** prompt instruuje, že při skórování L2/L3 milníků má Gemini brát pokrok NIŽŠÍCH vrstev (L4/L5) jako důkaz trajektorie (rozhodnutí Matyáše).
+- **Build + TS čisté.** Parsery ověřené dry-runem proti reálnému vaultu. Přidán `scripts/check-cascade-state.mjs` (živý stav cascade layerů + dimenzí + % + invokací). Žádná migrace.
+- **Projeví se** až: **Sync s vaultem** (natáhne čisté L2/L3, vynuluje % na 0) → **Přepočítej Hikari** (Gemini přeskóruje s časovou osou). Pořadí důležité.
+- **⚠️ KLÍČOVÝ insight Matyáše (22.6.):** cascade % budou reálná teprve s **víc a kvalitnějšími daty**. Hlavní mezera: **chybí zdroj aktuálního příjmu** (kolik teď reálně vydělává) → příjmové milníky (L2/L3 „Příjem · B1+B2", „500 Kč/měs") Gemini odhaduje **naslepo**. Bez tvrdých vstupů budou některé dimenze sedět a jiné ne. **Co dál pro cascade:** přidat strukturovaný vstup aktuálního příjmu + další tvrdá data (JLPT/karty počty, fyzička čísla z [[2027]] „měřitelnost") jako kotvy pro Gemini. Až pak bude % konzistentně reálné. (Dnešní stav: „reálnější než předtím", ne hotové.)
+- **Nabídnuto, NEuděláno** (kandidáti na příště): tvrdý strop/clamp pro kadencové týdenní milníky (deterministická pojistka nad promptem, kdyby Gemini přestřelil); detaily L2 dimenzí (teď jen názvy bez popisku); `YEARLY_TARGET_YEAR` auto-derive z deadlinu; „potvrdit milník" UI (PRD: velké milníky autoškola/DofE potvrdí Matyáš ručně).
+
+---
+
+## ✅ VYŘEŠENO dříve (22.6. session 10)
 
 **Auto-sync z vaultu — POSTAVENO, zřetězeno do ranního cronu (PRD V2 „Auto-sync z vaultu").**
 - **Smysl:** odpadá ruční ťukání na „Sync s vaultem" — data z vaultu se natáhnou sama každé ráno před tím, než nad nimi Gemini přemýšlí.
