@@ -525,8 +525,9 @@ function LayerCard({ layer }: { layer: Layer }) {
 // L4/L5 also show a separate live habit-adherence badge (deterministic, daily).
 
 // Layers whose milestone LIST is the live vault (synced + rolled over each period),
-// now carrying Gemini per-milestone %. L1 (chips) + L2 (5 let) stay curated.
-const VAULT_DIM_LAYERS = new Set([3, 4, 5])
+// now carrying Gemini per-milestone %. L1 (chips) stays curated; L2 (5 let) is now
+// live too — its dimensions come from the vault "## 5letý cíl" and Gemini scores them.
+const VAULT_DIM_LAYERS = new Set([2, 3, 4, 5])
 
 type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
 type DbDim = { name: string; detail: string | null; kind: DimKind | null; progress: number }
