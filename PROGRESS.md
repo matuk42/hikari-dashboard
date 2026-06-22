@@ -219,5 +219,5 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 
 ## 📌 Stav modulů vs PRD (W23–W27)
 Hotovo: Habits (+ **rest days 3-stav**, **archiv/obnovení**), kibou, Cascade UI + **AI cascade % (milníky L3/L4/L5 + layer L2–L5 přes Gemini, on-demand)**, Vault sync (ruční) + denní úkoly z mentor-feedbacku + **odškrtávání úkolů na home**, login, onboarding, PWA (**SW auto-update**), Home s denními úkoly, **AI brain ranní cron (W26 jádro: streaky + Gemini nudge/reasoning s vault-state + čas + task-state kontextem)**, **živá energetická osa z きぼう dat**, **/history kalendářní heat-mapa (+ rest šrafování, dropdown výběr, retrospektivní doplnění, souhrn)**.
-**Detekce vzorů → proposed memory + schvalovací UI** (hybrid stat+Gemini, session 8). Chybí: konflikt workflow (CLI ↔ Supabase), auto-sync cron (Ne 22:00), auto-retire habits, /calculator. (Hodnotící zprávy balíčků — zrušeno 18.6.)
+**Detekce vzorů → proposed memory + schvalovací UI** (hybrid stat+Gemini, session 8). Chybí: konflikt workflow (CLI ↔ Supabase), auto-retire habits, /calculator. (Auto-sync cron ✅ 22.6. — zřetězen do ranního cronu.) (Hodnotící zprávy balíčků — zrušeno 18.6.)
 **Migrace:** všechny aplikované (003/004/005/006/007/008). 008 = `ai_daily_brief.speaking JSONB` (speaking feedback na home). Žádné otevřené.
