@@ -15,8 +15,15 @@ export function elapsedDays(today: string): { week: number; month: number } {
   return { week: dow, month: parseInt(today.slice(8), 10) }
 }
 
-/** Adherence % = completions / (habits × daysElapsed), rounded and clamped to 0–100. */
-export function adherencePct(done: number, habits: number, days: number): number {
+/**
+ * Adherence % = completions / (habits × daysElapsed − restSlots), rounded, 0–100.
+ * Rest days are intentional skips, so each (habit, day) marked rest is removed from
+ * the denominator — a rest day neither helps nor hurts the ratio (same rule the
+ * daily X/Y counter uses on /habits and home).
+ */
+export function adherencePct(done: number, habits: number, days: number, rest = 0): number {
   if (habits <= 0 || days <= 0) return 0
-  return Math.min(100, Math.round((done / (habits * days)) * 100))
+  const slots = habits * days - rest
+  if (slots <= 0) return done > 0 ? 100 : 0
+  return Math.min(100, Math.round((done / slots) * 100))
 }
