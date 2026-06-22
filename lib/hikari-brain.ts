@@ -948,18 +948,22 @@ export async function runMorningCron(
     .filter(s => s.name)
 
   // Today's habit completion — trackable (non-graduated) only, so the brief can
-  // say "2/19 done" instead of the misleading week-% rollup.
+  // say "2/19 done" instead of the misleading week-% rollup. Rest days are
+  // intentional skips: they drop out of the denominator and are NOT counted as
+  // undone, so Gemini sees the same rest-aware count as /habits and home.
   const trackable = (profileHabits.data ?? []).filter(h => h.category !== 'graduated')
   const trackableIds = trackable.map(h => h.id as string)
   const { data: todayLogs } = trackableIds.length
-    ? await db.from('habit_logs').select('habit_id').in('habit_id', trackableIds)
-        .eq('date', today).eq('status', 'done')
-    : { data: [] as { habit_id: string }[] }
-  const doneIdSet = new Set((todayLogs ?? []).map(l => l.habit_id as string))
+    ? await db.from('habit_logs').select('habit_id, status').in('habit_id', trackableIds)
+        .eq('date', today).in('status', ['done', 'rest'])
+    : { data: [] as { habit_id: string; status: string }[] }
+  const doneIdSet = new Set((todayLogs ?? []).filter(l => l.status === 'done').map(l => l.habit_id as string))
+  const restIdSet = new Set((todayLogs ?? []).filter(l => l.status === 'rest').map(l => l.habit_id as string))
+  const dueToday = trackable.filter(h => !restIdSet.has(h.id as string))
   const todayHabits = {
-    done:   trackable.filter(h => doneIdSet.has(h.id as string)).map(h => h.name as string),
-    undone: trackable.filter(h => !doneIdSet.has(h.id as string)).map(h => h.name as string),
-    total:  trackable.length,
+    done:   dueToday.filter(h => doneIdSet.has(h.id as string)).map(h => h.name as string),
+    undone: dueToday.filter(h => !doneIdSet.has(h.id as string)).map(h => h.name as string),
+    total:  dueToday.length,
   }
 
   type WeekDim = { name: string; detail: string | null; kind: string | null; sort_order: number | null }
