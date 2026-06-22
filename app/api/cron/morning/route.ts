@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, runMorningCron } from '@/lib/hikari-brain'
+import { runVaultSync } from '@/app/api/vault-sync/route'
+
+type SyncDb = Parameters<typeof runVaultSync>[0]
 
 // Vercel sends `Authorization: Bearer {CRON_SECRET}` when CRON_SECRET env var is set.
 // Same header works for manual invocations (curl, Insomnia, the home-page refresh button).
