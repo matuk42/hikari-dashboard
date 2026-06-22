@@ -1008,12 +1008,15 @@ export default function HabitsPage() {
     await reloadHabits()
   }
 
-  // Rest days are intentional skips → drop them from today's denominator so the
-  // "X/Y" counter reflects only the habits actually due today (a 3×/week habit on
-  // its off day shouldn't read as a miss).
+  // Header "X/Y" counts ALL trackable (non-graduated) habits — same denominator as
+  // the home page, which is the source of truth. (Earlier this subtracted rest days,
+  // which made the two screens disagree, e.g. 10/11 here vs 10/13 on home.)
+  // The "all done" celebration still ignores rest days: a habit on its off day
+  // shouldn't block the streak quote.
   const doneCount = groups.trackable.filter(h => done.has(h.id)).length
-  const totalCount = groups.trackable.filter(h => !rest.has(h.id)).length
-  const allDone = doneCount === totalCount && totalCount > 0
+  const totalCount = groups.trackable.length
+  const dueCount = groups.trackable.filter(h => !rest.has(h.id)).length
+  const allDone = doneCount === dueCount && dueCount > 0
 
   // Hero: habit with the highest current streak (streaks_cache, else baseline)
   const heroHabit = habits.length
