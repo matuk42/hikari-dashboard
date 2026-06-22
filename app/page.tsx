@@ -526,10 +526,12 @@ export default function HomePage() {
       const trackableIds = allHabits.filter(h => h.category !== 'graduated').map(h => h.id)
 
       const [logsRes, maxStreakRes, weekLayerRes, briefRes, energyRes, proposalsRes] = await Promise.all([
+        // Today's logs for trackable habits → done + rest. Rest days are intentional
+        // skips and drop out of the denominator (same rule as /habits and the cron).
         trackableIds.length > 0
-          ? supabase.from('habit_logs').select('*', { count: 'exact', head: true })
-              .in('habit_id', trackableIds).eq('date', dateKey).eq('status', 'done')
-          : Promise.resolve({ count: 0 }),
+          ? supabase.from('habit_logs').select('habit_id, status')
+              .in('habit_id', trackableIds).eq('date', dateKey)
+          : Promise.resolve({ data: [] }),
         // MAX streak across all habits (not just Anki)
         allHabitIds.length > 0
           ? supabase.from('streaks_cache').select('habit_id, current_streak')
