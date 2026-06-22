@@ -195,7 +195,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
 1. **Dotáhnout AI brain (cron jádro + denní úkoly + detekce vzorů hotové):**
    - ~~**Detekce vzorů**~~ ✅ HOTOVO 19.6. (session 8) — hybrid stat+Gemini, zápis `proposed` do `hikari_memory` + schvalovací UI na home. Možné dotažení: per-vzor re-evaluace když data zesílí (teď 1×/vzor), víc rodin vzorů (nemoc→nároky, víkend pauza), nebo přidat vzory do Gemini brief promptu jako aktivní pravidla.
    - ~~**Živá energetická osa**~~ ✅ HOTOVO 18.6. (session 5) — cron píše `energy_blocks`, home zobrazuje live s current-time indikátorem.
-   - ~~**Cascade milníková % přes Gemini**~~ ✅ HOTOVO 17.6. (on-demand tlačítkem, viz session 4). Možné dotažení: rozšířit kontext o deníky (teď jen feedbacky), nebo přidat L2 per-dim % (teď L2 jen layer-%, dimenze kurátované v UI).
+   - ~~**Cascade milníková % přes Gemini**~~ ✅ HOTOVO 17.6. + dotaženo 22.6. (session 11): L2 teď živá per-dim % jako L3-5, L3 oživena (yearly soubor), týden/měsíc % zná časovou osu. **Zbývá pro reálná %:** přidat tvrdé datové vstupy — hlavně **zdroj aktuálního příjmu** (příjmové milníky se teď odhadují naslepo), pak fyzička čísla / JLPT / počty karet. Možná i: tvrdý clamp kadencových týdenních milníků, „potvrdit milník" UI.
 2. **Drobnosti:**
    - ~~Auto-sync cron~~ ✅ HOTOVO 22.6. (session 10) — zřetězeno do ranního cronu 6:00 (sync → brain), ne samostatný cron.
    - Energy obrázek v kibou — kdyby chtěl něco jiného než blesk.
