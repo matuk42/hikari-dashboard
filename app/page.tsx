@@ -603,9 +603,14 @@ export default function HomePage() {
 
       const proposals = ((proposalsRes as { data: Proposal[] | null }).data ?? []) as Proposal[]
 
+      // Rest-aware counts: rest days are dropped from the denominator so home agrees
+      // with /habits (e.g. 10/11, not 10/13 when 2 habits are on a rest day).
+      const todayLogs = (logsRes as { data: { habit_id: string; status: string }[] | null }).data ?? []
+      const restToday = todayLogs.filter(l => l.status === 'rest').length
+
       setData({
-        habitsDone:   (logsRes as { count: number | null }).count ?? 0,
-        habitsTotal:  trackableIds.length,
+        habitsDone:   todayLogs.filter(l => l.status === 'done').length,
+        habitsTotal:  trackableIds.length - restToday,
         streakValue:  topStreak?.current_streak ?? FALLBACK_STREAK,
         streakHabit:  topHabitName,
         hopeToday:    hopeRes.data ?? null,
