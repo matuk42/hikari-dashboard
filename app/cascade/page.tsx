@@ -520,9 +520,10 @@ function LayerCard({ layer }: { layer: Layer }) {
 // which carries richer chips (detail + Hikari note) than the DB can hold.
 
 // Layer % (the big number) is Gemini-computed for L2–L5 once the on-demand
-// milestone calc has run: L3/L4/L5 = mean of their milestone %s, L2 = holistic.
-// Until then any layer falls back to its curated estimate (used > 0 from DB).
-// L4/L5 also show a separate live habit-adherence badge (deterministic, daily).
+// milestone calc has run: every layer = mean of its milestone %s (so the top
+// number always agrees with the bars below it). Until then any layer falls back
+// to its curated estimate (used > 0 from DB). L4/L5 also show a separate live
+// habit-adherence badge (deterministic, daily).
 
 // Layers whose milestone LIST is the live vault (synced + rolled over each period),
 // now carrying Gemini per-milestone %. L1 (chips) stays curated; L2 (5 let) is now
