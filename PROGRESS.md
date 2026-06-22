@@ -4,11 +4,24 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-19 (session 9)
+**Poslední aktualizace:** 2026-06-22 (session 10)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (19.6. session 9)
+## ✅ VYŘEŠENO tuto session (22.6. session 10)
+
+**Auto-sync z vaultu — POSTAVENO, zřetězeno do ranního cronu (PRD V2 „Auto-sync z vaultu").**
+- **Smysl:** odpadá ruční ťukání na „Sync s vaultem" — data z vaultu se natáhnou sama každé ráno před tím, než nad nimi Gemini přemýšlí.
+- **Refactor (`app/api/vault-sync/route.ts`):** jádro syncu vytaženo do **`runVaultSync(db, pid, token)`** — auth-free, vrací `{synced, files, errors, timestamp}`. POST (tlačítko „Sync s vaultem") si nechal cookie-auth, vyřeší usera/profil a deleguje. Žádná změna chování tlačítka.
+- **Zřetězení (rozhodnutí Matyáše 22.6.):** místo druhého samostatného cronu **ranní cron `/api/cron/morning` (denně 6:00 UTC) teď dělá obojí v jednom běhu, v zaručeném pořadí:** pro každý profil (1) `runVaultSync` → čerstvá data, (2) `runMorningCron` → Gemini brief nad nimi. Proč zřetězit a ne 2 crony: na **Vercel Hobby plánu se crony nespouští na přesnou minutu** (drift v rámci hodiny) → dva oddělené crony negarantují pořadí. Zřetězení běží za sebou v jednom procesu = 100% jistota, že sync doběhne před mozkem.
+- **Odolnost:** sync failure (GitHub výpadek) se zaloguje ale **neblokuje brain** (degraduje na to, co už v Supabase je). Bez `GITHUB_TOKEN` se sync přeskočí (`skipped`), brain běží dál. Výsledek cronu je teď per profil `{ vaultSync:{...}, brain:{...} }`.
+- **`/api/cron/vault-sync`** route existuje (service-key, projde profily, `CRON_SECRET` auth) ale **už NENÍ ve `vercel.json` schedule** — nechána jen jako ruční „sync všech profilů" přes curl. `vercel.json` má teď jediný cron (`/api/cron/morning` `0 6 * * *`).
+- **Žádná migrace.** Build + TS čisté, obě cron routy ve výpisu.
+- **Pozn. k času:** `0 6 * * *` = 6:00 UTC = 8:00 Praha (léto). DST: v zimě 7:00 Praha. Cron expression je UTC, nejde mít napevno lokální čas celý rok.
+
+---
+
+## ✅ VYŘEŠENO dříve (19.6. session 9)
 
 **Speaking feedback na home („Hikari dnes" 3. blok) — POSTAVENO.** (Matyášův nápad z 16.+18.6.: *„těžké si pamatovat speaking úkoly přes den; vidět je vícekrát = lepší"*.)
 - **Co:** karta „Hikari dnes" má nově **třetí blok „🗣 Řeč dnes"** (pod nudge + reasoning, v rozkliknutém stavu): (1) **filler slova k hlídání + počty** (chip-y, např. `jo ~55× · eh ~32× · jako ~22×`) a (2) **principy do běžné mluvy** (odrážky z „3 body ke zlepšení", např. „místo jo na konci věty → pauza"). 
