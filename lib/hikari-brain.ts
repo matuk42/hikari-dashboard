@@ -650,9 +650,9 @@ Odpověz POUZE čistým JSON (žádný text navíc):
     return { dims: 0, layers: 0, error: err }
   }
 
-  // 6 — write back (clamp 0–100, round). Per-milestone % → dimensions; layer %
-  // for týden/měsíc/rok = mean of that layer's milestone %s (so the top number
-  // summarizes the bars below it); 5 let = Gemini's holistic estimate.
+  // 6 — write back (clamp 0–100, round). Per-milestone % → dimensions; every
+  // layer % (L2–L5) = mean of that layer's milestone %s, so the top number always
+  // summarizes the bars below it (no more holistic L2 estimate diverging from them).
   const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)))
 
   const byLayer: Record<number, { sum: number; cnt: number }> = {}
