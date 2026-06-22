@@ -156,7 +156,8 @@ function mdTable(content: string): Array<Record<string, string>> {
 
 /** H3 section names within a block, excluding noise headings. */
 function h3Names(content: string): string[] {
-  const skip = ['anti-cíl', 'citát', 'calculator', 'propojení', 'průměrný týden', 'měřitelnost']
+  const skip = ['anti-cíl', 'citát', 'calculator', 'propojení', 'průměrný týden', 'měřitelnost',
+    'místo (branch', 'otevřené dimenze']
   return content.split('\n')
     .filter(l => l.startsWith('### '))
     .map(l => l.replace(/^### /, '').trim())
