@@ -707,7 +707,7 @@ export async function runVaultSync(
     try {
       raw[key] = await ghFetch(path, token)
       if (raw[key] !== null) synced.push(path)
-      else if (key !== 'monthly') errors.push(`Not found: ${path}`)
+      else if (key !== 'monthly' && key !== 'yearly') errors.push(`Not found: ${path}`)
     } catch (e) {
       errors.push(`Fetch ${path}: ${e instanceof Error ? e.message : String(e)}`)
     }
