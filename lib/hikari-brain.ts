@@ -130,12 +130,13 @@ export async function calcCascadePct(
   const ids = habits.map(h => h.id as string)
   const monthStart = today.slice(0, 7) + '-01'
 
+  // Pull done + rest in one go: rest days are removed from the denominator below.
   const { data: logs, error: lErr } = await db.from('habit_logs')
-    .select('date')
+    .select('date, status')
     .in('habit_id', ids)
     .gte('date', monthStart)
     .lte('date', today)       // include today — its completions should count
-    .eq('status', 'done')
+    .in('status', ['done', 'rest'])
 
   if (lErr) {
     errors.push(`habit_logs cascade: ${lErr.message}`)
@@ -144,12 +145,14 @@ export async function calcCascadePct(
 
   const n         = ids.length
   const weekStart = isoMondayOf(today)
-  const weekLogs  = (logs ?? []).filter(l => (l.date as string) >= weekStart)
+  const doneLogs  = (logs ?? []).filter(l => l.status === 'done')
+  const restLogs  = (logs ?? []).filter(l => l.status === 'rest')
+  const inWeek    = (l: { date: string }) => (l.date as string) >= weekStart
 
   // Elapsed days INCLUDING today — Monday with 2/19 done = ~11%, not 0%.
   const { week: weekDays, month: monthDays } = elapsedDays(today)
-  const week  = adherencePct(weekLogs.length,    n, weekDays)
-  const month = adherencePct((logs ?? []).length, n, monthDays)
+  const week  = adherencePct(doneLogs.filter(inWeek).length, n, weekDays, restLogs.filter(inWeek).length)
+  const month = adherencePct(doneLogs.length,                n, monthDays, restLogs.length)
 
   return { week, month, errors }
 }
