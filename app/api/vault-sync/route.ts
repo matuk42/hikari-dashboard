@@ -880,10 +880,10 @@ export async function runVaultSync(
   // Only real errors flip `synced` to false, so an info note doesn't show as ⚠.
   const realErrors = errors.filter(e => !e.startsWith('ℹ️'))
 
-  return NextResponse.json({
+  return {
     synced:    realErrors.length === 0,
     files:     synced,
     errors,
     timestamp: new Date().toISOString(),
-  })
+  }
 }
