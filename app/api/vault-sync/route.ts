@@ -764,20 +764,24 @@ export async function runVaultSync(
       }, errors)
       if (l1id) await insertNewDimensions(db, l1id, l1dims)
 
-      // Layer 2 — 5 let — H3 under "## 5letý cíl"
+      // Layer 2 — 5 let — H3 under "## 5letý cíl". Full refresh (replaceDimensions)
+      // so it mirrors the vault and Gemini can score each dimension like L3/L4/L5
+      // (previously insert-only → duplicates accumulated; non-measurable H3s like
+      // "Místo (branch…)" / "Otevřené dimenze" are filtered out in h3Names).
       const l2sec   = mdSection(sen, '## 5letý cíl')
-      const l2dims  = dimsFromH3(l2sec).map(n => n.replace(/ ke 21$/, '').trim())
+      const l2dims: DimItem[] = dimsFromH3(l2sec)
+        .map(n => ({ name: n.replace(/ ke 21$/, '').trim(), detail: '' }))
       // Add income dimension from prijem.md
       if (raw.prijem) {
         const pSec5 = mdSection(raw.prijem, '## 5letý cíl')
         const match = pSec5.match(/\*\*(\d+k[^\*]*)\*\*/)
-        l2dims.push(match ? `Příjem · B1+B2 · ${match[1]}` : 'Příjem · B1+B2 stabilní')
+        l2dims.push({ name: match ? `Příjem · B1+B2 · ${match[1]}` : 'Příjem · B1+B2 stabilní', detail: '' })
       }
       const l2id = await upsertLayer(db, pid, {
         tree: 'sen', layer: 2, title: '5 let', description: 'Věk 21 · 2031',
         deadline: '2031-01-01', sourceFile: FILES.sen,
       }, errors)
-      if (l2id) await insertNewDimensions(db, l2id, l2dims)
+      if (l2id) await replaceDimensions(db, l2id, 2, l2dims, errors)
 
       // Layer 3 — Rok — moved 2026-06-21 from sen.md into its own yearly review
       // file (wiki/reviews/yearly/<year>.md). Read the "### Dimenze a milníky"
