@@ -468,7 +468,7 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 ### 🔜 V2 — po MVP
 - [ ] HOPE korelace → živá časová osa energie (UI nad existujícím `energy_blocks`)
 - [x] Správa habits z dashboardu (CRUD v `/habits` — hotovo 16.6, appka = zdroj pravdy)
-- [ ] Auto-sync z vaultu (Vercel cron Ne 22:00)
+- [x] Auto-sync z vaultu — **hotovo 22.6**: zřetězeno do ranního cronu `/api/cron/morning` (6:00, sync → brain v jednom běhu), ne samostatný cron (Vercel Hobby negarantuje pořadí dvou cronů). `runVaultSync` vytaženo jako sdílená funkce.
 - [ ] Auto-retire habits (denní cron checking end_date)
 - [x] Historie kalendář (`/history`) — **hotovo 18.6**: měsíční heat-mapa, režim Vše/per-habit, klik na den → detail, čte `habit_logs`
 - [x] Cascade progress AI výpočet — **hotovo 17.6**: Gemini počítá milníková % L3/L4/L5 + layer % L2–L5 z vault reviewů, on-demand (viz v2.2 changelog)
