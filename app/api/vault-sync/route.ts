@@ -640,21 +640,12 @@ async function replaceDimensions(
 
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
+// Cookie-authenticated manual sync — the "Sync s vaultem" button on the home page.
+// Resolves the logged-in user's profile, then delegates to runVaultSync.
 export async function POST() {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     return NextResponse.json({ error: 'GITHUB_TOKEN not set' }, { status: 500 })
-  }
-
-  // Dynamic file paths — computed at request time so sync always reads the current week/month.
-  // `weekly` is resolved later with rollover: if the current week's plan file
-  // doesn't exist yet (typical mid-week before Sunday review), we fall back to
-  // the most recent existing weekly file. This keeps the dashboard usable instead
-  // of erroring out with "Not found".
-  const FILES = {
-    ...STATIC_PATHS,
-    weekly:  '',                                                  // resolved below
-    monthly: `wiki/reviews/monthly/${yearMonthStr()}.md`,
   }
 
   const cookieStore = await cookies()
@@ -676,7 +667,29 @@ export async function POST() {
     .from('profiles').select('id').eq('auth_user_id', user.id).single()
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
-  const pid     = profile.id as string
+  const result = await runVaultSync(db, profile.id as string, token)
+  return NextResponse.json(result)
+}
+
+/** Core vault → Supabase sync for one profile. Shared by the manual POST (cookie auth)
+ *  and the Sunday-22:00 Vercel cron (service-role client). Auth-free: the caller resolves
+ *  the Supabase client + profile id and supplies the GitHub token. */
+export async function runVaultSync(
+  db: SupaClient,
+  pid: string,
+  token: string,
+): Promise<{ synced: boolean; files: string[]; errors: string[]; timestamp: string }> {
+  // Dynamic file paths — computed at call time so sync always reads the current week/month.
+  // `weekly` is resolved later with rollover: if the current week's plan file
+  // doesn't exist yet (typical mid-week before Sunday review), we fall back to
+  // the most recent existing weekly file. This keeps the dashboard usable instead
+  // of erroring out with "Not found".
+  const FILES = {
+    ...STATIC_PATHS,
+    weekly:  '',                                                  // resolved below
+    monthly: `wiki/reviews/monthly/${yearMonthStr()}.md`,
+  }
+
   const synced: string[] = []
   const errors: string[] = []
 
