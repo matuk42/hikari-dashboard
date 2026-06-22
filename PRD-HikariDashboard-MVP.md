@@ -476,7 +476,8 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 - [x] Auto-sync z vaultu — **hotovo 22.6**: zřetězeno do ranního cronu `/api/cron/morning` (6:00, sync → brain v jednom běhu), ne samostatný cron (Vercel Hobby negarantuje pořadí dvou cronů). `runVaultSync` vytaženo jako sdílená funkce.
 - [ ] Auto-retire habits (denní cron checking end_date)
 - [x] Historie kalendář (`/history`) — **hotovo 18.6**: měsíční heat-mapa, režim Vše/per-habit, klik na den → detail, čte `habit_logs`
-- [x] Cascade progress AI výpočet — **hotovo 17.6**: Gemini počítá milníková % L3/L4/L5 + layer % L2–L5 z vault reviewů, on-demand (viz v2.2 changelog)
+- [x] Cascade progress AI výpočet — **hotovo 17.6, zreálněno 22.6**: Gemini počítá milníková % L2–L5 (layer = průměr milníků), L3 z `yearly/<rok>.md`, časová osa pro týden/měsíc (viz v2.3 changelog)
+- [ ] **Cascade datové kotvy pro reálná %** (návazné na 22.6) — Gemini teď bez tvrdých vstupů odhaduje část milníků naslepo. Doplnit strukturované zdroje: **(1) aktuální příjem** (kolik Matyáš reálně vydělává — vstup pro příjmové milníky L2/L3/L4), (2) fyzička čísla (shyby/běh/kolo z [[2027]] „měřitelnost"), (3) JLPT úroveň / počet Anki karet. Bez nich budou některé dimenze sedět a jiné ne. Volitelně: tvrdý clamp kadencových týdenních milníků + „potvrdit milník" UI.
 - [x] Odškrtávání denních úkolů na home (klik → přeškrtne, `done_keys`, migrace 006) — hotovo 17.6
 - [ ] ⚡ Hikari názor na změnu úkolu
 - [ ] Zlepšení za měsíc
