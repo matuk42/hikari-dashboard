@@ -529,9 +529,10 @@ export async function calcMilestonePct(
     .select('id, layer_id, name, detail, sort_order')
     .in('layer_id', layers.map(l => l.id as string))
 
-  // Per-milestone scoring is for L3/L4/L5 only — L2's dimensions are curated in
-  // the UI (not rendered from DB), so for L2 we estimate the layer % alone.
-  const PER_DIM = new Set([3, 4, 5])
+  // Per-milestone scoring for L2–L5 — each layer's % is the mean of its scored
+  // milestones (so the top number always agrees with the bars below it). L2 (5 let)
+  // is now a live vault layer too, scored like the rest (no more holistic estimate).
+  const PER_DIM = new Set([2, 3, 4, 5])
   const items = (dimRows ?? [])
     .filter(d => PER_DIM.has(layerNumById[d.layer_id as string]))
     .sort((a, b) => ((a.sort_order as number) ?? 0) - ((b.sort_order as number) ?? 0))
