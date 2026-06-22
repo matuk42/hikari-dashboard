@@ -693,6 +693,7 @@ export async function runVaultSync(
     ...STATIC_PATHS,
     weekly:  '',                                                  // resolved below
     monthly: `wiki/reviews/monthly/${yearMonthStr()}.md`,
+    yearly:  `wiki/reviews/yearly/${YEARLY_TARGET_YEAR}.md`,      // L3 (Rok) source since 2026-06-21
   }
 
   const synced: string[] = []
