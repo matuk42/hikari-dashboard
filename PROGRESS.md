@@ -183,7 +183,7 @@ Dřívější milníky: 9.6. session — (a) oprava sync na nový W24 formát + 
    - ~~**Živá energetická osa**~~ ✅ HOTOVO 18.6. (session 5) — cron píše `energy_blocks`, home zobrazuje live s current-time indikátorem.
    - ~~**Cascade milníková % přes Gemini**~~ ✅ HOTOVO 17.6. (on-demand tlačítkem, viz session 4). Možné dotažení: rozšířit kontext o deníky (teď jen feedbacky), nebo přidat L2 per-dim % (teď L2 jen layer-%, dimenze kurátované v UI).
 2. **Drobnosti:**
-   - Auto-sync cron (Ne 22:00) místo jen ručního tlačítka.
+   - ~~Auto-sync cron~~ ✅ HOTOVO 22.6. (session 10) — zřetězeno do ranního cronu 6:00 (sync → brain), ne samostatný cron.
    - Energy obrázek v kibou — kdyby chtěl něco jiného než blesk.
 3. **V2:** `/history` heat-mapa · **V3:** `/calculator`.
 
