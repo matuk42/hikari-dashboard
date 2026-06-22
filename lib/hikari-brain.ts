@@ -587,7 +587,22 @@ export async function calcMilestonePct(
       + its.map(i => `  ${i.key}: ${i.name}${i.detail ? ` — ${i.detail}` : ''}`).join('\n')
   }).filter(Boolean).join('\n')
 
-  const prompt = `Jsi Hikari — analytický mozek Matyáše (16, SPŠOA Bruntál). Teď NEMENTORUJEŠ — STŘÍZLIVĚ odhaduješ procento splnění u každého cascade milníku z tvrdých dat a deníkových feedbacků. Matyáš míří k location-independent příjmu a svobodě žít sen (Japonsko, výpravy, příroda, tvorba). Dnes je ${today}.
+  // Time axis of the current week/month — so weekly/monthly milestone % reflect
+  // BOTH progress so far AND how much of the period is left (Monday with one
+  // session done ≠ 90% of the week). Same helpers as calcCascadePct.
+  const { week: weekDay, month: monthDay } = elapsedDays(today)
+  const monthLen      = new Date(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 0).getDate()
+  const weekElapsed   = Math.round((weekDay / 7) * 100)
+  const monthElapsed  = Math.round((monthDay / monthLen) * 100)
+  const daysLeftWeek  = 7 - weekDay
+  const daysLeftMonth = monthLen - monthDay
+  const dayName       = CZ_DAYS[new Date(`${today}T12:00:00Z`).getUTCDay()]
+
+  const prompt = `Jsi Hikari — analytický mozek Matyáše (16, SPŠOA Bruntál). Teď NEMENTORUJEŠ — STŘÍZLIVĚ odhaduješ procento splnění u každého cascade milníku z tvrdých dat a deníkových feedbacků. Matyáš míří k location-independent příjmu a svobodě žít sen (Japonsko, výpravy, příroda, tvorba). Dnes je ${today} (${dayName}).
+
+ČASOVÁ OSA OBDOBÍ (klíčové pro L4/L5):
+- Týden uplynul z ${weekElapsed} % (den ${weekDay}/7, zbývá ${daysLeftWeek} dní do neděle).
+- Měsíc uplynul z ${monthElapsed} % (den ${monthDay}/${monthLen}, zbývá ${daysLeftMonth} dní).
 
 TVRDÁ DATA:
 - Trackované habits: ${habitNames}
@@ -605,12 +620,19 @@ MILNÍKY K OHODNOCENÍ (klíč: název — detail):
 ${grouped}
 
 ÚKOL:
-Pro KAŽDÝ milník odhadni realistické % splnění (0–100) vzhledem k jeho deadline a aktuálnímu stavu. Buď konzervativní a opřený o data — když pro milník nemáš signál, drž nízko. Týdenní (L5) a měsíční (L4) milníky hodnoť vůči jejich krátkému horizontu; roční (L3) vůči 1.9.2027. (Celkové % vrstev týden/měsíc/rok se spočítají jako průměr těchto milníků — nevracej je.) Dále odhadni jen CELKOVÉ % pro vrstvu „5 let" (věk 21, 2031) jako vážený obraz pokroku napříč dimenzemi.
+Pro KAŽDÝ milník odhadni REÁLNÉ % splnění (0–100) vůči jeho skutečnému cíli. % musí kombinovat DVĚ věci dohromady:
+1) co je reálně hotovo (kumulativně, z dat a feedbacků),
+2) ČASOVOU OSU období — kolik z období zbývá a kolik práce na cíl ještě chybí.
+
+Tělo logiky pro KADENCOVÉ milníky (opakování přes celé období, např. „autoškola testy 5×/den každý den", „Anki 25 karet denně"): cíl = plný počet za CELÉ období (týden = 7 dní, ne dnešek). Když je teprve ${dayName} a uplynulo ${weekElapsed} % týdne, i kdyby byl dnešek splněný, týdenní milník NEMŮŽE být 90 % — drž ho blízko reálně vykonané části vůči celotýdennímu cíli, navýšenou jen mírně dle trajektorie. Pro JEDNORÁZOVÉ / připravenostní milníky (např. „autoškola jízdy — dojít do potřebného počtu", „sentence mining 200 karet") počítej připravenost vůči cíli (kolik z potřebného je hotovo) — ta může být vysoká i brzy v týdnu, pokud data sedí.
+
+Cíl: aby „${weekElapsed >= 40 && weekElapsed <= 60 ? 'jsem v polovině' : 'jsem na X %'}" znamenalo opravdu reálný pokrok k cíli, ne nafouknuté číslo. Buď konzervativní — bez signálu drž nízko. Roční (L3) hodnoť vůči 1.9.2027, „5 let" (L2) vůči 2031.
+
+VYŠŠÍ VRSTVY = ROLLUP: při skórování milníků „5 let" (L2) a „Rok" (L3) ber jako důkaz trajektorie odpovídající pokrok v NIŽŠÍCH vrstvách (měsíc L4, týden L5) — když konkrétní dimenze (japonština, fyzička, příjem…) jede dole dobře, projev to i nahoře; když dole stojí, drž nahoře nízko. (Celkové % každé vrstvy se spočítá jako průměr jejích milníků — nevracej layer čísla.)
 
 Odpověz POUZE čistým JSON (žádný text navíc):
 {
-  "milestones": { "m0": 0, "m1": 0, "...": "0-100 pro všechny klíče výše" },
-  "layer_5let": 0
+  "milestones": { "m0": 0, "m1": 0, "...": "0-100 pro VŠECHNY klíče výše (L2–L5)" }
 }`
 
   // 5 — Gemini (low temperature → stable, data-grounded estimates)
