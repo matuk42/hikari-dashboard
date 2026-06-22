@@ -13,6 +13,11 @@ const STATIC_PATHS = {
   memory: 'Memory.md',
 } as const
 
+// Yearly cascade (layer 3) target year. The academic-year goal date is 1.9.2027;
+// the year-level milestones moved out of sen.md/prijem.md into their own review
+// file on 2026-06-21 (wiki/reviews/yearly/<year>.md). Bump when the target rolls.
+const YEARLY_TARGET_YEAR = '2027'
+
 /** ISO 8601 week string for a given date, e.g. "2026-W23" */
 function isoWeekStrFromDate(input: Date): string {
   const d = new Date(input)
