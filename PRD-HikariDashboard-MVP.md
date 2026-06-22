@@ -293,10 +293,13 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Pár vět kontextu z vault souboru (sen.md)
 - Doporučení Hikari: "Japonština N3 do 1.9.2027 — jsi na 23%, potřebuješ +15 karet/den"
 
-**Progress výpočet (AI) — IMPLEMENTOVÁNO 17.6 (Gemini, on-demand):**
-- Gemini (`calcMilestonePct`) odhaduje % u jednotlivých milníků L3/L4/L5 + layer-% L2 holisticky; layer-% L3/L4/L5 = průměr jejich milníkových %.
+**Progress výpočet (AI) — IMPLEMENTOVÁNO 17.6, zreálněno 22.6 (Gemini, on-demand):**
+- Gemini (`calcMilestonePct`) odhaduje % u jednotlivých milníků **L2–L5**; layer-% **každé vrstvy = průměr jejích milníkových %** (top číslo vždy sedí s bary pod ním — od 22.6. i pro L2, dřív holisticky).
+- **Časová osa (22.6):** prompt dostává den v týdnu + % uplynulého týdne/měsíce + zbývající dny. Kadencové milníky (testy 5×/den) se hodnotí vůči celotýdennímu cíli → v pondělí nízko, ne 90 %. Jednorázové/připravenostní (jízdy, počet karet) = připravenost vůči cíli. Vyšší vrstvy (L2/L3) = rollup pokroku nižších.
 - Kontext = `gatherVaultState` (plán měsíce/týdne + poslední dokončené reviews + denní feedbacky) + habits/streaky/HOPE/paměť. Matyáš % nepřidává ručně.
-- Spouští se přes „Přepočítej Hikari" (ne v 6:00 cronu — milníky se mění pomalu). Milníky/dimenze samotné = živě z vaultu (sync).
+- Zdroje milníků: L2 = `sen.md ## 5letý cíl`, L3 = `wiki/reviews/yearly/<rok>.md` (přesunuto 21.6.), L4 = měsíční review, L5 = týdenní priority. Vše full-refresh při syncu.
+- Spouští se přes „Přepočítej Hikári" (ne v 6:00 cronu — milníky se mění pomalu).
+- **⚠️ Omezení přesnosti:** bez tvrdých datových vstupů Gemini některé milníky odhaduje naslepo — hlavně **příjmové** (chybí zdroj aktuálního příjmu). Pro konzistentně reálná % je potřeba doplnit datové kotvy (viz V2 backlog).
 - Velké milníky (autoškola, DofE) → Matyáš potvrdí v dashboardu (zatím přes odškrtání habits/úkolů; explicit confirm UI = budoucí).
 
 **Supabase tabulky:** `cascade_layers` · `cascade_dimensions` · `cascade_milestones` · `cascade_chips` — viz `supabase/migrations/001_init.sql` doména D.
