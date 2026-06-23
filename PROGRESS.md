@@ -18,6 +18,14 @@
 - **Háček vyřešen:** ruční `retireHabit` (`/habits`) historicky `retired_on` nevyplňoval (jen `category`). Auto-retire ho teď píše — víš, kdy a proč se co archivovalo.
 - **CronResult** má nově pole `autoRetire: {retired, names, errors}`. Build + TS čisté.
 
+**Cascade datová kotva — aktuální příjem (PRD §6.3 / V2 „datové kotvy") — POSTAVENO.** Gemini dřív skóroval příjmové milníky (L2/L3 „500 Kč/měs", „500 Kč/h", „30k/50k") **naslepo** — nic mu neřeklo, kolik Matyáš reálně vydělává (teď ~0, B1 nevybráno). Teď má tvrdou kotvu.
+- **Migrace 009 `income_snapshots`** (⚠️ Matyáš musí spustit v Supabase před použitím): append-only snapshoty `{date, monthly_income_kc, hourly_rate_kc, total_earned_kc, note}`. Append, ne upsert → drží trajektorii v čase (využije i „Zlepšení za měsíc"). Vlastní tabulka, **NE** doména F (`revenue_trajectory` = byznys modul Fáze 2, per-produkt MRR).
+- **Vstup = dashboard UI** (rozhodnutí Matyáše 23.6.): komponenta `IncomeAnchorCard` na `/cascade` (pod timeline). Zobrazí poslední snapshot (3 čísla + datum), tlačítko Zadat/Aktualizovat → formulář (měsíčně/hodinovka/celkem/pozn.) → INSERT nového snapshotu. Samostatná (vlastní fetch profilu), append-only.
+- **Napojení na Gemini:** `calcMilestonePct` (on-demand „Přepočítej Hikari") fetchuje poslední snapshot a vkládá do promptu sekci „AKTUÁLNÍ PŘÍJEM" v TVRDÁ DATA. Když snapshot není → explicitní instrukce „NEODHADUJ příjem nahoru, drž příjmové milníky ~0" (Gemini si nevymyslí číslo).
+- **Ověřovák `scripts/check-income.mjs`** (výpis snapshotů + co půjde do promptu). Build + TS čisté.
+- **Projeví se** až: spustit migraci 009 → zadat příjem na `/cascade` → „Přepočítej Hikari" (Gemini přeskóruje příjmové milníky s reálným číslem). Dokud je vše 0, příjmové milníky zůstanou nízko (správně).
+- **Zbývá z „datových kotev"** (volitelné, příště): fyzička čísla (shyby/běh/kolo) + JLPT/počet Anki karet jako další kotvy stejným způsobem; tvrdý clamp kadencových týdenních milníků; „potvrdit milník" UI.
+
 ---
 
 ## ✅ VYŘEŠENO dříve (22.6. session 11)
