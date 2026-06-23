@@ -629,6 +629,7 @@ TVRDÁ DATA:
 - Splnění habits: tento týden ${cascade.week}% · tento měsíc ${cascade.month}%
 - Aktivní streaky: ${topStreaks}
 - HOPE: ${hopeStr}
+- AKTUÁLNÍ PŘÍJEM (kotva pro příjmové milníky — 500 Kč/měs, 500 Kč/h, 30k/50k): ${incomeStr}
 
 KONTEXT Z PAMĚTI:
 ${memStr}
