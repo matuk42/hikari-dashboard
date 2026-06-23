@@ -487,6 +487,7 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 - [x] Automatická detekce vzorů (zápis `hikari_memory` status='proposed') — **hotovo 19.6**: hybrid — `lib/pattern-detect.ts` ověří čísla (den-v-týdnu × HOPE, habit→HOPE), Gemini je posoudí s vault kontextem (zahodí konfoundery), zápis `proposed`/`archived`, běží v `runMorningCron` krok 6 s dedupem
 
 ### 🔮 V3 — budoucnost
+- [ ] **Konflikt workflow CLI ↔ Supabase** (přesunuto z W26, 2026-06-23) — CLI Hikari porovná hlasový deník vs. dashboard, flagne `conflict_flags`, večerní konverzace rozhodne. Postavit až bude živá smyčka voice → Supabase zápis. Detailní design v §3.5.
 - [ ] Chat s Hikari v dashboardu (lokální AI rozhraní místo Claude Code CLI pro běžné věci)
 - [ ] Daily Calculator (po 2 měs. dat)
 - [ ] PC web layout (jiný než mobil)
