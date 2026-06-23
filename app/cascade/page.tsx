@@ -533,6 +533,157 @@ const VAULT_DIM_LAYERS = new Set([2, 3, 4, 5])
 type DbLayer = { layer: number; progress_pct: number | null; description: string | null }
 type DbDim = { name: string; detail: string | null; kind: DimKind | null; progress: number }
 
+// ─── Income anchor ───────────────────────────────────────────────────────────
+// Current income snapshot that anchors the cascade income milestones (500 Kč/měs,
+// 500 Kč/h, 30k/50k) — before this, Gemini scored them blind. Append-only: each
+// save is a new row, so a trajectory builds over time (reused later by "Zlepšení za
+// měsíc"). Self-contained: fetches its own profile, the milestone calc reads the
+// latest row server-side.
+type IncomeSnap = { date: string; monthly_income_kc: number; hourly_rate_kc: number; total_earned_kc: number; note: string | null }
+
+function IncomeAnchorCard() {
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const [snap, setSnap] = useState<IncomeSnap | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({ monthly: '', hourly: '', total: '', note: '' })
+
+  const load = React.useCallback(async (pid: string) => {
+    const { data } = await supabase.from('income_snapshots')
+      .select('date, monthly_income_kc, hourly_rate_kc, total_earned_kc, note')
+      .eq('profile_id', pid)
+      .order('date', { ascending: false }).order('logged_at', { ascending: false })
+      .limit(1).maybeSingle()
+    setSnap((data as IncomeSnap | null) ?? null)
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const user = session?.user
+      if (!user) return
+      const { data: profile } = await supabase.from('profiles').select('id').eq('auth_user_id', user.id).single()
+      if (!profile) return
+      setProfileId(profile.id as string)
+      await load(profile.id as string)
+    }).catch(() => {})
+  }, [load])
+
+  const openForm = () => {
+    setForm({
+      monthly: snap ? String(snap.monthly_income_kc) : '',
+      hourly:  snap ? String(snap.hourly_rate_kc) : '',
+      total:   snap ? String(snap.total_earned_kc) : '',
+      note:    '',
+    })
+    setEditing(true)
+  }
+
+  const save = async () => {
+    if (!profileId || saving) return
+    setSaving(true)
+    const num = (s: string) => { const n = Number(s.replace(',', '.').trim()); return Number.isFinite(n) ? n : 0 }
+    const { error } = await supabase.from('income_snapshots').insert({
+      profile_id:        profileId,
+      date:              new Date().toISOString().slice(0, 10),
+      monthly_income_kc: num(form.monthly),
+      hourly_rate_kc:    num(form.hourly),
+      total_earned_kc:   num(form.total),
+      note:              form.note.trim() || null,
+    })
+    setSaving(false)
+    if (!error) { setEditing(false); await load(profileId) }
+  }
+
+  const fmt = (n: number) => n.toLocaleString('cs-CZ')
+  const label = { fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textTransform: 'uppercase' as const }
+  const value = { fontSize: 18, fontWeight: 700, color: '#F59E0B', lineHeight: 1.2 }
+  const inputStyle = {
+    width: '100%', background: '#0a0a0a', border: '1px solid rgba(245,158,11,0.18)',
+    borderRadius: 8, padding: '9px 10px', color: '#ededed', fontSize: 14, outline: 'none',
+  }
+
+  return (
+    <section style={{ marginTop: 28 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10,
+      }}>
+        <span style={{ fontSize: 11, color: 'rgba(245,158,11,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          Aktuální příjem
+        </span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)' }}>· kotva pro příjmové milníky</span>
+      </div>
+
+      <div style={{
+        background: '#0e0e0e', border: '1px solid rgba(245,158,11,0.10)',
+        borderRadius: 12, padding: 16,
+      }}>
+        {!editing ? (
+          <>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <div style={label}>Měsíčně</div>
+                <div style={value}>{snap ? fmt(snap.monthly_income_kc) : '0'} <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>Kč/měs</span></div>
+              </div>
+              <div>
+                <div style={label}>Hodinovka</div>
+                <div style={value}>{snap ? fmt(snap.hourly_rate_kc) : '0'} <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>Kč/h</span></div>
+              </div>
+              <div>
+                <div style={label}>Celkem</div>
+                <div style={value}>{snap ? fmt(snap.total_earned_kc) : '0'} <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>Kč</span></div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                {snap ? `naposled ${snap.date}${snap.note ? ` · ${snap.note}` : ''}` : 'zatím nezadáno — Gemini drží příjem na ~0'}
+              </span>
+              <button onClick={openForm} style={{
+                background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
+                color: '#F59E0B', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {snap ? 'Aktualizovat' : 'Zadat'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ ...label, marginBottom: 4 }}>Měsíční příjem (Kč/měs)</div>
+              <input style={inputStyle} inputMode="decimal" value={form.monthly} onChange={e => setForm(f => ({ ...f, monthly: e.target.value }))} placeholder="0" />
+            </div>
+            <div>
+              <div style={{ ...label, marginBottom: 4 }}>Hodinová sazba (Kč/h)</div>
+              <input style={inputStyle} inputMode="decimal" value={form.hourly} onChange={e => setForm(f => ({ ...f, hourly: e.target.value }))} placeholder="0" />
+            </div>
+            <div>
+              <div style={{ ...label, marginBottom: 4 }}>Celkem vyděláno (Kč)</div>
+              <input style={inputStyle} inputMode="decimal" value={form.total} onChange={e => setForm(f => ({ ...f, total: e.target.value }))} placeholder="0" />
+            </div>
+            <div>
+              <div style={{ ...label, marginBottom: 4 }}>Poznámka (nepovinné)</div>
+              <input style={inputStyle} value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="odkud, kontext…" />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={save} disabled={saving} style={{
+                flex: 1, background: '#F59E0B', border: 'none', color: '#080808',
+                borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
+              }}>
+                {saving ? 'Ukládám…' : 'Uložit snapshot'}
+              </button>
+              <button onClick={() => setEditing(false)} disabled={saving} style={{
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.5)', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer',
+              }}>
+                Zrušit
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 export default function CascadePage() {
   const [mounted, setMounted] = useState(false)
   const [dbLayers, setDbLayers] = useState<Record<number, DbLayer>>({})
