@@ -907,6 +907,37 @@ Odpověz POUZE čistým JSON:
 
 // ─── Main cron orchestrator ───────────────────────────────────────────────────
 
+// ─── Auto-retire (end_date passed) ─────────────────────────────────────────────
+// Habits with a hard end_date now in the past are archived automatically — same
+// effect as the "delete" button on /habits (category='retired'; logs + streaks
+// survive, the habit just disappears from all views). Only end_date is honoured:
+// trial_end belonged to the (cancelled 18.6.) package-evaluation flow, and silently
+// retiring a trial could drop a habit you meant to graduate.
+export async function autoRetireHabits(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string
+): Promise<{ retired: number; names: string[]; errors: string[] }> {
+  const { data: due, error } = await db.from('habits')
+    .select('id, name')
+    .eq('profile_id', profileId)
+    .neq('category', 'retired')
+    .not('end_date', 'is', null)
+    .lt('end_date', today)          // end_date is the last active day → retire once it's passed
+
+  if (error)      return { retired: 0, names: [], errors: [`habits fetch: ${error.message}`] }
+  if (!due?.length) return { retired: 0, names: [], errors: [] }
+
+  const ids   = due.map(h => h.id as string)
+  const names = due.map(h => h.name as string)
+  const { error: upErr } = await db.from('habits')
+    .update({ category: 'retired', retired_on: today, retired_reason: 'auto: end_date uplynul' })
+    .in('id', ids)
+
+  if (upErr) return { retired: 0, names, errors: [`retire update: ${upErr.message}`] }
+  return { retired: ids.length, names, errors: [] }
+}
+
 export async function runMorningCron(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
@@ -914,6 +945,11 @@ export async function runMorningCron(
   trigger: 'cron' | 'button' = 'cron',
   withMilestones = false
 ): Promise<CronResult> {
+
+  // 0 — Auto-retire habits whose end_date has passed (archive = category='retired',
+  // logs/streaks survive). Runs first so every step below — streaks, brief context —
+  // naturally excludes the just-archived habit (all of them filter out 'retired').
+  const autoRetire = await autoRetireHabits(db, profileId, today)
 
   // 1 — Streaks
   const streaks = await recalcStreaks(db, profileId, today)
