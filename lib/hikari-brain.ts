@@ -583,6 +583,16 @@ export async function calcMilestonePct(
 
   const memStr = (memRows.data ?? []).map(m => `- ${m.content as string}`).join('\n') || '(prázdné)'
 
+  // Income anchor — hard numbers so income milestones aren't scored blind. When no
+  // snapshot exists yet, say so explicitly (don't let Gemini invent a number).
+  const inc = incomeRow.data as
+    | { date: string; monthly_income_kc: number; hourly_rate_kc: number; total_earned_kc: number; note: string | null }
+    | null
+  const incomeStr = inc
+    ? `měsíčně ${inc.monthly_income_kc} Kč/měs · hodinovka ${inc.hourly_rate_kc} Kč/h · celkem vyděláno ${inc.total_earned_kc} Kč`
+      + ` (zadáno ${inc.date}${inc.note ? `, pozn.: ${inc.note}` : ''})`
+    : 'zatím nezadáno — žádný tvrdý údaj. NEODHADUJ příjem nahoru, drž příjmové milníky velmi nízko (reálně ~0 Kč).'
+
   // 4 — milestone listing grouped by layer (with each layer's deadline for calibration)
   const layerHeader: Record<number, string> = {
     2: `L2 — 5 LET (${layerInfo[2]?.description ?? 'věk 21'}, deadline ${layerInfo[2]?.deadline ?? '2031-01-01'})`,
