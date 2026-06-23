@@ -4,11 +4,23 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-22 (session 11)
+**Poslední aktualizace:** 2026-06-23 (session 12)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (22.6. session 11)
+## ✅ VYŘEŠENO tuto session (23.6. session 12)
+
+**Auto-retire habits (PRD §7.2 / V2) — POSTAVENO.** Habit s uplynulým `end_date` se sám archivuje (= totéž co tlačítko smazat: `category='retired'`, logy + streaky zůstanou, jen zmizí ze všech zobrazení).
+- **Kde:** nová `autoRetireHabits(db, pid, today)` v `lib/hikari-brain.ts`, zapojená jako **krok 0 v `runMorningCron`** (běží před streaky i před stavbou Gemini kontextu — vše po něm `retired` přirozeně filtruje, takže archivovaný habit hned vypadne ze streaků i briefu). Běží v ranním cronu 6:00 i na tlačítko „Přepočítej Hikari".
+- **Podmínka:** `end_date < dnes` (end_date = poslední aktivní den → archiv až po jeho uplynutí). Zapisuje `category='retired'` + **`retired_on=dnes`** + `retired_reason='auto: end_date uplynul'` (sloupce existují od 001, žádná migrace).
+- **Rozsah — JEN `end_date`, NE `trial_end`.** `trial_end` patřil ke zrušenému (18.6.) hodnocení balíčků; tiché archivování trialu by mohlo zahodit habit, který chceš povýšit. (Pozn.: habity balíčku Imunita mají v DB nastavené `end_date`, ne `trial_end` — takže je auto-retire zachytí.)
+- **Dopad ověřen** (`scripts/check-autoretire.mjs`, suchý běh proti DB, nic nezapisuje): teď (23.6.) by se nearchivovalo nic; **1.7. se auto-archivují 4 Imunita habity** (Probiotika, 2 L vody, Větrat ložnici, Omega-3 — všechny `end_date` 30.6.). Autoškola `end_date` nastavené NEMÁ → sama se nearchivuje.
+- **Háček vyřešen:** ruční `retireHabit` (`/habits`) historicky `retired_on` nevyplňoval (jen `category`). Auto-retire ho teď píše — víš, kdy a proč se co archivovalo.
+- **CronResult** má nově pole `autoRetire: {retired, names, errors}`. Build + TS čisté.
+
+---
+
+## ✅ VYŘEŠENO dříve (22.6. session 11)
 
 **Cascade audit + oprava nereálných % (A+B+C) — POSTAVENO.** (Matyáš si všiml: 5 let 45 %, v pondělí „autoškola testy 90 %", celý týden 64 % — „to je moc".)
 - **A — L3 (Rok) byla MRTVÁ vrstva.** DB měla pro L3 **0 milníků**. Příčina: 21.6. jsi ve vaultu přesunul roční cíl ze `sen.md` (`## Roční cíl`, teď jen odkaz) do **`wiki/reviews/yearly/2027.md`** (`### Dimenze a milníky` + příjem `### Milníky`). Sync to nevěděl → `replaceDimensions` mazal a nic nevkládal → L3 % zaseklé na 18 (Gemini ho nepřepočítal, neměl co průměrovat). **Fix (`vault-sync/route.ts`):** nový `FILES.yearly` (`YEARLY_TARGET_YEAR='2027'` konstanta — **ruční bump po 1.9.2027**, nebo později auto-derive z deadlinu), L3 parse čte yearly soubor. Ověřeno dry-runem: vrací 11 dimenzí (10 + Příjem).
