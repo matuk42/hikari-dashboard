@@ -550,12 +550,18 @@ export async function calcMilestonePct(
   if (!items.length) return { dims: 0, layers: 0, error: 'no milestones to score' }
 
   // 2 — dashboard context
-  const [streakRows, habitRows, hopeRows, memRows] = await Promise.all([
+  const [streakRows, habitRows, hopeRows, memRows, incomeRow] = await Promise.all([
     db.from('streaks_cache').select('habit_id, current_streak').gt('current_streak', 0),
     db.from('habits').select('id, name, category').eq('profile_id', profileId).neq('category', 'retired'),
     db.from('hope_logs').select('date, mood, energy, hope').eq('profile_id', profileId)
       .order('date', { ascending: false }).limit(7),
     db.from('hikari_memory').select('content').eq('profile_id', profileId).eq('status', 'active').limit(6),
+    // Latest income snapshot — the hard anchor for income milestones (was scored blind).
+    db.from('income_snapshots')
+      .select('date, monthly_income_kc, hourly_rate_kc, total_earned_kc, note')
+      .eq('profile_id', profileId)
+      .order('date', { ascending: false }).order('logged_at', { ascending: false })
+      .limit(1).maybeSingle(),
   ])
 
   const nameById: Record<string, string> = {}
