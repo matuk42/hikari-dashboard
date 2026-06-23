@@ -13,6 +13,7 @@ export interface BriefData {
 }
 
 export interface CronResult {
+  autoRetire: { retired: number; names: string[]; errors: string[] }
   streaks:    { updated: number; errors: string[] }
   cascade:    { week: number; month: number; errors: string[] }
   brief:      'generated' | { error: string | null }
