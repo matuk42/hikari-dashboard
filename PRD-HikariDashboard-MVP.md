@@ -469,7 +469,7 @@ Schéma existuje od dne 1 (doména F v migraci 001). UI se zapíná postupně.
 | **W23** | 1.–7.6.  | Supabase projekt + 001_init.sql + Habits route s odškrtáváním (bez AI) |
 | **W24** | 8.–14.6. | HOPE tracker + streaks_cache logic + grace day |
 | **W25** | 15.–21.6. | Cascade UI + vault sync (manuál) + memory bootstrap |
-| **W26** | 22.–28.6. | AI brain v1 (cron 6:00 generuje brief). *(Konflikt workflow CLI ↔ Supabase odsunut na V3 — viz §3.5.)* |
+| **W26** | 22.–28.6. | AI brain v1 (cron 6:00 generuje brief). *(Konflikt workflow CLI ↔ Supabase ZRUŠEN — deníky jdou jen do vaultu, viz §3.5.)* |
 | **W27** | 29.6.–5.7. | Home screen + PWA polish + onboarding |
 
 ### 🔜 V2 — po MVP
