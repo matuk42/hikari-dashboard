@@ -1115,6 +1115,7 @@ export async function runMorningCron(
   }
 
   return {
+    autoRetire,
     streaks,
     cascade,
     brief: brief ? 'generated' : { error: briefError },
