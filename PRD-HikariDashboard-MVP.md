@@ -301,7 +301,7 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 - Kontext = `gatherVaultState` (plán měsíce/týdne + poslední dokončené reviews + denní feedbacky) + habits/streaky/HOPE/paměť. Matyáš % nepřidává ručně.
 - Zdroje milníků: L2 = `sen.md ## 5letý cíl`, L3 = `wiki/reviews/yearly/<rok>.md` (přesunuto 21.6.), L4 = měsíční review, L5 = týdenní priority. Vše full-refresh při syncu.
 - Spouští se přes „Přepočítej Hikári" (ne v 6:00 cronu — milníky se mění pomalu).
-- **⚠️ Omezení přesnosti:** bez tvrdých datových vstupů Gemini některé milníky odhaduje naslepo — hlavně **příjmové** (chybí zdroj aktuálního příjmu). Pro konzistentně reálná % je potřeba doplnit datové kotvy (viz V2 backlog).
+- **Datová kotva — příjem (hotovo 23.6):** `/cascade` má `IncomeAnchorCard` (měsíční příjem / hodinovka / celkem vyděláno → `income_snapshots`, migrace 009, append-only). `calcMilestonePct` čte poslední snapshot a vkládá ho do promptu → příjmové milníky (L2/L3) se skórují proti reálnému číslu, ne naslepo. Bez snapshotu Gemini drží příjem ~0 (nehádá nahoru). **Zbývající kotvy (V2):** fyzička čísla, JLPT/počet karet.
 - Velké milníky (autoškola, DofE) → Matyáš potvrdí v dashboardu (zatím přes odškrtání habits/úkolů; explicit confirm UI = budoucí).
 
 **Supabase tabulky:** `cascade_layers` · `cascade_dimensions` · `cascade_milestones` · `cascade_chips` — viz `supabase/migrations/001_init.sql` doména D.
