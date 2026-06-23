@@ -944,6 +944,9 @@ export default function CascadePage() {
               ))}
             </div>
 
+            {/* ── Income anchor (feeds the cascade income milestones) ── */}
+            <IncomeAnchorCard />
+
             {/* ── Footer quote ── */}
             <div style={{ textAlign: 'center', padding: '32px 24px 16px', opacity: 0.4 }}>
               <p style={{ fontSize: 12, fontStyle: 'italic', color: '#F59E0B', lineHeight: 1.6, margin: 0 }}>
