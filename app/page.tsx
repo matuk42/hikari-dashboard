@@ -156,14 +156,13 @@ function LuffySilhouette({ opacity = 0.06, right = -10, height = 160 }: {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/luffy.jpg"
+      src="/luffy.png"
       alt=""
       aria-hidden="true"
       style={{
         position: 'absolute', top: '50%', right,
         transform: 'translateY(-50%)', height, width: 'auto',
-        pointerEvents: 'none', userSelect: 'none', zIndex: 0,
-        filter: 'invert(1) grayscale(1)', mixBlendMode: 'screen', opacity,
+        pointerEvents: 'none', userSelect: 'none', zIndex: 0, opacity,
       }}
     />
   )
