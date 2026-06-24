@@ -19,6 +19,7 @@ export interface CronResult {
   brief:      'generated' | { error: string | null }
   milestones?: MilestoneResult
   patterns?:  PatternResult
+  correlations?: CorrelationResult
 }
 
 // ─── Admin client (bypasses RLS — server-side only) ───────────────────────────
