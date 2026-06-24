@@ -368,14 +368,13 @@ function StrawHatFigure() {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/luffy.jpg"
+      src="/luffy.png"
       alt=""
       aria-hidden="true"
       style={{
         position: 'absolute', top: '50%', right: -10,
         transform: 'translateY(-50%)', height: 160, width: 'auto',
-        pointerEvents: 'none', userSelect: 'none', zIndex: 0,
-        filter: 'invert(1) grayscale(1)', mixBlendMode: 'screen', opacity: 0.09,
+        pointerEvents: 'none', userSelect: 'none', zIndex: 0, opacity: 0.09,
       }}
     />
   )
