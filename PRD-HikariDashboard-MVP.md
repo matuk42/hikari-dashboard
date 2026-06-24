@@ -312,21 +312,20 @@ Po onboardingu → Home screen s fallback stavem (viz sekce 6.1).
 
 **Účel:** Denní sledování mood/energy/hope → výpočet kdy má Matyáš peak výkon → optimalizace rozvrhu.
 
-**Zadávání (konec dne):**
-- 3 slidery: **mood** / **energy** / **hope** (každý 1–10)
-- Volitelná krátká poznámka (kontext pro Hikari — "dnes nemoc", "kytara šla skvěle")
-- Uložit → Supabase
+**Zadávání — intraday check-iny (aktualizováno 24.6, session 13):**
+- 3 slidery: **mood** / **energy** / **hope** (každý 1–10) + volitelná krátká poznámka (co se právě dělo — "les", "po škole", "kytara")
+- **„Zaznamenat teď" = check-in v čase** (víc za den — ráno/po škole/večer), append do `hope_checkins` (migrace 010, NE jedno číslo/den). Denní číslo pro vše ostatní = **průměr dne** (rollup do `hope_logs` při každém uložení) → trend/průměry/osa/vzory beze změny.
 
 **Zobrazení:**
-- Dnešní čísla (3 velká zlatá čísla)
-- 30-denní trend graf (čárový, gold/dark) — přepínatelný: 30 dní / celý život
-- Průměry: tento týden / tento měsíc / celkový průměr
+- **Křivka dne (energetický oblouk)** — osa X = čas (6–22h), tečky v reálných časech check-inů, tooltip s poznámkou + day stepper (listování minulými dny)
+- Sekce **„Co ti hýbe energií"** — korelace aktivita→energie (diverging bar ±)
+- 30-denní trend graf (denní rollup) — přepínatelný 30 dní / celý život + průměry (týden/měsíc/celkem)
 
-**Korelace (AI výpočet):**
-- Hikari analyzuje: kdy byl energy nejvyšší → co Matyáš dělal ten den (z habit_logs + poznámky)
-- Výstup napájí Home screen časovou osu
+**Korelace (hybrid, ranní cron — `calcHopeCorrelations`):**
+- Poznámky jsou volný text → **Gemini** je znormalizuje na 1 aktivitní tag (cache zpět na check-in, sentinel `—` pro "bez aktivity"). **Kód** spočítá delty mezi po sobě jdoucími check-iny v rámci dne, přiřadí pozdějšímu → agreguje per tag → `hope_correlations`. Gemini volá jen u nových neotagovaných poznámek.
+- **Energetická osa se učí reálný tvar** — `calcEnergyBlocks` bere u bloku s ≥3 intraday vzorky naměřený průměr (Prague-lokální čas), jinak syntetický `BASE_CURVE`. Výstup napájí Home časovou osu.
 
-**Supabase tabulky:** `hope_logs` · `energy_blocks` · `hope_correlations` — viz `supabase/migrations/001_init.sql` doména C.
+**Supabase tabulky:** `hope_checkins` (010) · `hope_logs` (rollup) · `energy_blocks` · `hope_correlations` — viz `supabase/migrations/001_init.sql` doména C + `010_hope_checkins.sql`.
 
 ---
 
