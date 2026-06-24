@@ -23,6 +23,24 @@ interface HopeEntry {
   hope: number
 }
 
+// One intraday check-in, positioned on the day's time axis.
+interface CheckinPoint {
+  h: number          // hour-of-day decimal (e.g. 14.5) — X position on the curve
+  timeLabel: string  // "14:30"
+  mood: number
+  energy: number
+  hope: number
+  note: string | null
+}
+
+interface Correlation {
+  tag: string
+  energyDelta: number
+  moodDelta: number
+  hopeDelta: number
+  sample: number
+}
+
 // ─── Placeholder data (shown before real data exists) ────────────────────────
 
 function generatePlaceholderData(): HopeEntry[] {
@@ -56,6 +74,14 @@ function weekEntries(data: HopeEntry[]): HopeEntry[] {
 
 function monthEntries(data: HopeEntry[]): HopeEntry[] {
   return data.slice(-30)
+}
+
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
+function fmtDelta(n: number): string {
+  return (n > 0 ? '+' : '') + n.toFixed(1)
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -204,6 +230,23 @@ function SliderInput({
   )
 }
 
+// Tooltip for the intraday curve — shows the time + note of the check-in.
+interface CurveTooltipProps {
+  active?: boolean
+  payload?: Array<{ payload: CheckinPoint }>
+}
+function CurveTooltip({ active, payload }: CurveTooltipProps) {
+  if (!active || !payload?.length) return null
+  const p = payload[0].payload
+  return (
+    <div style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#ededed', maxWidth: 200 }}>
+      <div style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{p.timeLabel}</div>
+      <div>🌟 {p.hope} · ⚡ {p.energy} · 😌 {p.mood}</div>
+      {p.note && <div style={{ color: 'rgba(255,255,255,0.45)', marginTop: 4, fontStyle: 'italic' }}>„{p.note}"</div>}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function KibouPage() {
@@ -219,40 +262,88 @@ export default function KibouPage() {
   const [mounted, setMounted] = useState(false)
   const [dataLoaded, setDataLoaded] = useState(false)
   const [profileId, setProfileId] = useState<string | null>(null)
-  const today = new Date().toISOString().slice(0, 10)
+
+  // Intraday curve state
+  const [curveDate, setCurveDate] = useState<string>(ymd(new Date()))
+  const [curve, setCurve] = useState<CheckinPoint[]>([])
+  const [correlations, setCorrelations] = useState<Correlation[]>([])
+
+  const today = ymd(new Date())
+
+  // Load the intraday curve (check-ins) for a given day.
+  const loadCurve = useCallback(async (pid: string, date: string) => {
+    const { data, error } = await supabase
+      .from('hope_checkins')
+      .select('ts, mood, energy, hope, note')
+      .eq('profile_id', pid)
+      .eq('date', date)
+      .order('ts', { ascending: true })
+
+    // Table missing (pre-migration) or empty → clear curve, no crash
+    if (error || !data) { setCurve([]); return }
+
+    setCurve(data.map(r => {
+      const d = new Date(r.ts as string)
+      return {
+        h: d.getHours() + d.getMinutes() / 60,
+        timeLabel: d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+        mood: r.mood as number,
+        energy: r.energy as number,
+        hope: r.hope as number,
+        note: (r.note as string) ?? null,
+      }
+    }))
+  }, [])
 
   const loadData = useCallback(async (pid: string) => {
+    // Daily trend (rollup) from hope_logs
     const { data } = await supabase
       .from('hope_logs')
       .select('date, mood, energy, hope, logged_at')
       .eq('profile_id', pid)
-      .order('logged_at', { ascending: true })
+      .order('date', { ascending: true })
 
     if (data && data.length > 0) {
-      // Multiple logs per day are allowed — keep the latest per date for the chart
-      const byDate = new Map<string, { date: string; mood: number; energy: number; hope: number }>()
-      for (const row of data) {
-        byDate.set(row.date, { date: row.date, mood: row.mood, energy: row.energy, hope: row.hope })
-      }
-      const deduped = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+      const deduped = [...data].sort((a, b) => (a.date as string).localeCompare(b.date as string))
       setChartData(deduped.map(r => ({
-        date: new Date(r.date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }),
-        mood: r.mood,
-        energy: r.energy,
-        hope: r.hope,
+        date: new Date(r.date as string).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }),
+        mood: r.mood as number,
+        energy: r.energy as number,
+        hope: r.hope as number,
       })))
       setIsPlaceholder(false)
     }
 
-    // Pre-fill from the most recent log today (last in ascending logged_at order)
-    const todayLogs = (data ?? []).filter(r => r.date === today)
-    const latestToday = todayLogs[todayLogs.length - 1]
-    if (latestToday) {
-      setMood(latestToday.mood)
-      setEnergy(latestToday.energy)
-      setHope(latestToday.hope)
+    // Today's intraday curve + pre-fill sliders from the latest check-in
+    await loadCurve(pid, today)
+    const { data: todayCi } = await supabase
+      .from('hope_checkins')
+      .select('mood, energy, hope, ts')
+      .eq('profile_id', pid)
+      .eq('date', today)
+      .order('ts', { ascending: true })
+    const latest = todayCi?.[todayCi.length - 1]
+    if (latest) {
+      setMood(latest.mood as number)
+      setEnergy(latest.energy as number)
+      setHope(latest.hope as number)
     }
-  }, [today])
+
+    // Activity → HOPE correlations (filled by the morning cron)
+    const { data: corr } = await supabase
+      .from('hope_correlations')
+      .select('activity_tag, avg_energy_delta, avg_mood_delta, avg_hope_delta, sample_size')
+      .eq('profile_id', pid)
+    if (corr) {
+      setCorrelations(corr.map(c => ({
+        tag: c.activity_tag as string,
+        energyDelta: Number(c.avg_energy_delta ?? 0),
+        moodDelta: Number(c.avg_mood_delta ?? 0),
+        hopeDelta: Number(c.avg_hope_delta ?? 0),
+        sample: c.sample_size as number,
+      })).sort((a, b) => b.energyDelta - a.energyDelta))
+    }
+  }, [today, loadCurve])
 
   useEffect(() => {
     setMounted(true)
@@ -269,6 +360,35 @@ export default function KibouPage() {
     }).catch(() => setDataLoaded(true))
   }, [loadData])
 
+  // Re-fetch the curve when the user steps to another day
+  useEffect(() => {
+    if (profileId) loadCurve(profileId, curveDate)
+  }, [profileId, curveDate, loadCurve])
+
+  // Recompute today's hope_logs rollup = average of today's check-ins. Keeps the
+  // 30d trend / averages / energy axis / pattern detection working unchanged.
+  async function rollupToday(pid: string) {
+    const { data } = await supabase
+      .from('hope_checkins')
+      .select('mood, energy, hope, note, ts')
+      .eq('profile_id', pid)
+      .eq('date', today)
+      .order('ts', { ascending: true })
+    if (!data?.length) return
+    const round = (k: 'mood' | 'energy' | 'hope') =>
+      Math.round(data.reduce((s, r) => s + (r[k] as number), 0) / data.length)
+    const lastNote = [...data].reverse().find(r => r.note)?.note ?? null
+    await supabase.from('hope_logs').upsert({
+      profile_id: pid,
+      date: today,
+      mood: round('mood'),
+      energy: round('energy'),
+      hope: round('hope'),
+      note: lastNote,
+      logged_at: new Date().toISOString(),
+    }, { onConflict: 'profile_id,date' })
+  }
+
   async function handleSave() {
     setSaving(true)
     setSavedMsg('')
@@ -279,32 +399,50 @@ export default function KibouPage() {
       return
     }
 
-    // Upsert — re-saving the same day overwrites instead of failing on the
-    // UNIQUE(profile_id, date) constraint. Bumping logged_at lets chart/pre-fill
-    // pick the most recent edit if Supabase realtime ever pushes mid-day.
-    const { error } = await supabase.from('hope_logs').upsert({
+    // Each save APPENDS a timestamped check-in (no overwrite). The daily number is
+    // derived as the average via rollupToday().
+    const { error } = await supabase.from('hope_checkins').insert({
       profile_id: profileId,
       date: today,
+      ts: new Date().toISOString(),
       mood,
       energy,
       hope,
-      note: note || null,
-      logged_at: new Date().toISOString(),
-    }, { onConflict: 'profile_id,date' })
+      note: note.trim() || null,
+    })
 
     if (error) {
-      console.error('hope_logs upsert error:', error)
+      console.error('hope_checkins insert error:', error)
       setSavedMsg('Chyba uložení: ' + error.message)
-    } else {
-      setSavedMsg('Uloženo ✓')
-      await loadData(profileId)
+      setSaving(false)
+      return
     }
+
+    await rollupToday(profileId)
+    setSavedMsg('Zaznamenáno ✓')
+    setNote('')
+    // Make sure the curve we refresh is today's
+    setCurveDate(today)
+    await loadData(profileId)
     setSaving(false)
   }
 
   const displayData = range === '30' ? monthEntries(chartData) : chartData
   const weekData = weekEntries(chartData)
   const monthData = monthEntries(chartData)
+
+  const isToday = curveDate === today
+  const curveDateLabel = isToday
+    ? 'Dnes'
+    : new Date(curveDate).toLocaleDateString('cs-CZ', { weekday: 'short', day: 'numeric', month: 'numeric' })
+
+  function stepDay(delta: number) {
+    const d = new Date(curveDate)
+    d.setDate(d.getDate() + delta)
+    const next = ymd(d)
+    if (next > today) return   // no future
+    setCurveDate(next)
+  }
 
   return (
     <div style={{
@@ -366,7 +504,7 @@ export default function KibouPage() {
               <textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}
-                placeholder="Poznámka pro Hikari — co se dnes dělo? (volitelné)"
+                placeholder="Co se právě dělo? — les, škola, kytara… (volitelné, ale krmí korelace)"
                 rows={2}
                 style={{
                   width: '100%',
@@ -401,18 +539,150 @@ export default function KibouPage() {
                   transition: 'background 0.15s',
                 }}
               >
-                {saving ? 'Ukládám…' : 'Uložit dnes'}
+                {saving ? 'Ukládám…' : 'Zaznamenat teď'}
               </button>
+
+              <p style={{ textAlign: 'center', fontSize: 10, marginTop: 8, color: 'rgba(255,255,255,0.25)' }}>
+                Můžeš zaznamenat vícekrát denně — ráno, po škole, večer.
+              </p>
 
               {savedMsg && (
                 <p style={{
                   textAlign: 'center',
                   fontSize: 12,
-                  marginTop: 10,
-                  color: savedMsg.startsWith('Uloženo') ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)',
+                  marginTop: 6,
+                  color: savedMsg.startsWith('Zaznamenáno') ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)',
                 }}>
                   {savedMsg}
                 </p>
+              )}
+            </section>
+
+            {/* ── Intraday curve (energetický oblouk dne) ── */}
+            <section style={{
+              position: 'relative',
+              background: '#0e0e0e',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14,
+              padding: '16px 4px 12px',
+              marginBottom: 16,
+              overflow: 'hidden',
+            }}>
+              {/* Day stepper */}
+              <div style={{
+                position: 'relative', zIndex: 1,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '0 14px', marginBottom: 12,
+              }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Oblouk dne
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button onClick={() => stepDay(-1)} style={stepBtn}>‹</button>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', minWidth: 64, textAlign: 'center' }}>
+                    {curveDateLabel}
+                  </span>
+                  <button onClick={() => stepDay(1)} disabled={isToday} style={{ ...stepBtn, opacity: isToday ? 0.25 : 1 }}>›</button>
+                </div>
+              </div>
+
+              {curve.length === 0 ? (
+                <div style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', textAlign: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+                    {isToday
+                      ? 'Zatím žádný check-in dnes. Zaznamenej, jak se teď cítíš — a klidně znovu po škole, večer.'
+                      : 'Pro tento den nejsou žádné check-iny.'}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ position: 'relative', zIndex: 1, width: '100%', height: 170 }}>
+                    {!mounted ? <div style={{ height: 170 }} /> : <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={curve} margin={{ top: 6, right: 16, left: -20, bottom: 0 }}>
+                        <XAxis
+                          dataKey="h"
+                          type="number"
+                          domain={[6, 22]}
+                          ticks={[6, 9, 12, 15, 18, 21]}
+                          tickFormatter={(h: number) => `${String(h).padStart(2, '0')}:00`}
+                          tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          domain={[1, 10]}
+                          tick={{ fontSize: 8, fill: 'rgba(255,255,255,0.2)' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip content={<CurveTooltip />} />
+                        <Line type="monotone" dataKey="hope" stroke="#F59E0B" strokeWidth={2} dot={{ r: 3, fill: '#F59E0B' }} name="Hope" />
+                        <Line type="monotone" dataKey="energy" stroke="rgba(245,158,11,0.55)" strokeWidth={1.5} dot={{ r: 2.5, fill: 'rgba(245,158,11,0.55)' }} name="Energy" />
+                        <Line type="monotone" dataKey="mood" stroke="rgba(245,158,11,0.3)" strokeWidth={1.5} dot={{ r: 2.5, fill: 'rgba(245,158,11,0.3)' }} name="Mood" strokeDasharray="4 4" />
+                      </LineChart>
+                    </ResponsiveContainer>}
+                  </div>
+
+                  {/* Check-in list (time · note) */}
+                  <div style={{ position: 'relative', zIndex: 1, padding: '8px 14px 0', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {curve.map((c, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 11 }}>
+                        <span style={{ color: '#F59E0B', fontWeight: 600, minWidth: 38 }}>{c.timeLabel}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.35)', minWidth: 70 }}>🌟{c.hope} ⚡{c.energy} 😌{c.mood}</span>
+                        {c.note && <span style={{ color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>„{c.note}"</span>}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+            {/* ── Activity → HOPE correlations ── */}
+            <section style={{
+              background: '#0e0e0e',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14,
+              padding: '16px 16px 14px',
+              marginBottom: 16,
+            }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>
+                Co ti hýbe energií
+              </div>
+              {correlations.length === 0 ? (
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+                  Hikari sbírá data. Zaznamenávej během dne s krátkou poznámkou („les", „po škole", „kytara") — za pár dní tu uvidíš, co tě zvedá a co sráží.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {correlations.map(c => {
+                    const up = c.energyDelta >= 0
+                    return (
+                      <div key={c.tag} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', textTransform: 'capitalize', minWidth: 90 }}>
+                          {c.tag}
+                        </span>
+                        <div style={{ flex: 1, height: 4, background: '#1a1a1a', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
+                          <div style={{
+                            position: 'absolute', top: 0, bottom: 0,
+                            left: up ? '50%' : undefined, right: up ? undefined : '50%',
+                            width: `${Math.min(Math.abs(c.energyDelta) / 4, 1) * 50}%`,
+                            background: up ? '#F59E0B' : 'rgba(239,68,68,0.7)',
+                          }} />
+                          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.12)' }} />
+                        </div>
+                        <span style={{
+                          fontSize: 12, fontWeight: 700, minWidth: 56, textAlign: 'right',
+                          color: up ? '#F59E0B' : 'rgba(239,68,68,0.85)',
+                        }}>
+                          {fmtDelta(c.energyDelta)} ⚡
+                        </span>
+                      </div>
+                    )
+                  })}
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
+                    Změna energie mezi po sobě jdoucími check-iny. Z poznámek (tag dělá Hikari ráno).
+                  </p>
+                </div>
               )}
             </section>
 
@@ -471,7 +741,7 @@ export default function KibouPage() {
               ))}
             </section>
 
-            {/* ── Trend chart ── */}
+            {/* ── Trend chart (denní rollup) ── */}
             <section style={{
               position: 'relative',
               background: '#0e0e0e',
@@ -606,4 +876,19 @@ export default function KibouPage() {
       </div>
     </div>
   )
+}
+
+const stepBtn: React.CSSProperties = {
+  background: '#141414',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 6,
+  color: 'rgba(255,255,255,0.6)',
+  width: 24,
+  height: 24,
+  fontSize: 14,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  lineHeight: 1,
 }
