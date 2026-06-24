@@ -975,6 +975,150 @@ Odpověz POUZE čistým JSON:
   }
 }
 
+// ─── Activity → HOPE correlations (from intraday check-ins) ─────────────────────
+// Two steps, both over the last 30 days of hope_checkins:
+//   1. Tag extraction — notes are free text, so Gemini normalises each untagged
+//      note into ONE short activity tag (cached back onto the row so we never
+//      re-ask). Notes with no clear activity get a '—' sentinel (= processed, skip).
+//   2. Deltas — within each day, consecutive check-ins give an energy/mood/hope
+//      delta; it's attributed to the LATER check-in's activity (what happened in
+//      between, described in its note). Aggregated per tag → hope_correlations.
+// Cheap: the Gemini call only fires when there are new untagged notes.
+
+export interface CorrelationResult {
+  tagged: number      // untagged notes processed this run (Gemini)
+  tags:   number      // distinct activity tags written to hope_correlations
+  aiCall: boolean
+  error:  string | null
+}
+
+const TAG_SENTINEL = '—'   // note processed, no clear activity → don't re-ask Gemini
+
+function normalizeTag(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const t = raw.trim().toLowerCase().replace(/[.;,!?]+$/, '').slice(0, 24)
+  if (!t || t === 'null' || t === 'none' || t === 'žádná' || t === '-' || t === TAG_SENTINEL) return null
+  return t
+}
+
+interface CheckinRow {
+  id: string; date: string; ts: string
+  mood: number; energy: number; hope: number
+  note: string | null; activity_tag: string | null
+}
+
+export async function calcHopeCorrelations(
+  db: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  today: string,
+): Promise<CorrelationResult> {
+  const empty: CorrelationResult = { tagged: 0, tags: 0, aiCall: false, error: null }
+
+  const cutoff = new Date(`${today}T12:00:00Z`); cutoff.setUTCDate(cutoff.getUTCDate() - 30)
+  const since = cutoff.toISOString().slice(0, 10)
+
+  const { data, error } = await db.from('hope_checkins')
+    .select('id, date, ts, mood, energy, hope, note, activity_tag')
+    .eq('profile_id', profileId).gte('date', since).lte('date', today)
+    .order('ts', { ascending: true })
+
+  if (error) return { ...empty, error: error.message }   // table missing (pre-010) → skip
+  const rows = (data ?? []) as CheckinRow[]
+  if (!rows.length) return empty
+
+  // 1 — tag extraction for untagged notes
+  const untagged = rows.filter(r => r.activity_tag == null && (r.note ?? '').trim().length > 1)
+  const apiKey = process.env.GEMINI_API_KEY
+  let aiCall = false
+  const t0 = Date.now()
+
+  if (untagged.length && apiKey) {
+    aiCall = true
+    const list = untagged
+      .map((r, i) => `${i}: "${(r.note as string).replace(/"/g, "'").slice(0, 160)}"`)
+      .join('\n')
+
+    const prompt = `Jsi Hikari. Dostal jsi poznámky z HOPE check-inů Matyáše (co se v tu chvíli dělo). Pro každou vrať JEDEN krátký aktivitní tag česky, malými písmeny, 1 slovo (např. příroda, škola, kytara, učení, japonština, sport, kámoš, rodina, odpočinek, práce, anki, autoškola, jídlo, spánek). Tag = hlavní aktivita/kontext, ne nálada. Když poznámka nepopisuje žádnou jasnou aktivitu (jen pocit), vrať tag: null.
+
+POZNÁMKY:
+${list}
+
+Odpověz POUZE čistým JSON:
+{ "tags": [ { "i": 0, "tag": "příroda" }, { "i": 1, "tag": null } ] }`
+
+    try {
+      const clean = await geminiGenerate(prompt, apiKey, { temperature: 0.2 })
+      const parsed = JSON.parse(clean) as { tags?: Array<{ i: number; tag: string | null }> }
+      const tagByI = new Map((parsed.tags ?? []).map(t => [t.i, t.tag]))
+      // Write tags back (cache). '—' sentinel for "no activity" so the partial
+      // index won't surface this row again next run.
+      for (let i = 0; i < untagged.length; i++) {
+        const tag = normalizeTag(tagByI.get(i)) ?? TAG_SENTINEL
+        untagged[i].activity_tag = tag
+        await db.from('hope_checkins').update({ activity_tag: tag }).eq('id', untagged[i].id)
+      }
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e)
+      await db.from('ai_invocations').insert({
+        profile_id: profileId, trigger: 'cron', purpose: 'hope_correlations',
+        model: GEMINI_MODEL, duration_ms: Date.now() - t0, success: false, error: err,
+      })
+      return { ...empty, tagged: untagged.length, aiCall, error: err }
+    }
+  }
+
+  // 2 — deltas per tag (within-day, consecutive check-ins)
+  const byDate = new Map<string, CheckinRow[]>()
+  for (const r of rows) (byDate.get(r.date) ?? byDate.set(r.date, []).get(r.date)!).push(r)
+
+  const agg = new Map<string, { e: number[]; m: number[]; h: number[]; last: string }>()
+  for (const [date, dayRows] of byDate) {
+    const sorted = [...dayRows].sort((a, b) => a.ts.localeCompare(b.ts))
+    for (let i = 1; i < sorted.length; i++) {
+      const cur = sorted[i], prev = sorted[i - 1]
+      const tag = cur.activity_tag
+      if (!tag || tag === TAG_SENTINEL) continue
+      const a = agg.get(tag) ?? { e: [], m: [], h: [], last: '' }
+      a.e.push(cur.energy - prev.energy)
+      a.m.push(cur.mood - prev.mood)
+      a.h.push(cur.hope - prev.hope)
+      if (date > a.last) a.last = date
+      agg.set(tag, a)
+    }
+  }
+
+  const round1 = (n: number) => Math.round(n * 10) / 10
+  const MIN_SAMPLES = 2
+  const upserts = [...agg]
+    .filter(([, a]) => a.e.length >= MIN_SAMPLES)
+    .map(([tag, a]) => ({
+      profile_id:       profileId,
+      activity_tag:     tag,
+      avg_hope_delta:   round1(mean(a.h)),
+      avg_energy_delta: round1(mean(a.e)),
+      avg_mood_delta:   round1(mean(a.m)),
+      sample_size:      a.e.length,
+      last_seen_date:   a.last,
+      updated_at:       new Date().toISOString(),
+    }))
+
+  let writeErr: string | null = null
+  if (upserts.length) {
+    const { error: upErr } = await db.from('hope_correlations')
+      .upsert(upserts, { onConflict: 'profile_id,activity_tag' })
+    writeErr = upErr?.message ?? null
+  }
+
+  if (aiCall) {
+    await db.from('ai_invocations').insert({
+      profile_id: profileId, trigger: 'cron', purpose: 'hope_correlations',
+      model: GEMINI_MODEL, duration_ms: Date.now() - t0, success: !writeErr, error: writeErr,
+    })
+  }
+
+  return { tagged: untagged.length, tags: upserts.length, aiCall, error: writeErr }
+}
+
 // ─── Main cron orchestrator ───────────────────────────────────────────────────
 
 // ─── Auto-retire (end_date passed) ─────────────────────────────────────────────
