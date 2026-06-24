@@ -4,11 +4,26 @@
 > Na **začátku** session si ho přečti, ať navazuješ. Na **konci** session ho **aktualizuj**
 > (datum, co se udělalo, co je dál). Drž ho stručný a pravdivý.
 
-**Poslední aktualizace:** 2026-06-23 (session 12)
+**Poslední aktualizace:** 2026-06-24 (session 13)
 
 ---
 
-## ✅ VYŘEŠENO tuto session (23.6. session 12)
+## ✅ VYŘEŠENO tuto session (24.6. session 13)
+
+**Intraday HOPE check-iny → energetické oblouky dne + korelace aktivit — POSTAVENO.** (Nápad Matyáše: energie/nálada se mění v průběhu dne — ráno jinak, po škole jinak, večer. Chtěl zadávat きぼう vícekrát denně s časem a poznámkou + vidět HOPE jako křivku přes den + korelovat „les → +energie".)
+- **Rozhodnutí Matyáše (24.6.):** (1) **každé uložení = check-in v čase** — žádné přepisování, denní číslo se dopočítá průměrem; (2) **jen volná poznámka** (žádné chip-y); (3) **postavit rovnou vše** (capture + křivka + korelace + učící se osa).
+- **Migrace 010 `hope_checkins`** (⚠️ Matyáš musí spustit v Supabase před použitím): víc řádků/den, `ts timestamptz`, `mood/energy/hope`, `note`, `activity_tag` (plní cron). **NE** UNIQUE(profile_id,date) — to je celý smysl. Partial index na neotagované poznámky (fronta pro tag extrakci).
+- **`hope_logs` zůstává denní ROLLUP** — `/kibou` po každém check-inu přepočítá průměr dne a upsertne do `hope_logs`. Takže 30d trend, průměry, energetická osa, detekce vzorů jedou **beze změny** (nesahal jsem na ně).
+- **`/kibou` (`app/kibou/page.tsx`) přepsáno:** tlačítko „Zaznamenat teď" (append check-in + rollup), **křivka dne** (osa X = čas 6–22h, tečky v reálných časech, tooltip s poznámkou) + **day stepper** (‹ Dnes ›, listování minulými oblouky, budoucnost zamčená) + seznam check-inů (čas · poznámka) + sekce **„Co ti hýbe energií"** (korelace z `hope_correlations`, diverging bar ±energie). Graceful: před migrací prázdné stavy, nepadá.
+- **`calcHopeCorrelations` (`lib/hikari-brain.ts`, krok 7 v `runMorningCron`):** hybrid jako detekce vzorů. (1) **Gemini** znormalizuje volné poznámky → 1 aktivitní tag (cache zpět na řádek; bez aktivity → sentinel `—`, neptá se znovu). (2) **Kód** spočítá delty mezi po sobě jdoucími check-iny v rámci dne, přiřadí pozdějšímu (jeho poznámka popisuje co se dělo) → agreguje per tag → upsert `hope_correlations` (existující tabulka od 001). Gemini volá JEN když jsou nové neotagované poznámky. MIN_SAMPLES=2. Log `ai_invocations` purpose `hope_correlations`.
+- **`calcEnergyBlocks` upgrade — osa se UČÍ reálný tvar:** dřív čistě syntetický `BASE_CURVE` × denní škála. Teď bucketuje check-iny podle **Prague-lokálního (den, blok)** (`praguePartsOf` přes Intl, kvůli UTC serveru) — blok s ≥3 reálnými vzorky bere naměřený průměr (absolutní práh high≥6.5/mid≥4.0), jinak fallback na syntetiku. `realBlocks` v návratu. Degraduje na syntetiku-only před migrací (try/catch nad fetchem check-inů).
+- **Ověřovák `scripts/check-checkins.mjs`** (check-iny + fronta tagů + dnešní oblouk + reálné vs syntetické bloky + korelace). NIC nezapisuje. Build + TS čisté.
+- **Projeví se** až: spustit migraci 010 → zaznamenávat na `/kibou` během dne s poznámkami → křivka dne hned; korelace + učící se osa po ranním cronu (nebo „Přepočítej Hikari"). Korelace prázdné dokud nebude pár dní check-inů s poznámkami.
+- **Zbývá (volitelné, příště):** korelace na home („dnes tě zvedlo X"); víc metrik v korelaci (teď řadím podle energie); přiřazení aktivity i ku check-inu PŘED ní (teď jen po). 
+
+---
+
+## ✅ VYŘEŠENO dříve (23.6. session 12)
 
 **Auto-retire habits (PRD §7.2 / V2) — POSTAVENO.** Habit s uplynulým `end_date` se sám archivuje (= totéž co tlačítko smazat: `category='retired'`, logy + streaky zůstanou, jen zmizí ze všech zobrazení).
 - **Kde:** nová `autoRetireHabits(db, pid, today)` v `lib/hikari-brain.ts`, zapojená jako **krok 0 v `runMorningCron`** (běží před streaky i před stavbou Gemini kontextu — vše po něm `retired` přirozeně filtruje, takže archivovaný habit hned vypadne ze streaků i briefu). Běží v ranním cronu 6:00 i na tlačítko „Přepočítej Hikari".
