@@ -679,10 +679,12 @@ export default function KibouPage() {
                           <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.12)' }} />
                         </div>
                         <span style={{
-                          fontSize: 12, fontWeight: 700, minWidth: 56, textAlign: 'right',
+                          fontSize: 12, fontWeight: 700, minWidth: 56,
                           color: up ? '#F59E0B' : 'rgba(239,68,68,0.85)',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
                         }}>
-                          {fmtDelta(c.energyDelta)} ⚡
+                          {fmtDelta(c.energyDelta)}
+                          <KibouIcon kind="energy" size={11} />
                         </span>
                       </div>
                     )
