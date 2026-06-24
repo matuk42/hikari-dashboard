@@ -180,24 +180,39 @@ const BASE_CURVE: Array<{ hourStart: number; hourEnd: number; weight: number }> 
   { hourStart: 20, hourEnd: 22, weight: 0.25 },
 ]
 
+// Day-of-week (0=Sun … 6=Sat) + 0–23 hour of a timestamp, both in Prague local
+// time. Server runs UTC, so a 21:00 Prague check-in must not land in tomorrow's
+// or the wrong block. Used to bucket intraday check-ins onto the energy axis.
+const DOW_SHORT: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+function praguePartsOf(iso: string): { dow: number; hour: number } {
+  const d = new Date(iso)
+  const dowStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Prague', weekday: 'short' }).format(d)
+  const hour = Number(new Intl.DateTimeFormat('en-GB',
+    { timeZone: 'Europe/Prague', hour: '2-digit', hourCycle: 'h23' }).format(d))
+  return { dow: DOW_SHORT[dowStr] ?? 0, hour }
+}
+
+const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length
+
 export async function calcEnergyBlocks(
   db: ReturnType<typeof createAdminClient>,
   profileId: string,
   today: string
-): Promise<{ written: number; error: string | null }> {
+): Promise<{ written: number; error: string | null; realBlocks: number }> {
   const cutoff = new Date(`${today}T12:00:00Z`)
   cutoff.setDate(cutoff.getDate() - 30)
+  const since = cutoff.toISOString().slice(0, 10)
 
   const { data: logs, error: lErr } = await db.from('hope_logs')
     .select('date, energy')
     .eq('profile_id', profileId)
-    .gte('date', cutoff.toISOString().slice(0, 10))
+    .gte('date', since)
     .lte('date', today)
 
-  if (lErr) return { written: 0, error: lErr.message }
-  if (!logs?.length) return { written: 0, error: 'no hope data' }
+  if (lErr) return { written: 0, error: lErr.message, realBlocks: 0 }
+  if (!logs?.length) return { written: 0, error: 'no hope data', realBlocks: 0 }
 
-  // Group by JS day_of_week (0=Sun … 6=Sat — same as DB schema)
+  // Group hope_logs (daily) by JS day_of_week (0=Sun … 6=Sat) for the synthetic scale
   const byDow: Record<number, number[]> = {}
   for (const log of logs) {
     const dow = new Date(`${log.date as string}T12:00:00Z`).getDay()
@@ -207,6 +222,24 @@ export async function calcEnergyBlocks(
   const overallAvg = logs.reduce((s, l) => s + (l.energy as number), 0) / logs.length
   const BASELINE = 7.0
 
+  // Real intraday shape from check-ins, bucketed by Prague-local (dow, block).
+  // Wrapped: before migration 010 the table doesn't exist → fall back to synthetic.
+  const realByBlock = new Map<string, number[]>()   // key `${dow}-${hourStart}`
+  try {
+    const { data: ci } = await db.from('hope_checkins')
+      .select('ts, energy').eq('profile_id', profileId).gte('date', since).lte('date', today)
+    for (const c of ci ?? []) {
+      const { dow, hour } = praguePartsOf(c.ts as string)
+      const blk = BASE_CURVE.find(b => hour >= b.hourStart && hour < b.hourEnd)
+      if (!blk) continue
+      const k = `${dow}-${blk.hourStart}`
+      ;(realByBlock.get(k) ?? realByBlock.set(k, []).get(k))!.push(c.energy as number)
+    }
+  } catch { /* hope_checkins not migrated yet → synthetic only */ }
+
+  const MIN_REAL = 3
+  let realBlocks = 0
+
   const rows: Array<{
     profile_id: string; day_of_week: number; hour_start: number; hour_end: number;
     level: string; confidence: number; sample_size: number; updated_at: string
@@ -214,14 +247,28 @@ export async function calcEnergyBlocks(
 
   for (let dow = 0; dow < 7; dow++) {
     const vals = byDow[dow]
-    const dayAvg = vals?.length ? vals.reduce((s, v) => s + v, 0) / vals.length : overallAvg
+    const dayAvg = vals?.length ? mean(vals) : overallAvg
     const scale = dayAvg / BASELINE
-    const sampleSize = vals?.length ?? 0
-    const confidence = Math.min(sampleSize / 4, 1.0)
 
     for (const b of BASE_CURVE) {
-      const scaled = b.weight * scale
-      const level = scaled >= 0.65 ? 'high' : scaled >= 0.40 ? 'mid' : 'low'
+      const real = realByBlock.get(`${dow}-${b.hourStart}`)
+      let level: string, confidence: number, sampleSize: number
+
+      if (real && real.length >= MIN_REAL) {
+        // Learned: measured average energy (0–10) → absolute thresholds
+        const avg = mean(real)
+        level = avg >= 6.5 ? 'high' : avg >= 4.0 ? 'mid' : 'low'
+        confidence = Math.min(real.length / 6, 1.0)
+        sampleSize = real.length
+        realBlocks++
+      } else {
+        // Synthetic: circadian weight × day scale (relative within-day shape)
+        const scaled = b.weight * scale
+        level = scaled >= 0.65 ? 'high' : scaled >= 0.40 ? 'mid' : 'low'
+        confidence = Math.min((vals?.length ?? 0) / 4, 1.0)
+        sampleSize = vals?.length ?? 0
+      }
+
       rows.push({
         profile_id: profileId, day_of_week: dow,
         hour_start: b.hourStart, hour_end: b.hourEnd,
@@ -234,8 +281,8 @@ export async function calcEnergyBlocks(
   // No unique constraint on the table — safe to DELETE + INSERT
   await db.from('energy_blocks').delete().eq('profile_id', profileId)
   const { error: iErr } = await db.from('energy_blocks').insert(rows)
-  if (iErr) return { written: 0, error: iErr.message }
-  return { written: rows.length, error: null }
+  if (iErr) return { written: 0, error: iErr.message, realBlocks }
+  return { written: rows.length, error: null, realBlocks }
 }
 
 // ─── Gemini brief ─────────────────────────────────────────────────────────────
