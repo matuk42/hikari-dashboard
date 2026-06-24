@@ -1329,6 +1329,16 @@ export async function runMorningCron(
     patterns = { candidates: 0, proposed: 0, archived: 0, aiCall: false, error: e instanceof Error ? e.message : String(e) }
   }
 
+  // 7 — Activity→HOPE correlations from intraday check-ins (tag extraction + deltas).
+  // Cheap: Gemini only fires when there are new untagged notes. Skips cleanly before
+  // migration 010 (table missing → error returned, swallowed here).
+  let correlations: CorrelationResult | undefined
+  try {
+    correlations = await calcHopeCorrelations(db, profileId, today)
+  } catch (e) {
+    correlations = { tagged: 0, tags: 0, aiCall: false, error: e instanceof Error ? e.message : String(e) }
+  }
+
   return {
     autoRetire,
     streaks,
@@ -1336,5 +1346,6 @@ export async function runMorningCron(
     brief: brief ? 'generated' : { error: briefError },
     ...(milestones ? { milestones } : {}),
     ...(patterns ? { patterns } : {}),
+    ...(correlations ? { correlations } : {}),
   }
 }
