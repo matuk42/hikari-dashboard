@@ -159,9 +159,15 @@ export async function calcCascadePct(
 }
 
 // ─── Energy blocks from HOPE history ─────────────────────────────────────────
-// Computes expected energy level per time-block per day-of-week from the last
-// 30 days of hope_logs. Uses a circadian base curve (weights 0–1) scaled by the
-// day's historical average vs. BASELINE=7. DELETE + INSERT (no unique constraint).
+// Computes expected energy level per time-block per day-of-week. Two sources,
+// best-available wins per block:
+//   1. REAL shape — intraday hope_checkins (last 30d) bucketed by Prague-local
+//      (day-of-week, time-block). A block with ≥ MIN_REAL samples uses its measured
+//      average directly. This is the learned curve.
+//   2. SYNTHETIC fallback — the circadian BASE_CURVE (weights 0–1) scaled by the
+//      day's average vs. BASELINE=7. Used where there aren't enough real check-ins.
+// DELETE + INSERT (no unique constraint). Degrades to synthetic-only before the
+// hope_checkins migration (010) is run / while intraday data is still thin.
 
 const BASE_CURVE: Array<{ hourStart: number; hourEnd: number; weight: number }> = [
   { hourStart: 6,  hourEnd: 8,  weight: 0.35 },
