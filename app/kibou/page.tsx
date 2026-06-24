@@ -764,7 +764,7 @@ export default function KibouPage() {
               {/* Luffy silhouette */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/luffy.jpg"
+                src="/luffy.png"
                 alt=""
                 aria-hidden="true"
                 style={{
@@ -775,8 +775,6 @@ export default function KibouPage() {
                   height: 180,
                   width: 'auto',
                   pointerEvents: 'none',
-                  filter: 'invert(1) grayscale(1)',
-                  mixBlendMode: 'screen',
                   opacity: 0.06,
                   zIndex: 0,
                 }}
