@@ -21,6 +21,8 @@
 - **Projeví se** až: spustit migraci 010 → zaznamenávat na `/kibou` během dne s poznámkami → křivka dne hned; korelace + učící se osa po ranním cronu (nebo „Přepočítej Hikari"). Korelace prázdné dokud nebude pár dní check-inů s poznámkami.
 - **Zbývá (volitelné, příště):** korelace na home („dnes tě zvedlo X"); víc metrik v korelaci (teď řadím podle energie); přiřazení aktivity i ku check-inu PŘED ní (teď jen po). 
 
+**Drobnost (24.6.):** Luffy silueta (`public/luffy.jpg`, 750×1000) vyměněna za verzi s čistým pozadím (dynamický skákavý kop). Stejné rozměry → žádná změna CSS, projeví se na všech 5 stránkách (home/habits/cascade/kibou/history), které berou ten samý soubor. Render přes `filter: invert(1) grayscale(1)` + `mixBlendMode: screen` beze změny.
+
 ---
 
 ## ✅ VYŘEŠENO dříve (23.6. session 12)
