@@ -632,7 +632,11 @@ export default function KibouPage() {
                     {curve.map((c, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 11 }}>
                         <span style={{ color: '#F59E0B', fontWeight: 600, minWidth: 38 }}>{c.timeLabel}</span>
-                        <span style={{ color: 'rgba(255,255,255,0.35)', minWidth: 70 }}>🌟{c.hope} ⚡{c.energy} 😌{c.mood}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.45)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><KibouIcon kind="hope" size={11} />{c.hope}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><KibouIcon kind="energy" size={11} />{c.energy}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><KibouIcon kind="mood" size={11} />{c.mood}</span>
+                        </span>
                         {c.note && <span style={{ color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>„{c.note}"</span>}
                       </div>
                     ))}
