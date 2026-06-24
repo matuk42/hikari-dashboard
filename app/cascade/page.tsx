@@ -843,7 +843,7 @@ export default function CascadePage() {
             <div style={{ position: 'relative', marginBottom: 28 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/luffy.jpg"
+                src="/luffy.png"
                 alt=""
                 aria-hidden="true"
                 style={{
@@ -855,8 +855,6 @@ export default function CascadePage() {
                   width: 'auto',
                   pointerEvents: 'none',
                   userSelect: 'none',
-                  filter: 'invert(1) grayscale(1)',
-                  mixBlendMode: 'screen',
                   opacity: 0.07,
                   zIndex: 0,
                 }}
