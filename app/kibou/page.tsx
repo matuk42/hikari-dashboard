@@ -241,7 +241,11 @@ function CurveTooltip({ active, payload }: CurveTooltipProps) {
   return (
     <div style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#ededed', maxWidth: 200 }}>
       <div style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{p.timeLabel}</div>
-      <div>🌟 {p.hope} · ⚡ {p.energy} · 😌 {p.mood}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><KibouIcon kind="hope" size={12} />{p.hope}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><KibouIcon kind="energy" size={12} />{p.energy}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><KibouIcon kind="mood" size={12} />{p.mood}</span>
+      </div>
       {p.note && <div style={{ color: 'rgba(255,255,255,0.45)', marginTop: 4, fontStyle: 'italic' }}>„{p.note}"</div>}
     </div>
   )
