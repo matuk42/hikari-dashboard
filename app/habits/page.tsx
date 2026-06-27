@@ -671,9 +671,9 @@ function HabitRow({ habit, state, onToggle, liveStreak, editMode, onEdit }: {
 
 // ─── Pack accordion ───────────────────────────────────────────────────────────
 
-function PackSection({ title, subtitle, habits, done, rest, onToggle, streakMap, editMode, onEdit }: {
+function PackSection({ title, subtitle, habits, done, rest, onToggle, streakMap, editMode, onEdit, onRemoveGroup }: {
   title: string; subtitle: string; habits: Habit[]; done: Set<string>; rest: Set<string>; onToggle: (id: string) => void; streakMap: Record<string, number>
-  editMode?: boolean; onEdit?: (h: Habit) => void
+  editMode?: boolean; onEdit?: (h: Habit) => void; onRemoveGroup?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const completedCount = habits.filter(h => done.has(h.id)).length
@@ -687,9 +687,19 @@ function PackSection({ title, subtitle, habits, done, rest, onToggle, streakMap,
       >
         <div style={{ textAlign: 'left' }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.65)' }}>{title}</span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginLeft: 8 }}>{subtitle}</span>
+          {subtitle && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginLeft: 8 }}>{subtitle}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {editMode && onRemoveGroup && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onRemoveGroup() }}
+              style={{ fontSize: 10, fontWeight: 600, color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
+            >
+              Odebrat skupinu
+            </span>
+          )}
           <span style={{ fontSize: 12, fontWeight: 600, color: allPackDone ? '#F59E0B' : 'rgba(255,255,255,0.25)' }}>
             {completedCount}/{habits.length}
           </span>
