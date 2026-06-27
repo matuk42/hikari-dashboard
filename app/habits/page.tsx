@@ -115,21 +115,32 @@ function groupHabits(list: Habit[]) {
 
 // ─── Habit CRUD (app is the source of truth) ──────────────────────────────────
 
-// UI group → DB (category, pack). One picker covers both columns so the form
-// stays simple. Packs are always trial-category.
-type HabitGroup = 'active' | 'trial' | 'imunita' | 'fyzicka' | 'graduated'
+// UI „kind" → DB (category, pack). Fixní druhy + `pack` = libovolný balíček (skupina).
+// Balíčky jsou vždy trial-category. „pack" kind znamená: habit patří do pojmenované skupiny.
+type HabitKind = 'active' | 'trial' | 'graduated' | 'pack'
 
-const GROUP_LABELS: Record<HabitGroup, string> = {
+const KIND_LABELS: Record<HabitKind, string> = {
   active:    'Aktivní',
   trial:     'Testovací',
-  imunita:   'Balíček Imunita',
-  fyzicka:   'Balíček Fyzička',
   graduated: 'Zautomatizováno',
+  pack:      'Balíček (skupina)',
+}
+
+/** Hezký název skupiny pro zobrazení (první písmeno velké). */
+function prettyPack(name: string): string {
+  return name ? name.charAt(0).toUpperCase() + name.slice(1) : name
+}
+
+/** Podtitulek u známých výchozích balíčků; jinak prázdný. */
+const PACK_SUBTITLES: Record<string, string> = {
+  imunita: 'Trial · do 30.6.',
+  fyzicka: 'Trial · od ~5.6.',
 }
 
 interface HabitForm {
   name: string
-  group: HabitGroup
+  kind: HabitKind
+  packName: string   // použito když kind === 'pack' (název skupiny)
   frequency: string
   serves: string
   mandatory: boolean
@@ -138,18 +149,17 @@ interface HabitForm {
 }
 
 function emptyForm(): HabitForm {
-  return { name: '', group: 'trial', frequency: '', serves: '', mandatory: false, packCode: '', until: '' }
+  return { name: '', kind: 'trial', packName: '', frequency: '', serves: '', mandatory: false, packCode: '', until: '' }
 }
 
 /** Existing habit → form (for editing). */
 function habitToForm(h: Habit): HabitForm {
-  const group: HabitGroup =
-    h.pack === 'imunita' ? 'imunita' :
-    h.pack === 'fyzicka' ? 'fyzicka' :
+  const kind: HabitKind =
+    h.pack ? 'pack' :
     h.status === 'active' ? 'active' :
     h.status === 'graduated' ? 'graduated' : 'trial'
   return {
-    name: h.name, group, frequency: h.frequency, serves: h.serves,
+    name: h.name, kind, packName: h.pack ?? '', frequency: h.frequency, serves: h.serves,
     mandatory: !!h.mandatory, packCode: h.packCode ?? '',
     until: h.endIso ?? h.trialIso ?? '',
   }
@@ -157,8 +167,8 @@ function habitToForm(h: Habit): HabitForm {
 
 /** Form → DB row columns (without profile_id). */
 function formToRow(form: HabitForm): Record<string, unknown> {
-  const category = form.group === 'imunita' || form.group === 'fyzicka' ? 'trial' : form.group
-  const pack     = form.group === 'imunita' ? 'imunita' : form.group === 'fyzicka' ? 'fyzicka' : null
+  const category = form.kind === 'pack' ? 'trial' : form.kind
+  const pack     = form.kind === 'pack' ? (form.packName.trim().toLowerCase() || null) : null
   const until    = /^\d{4}-\d{2}-\d{2}$/.test(form.until) ? form.until : null
   return {
     name:        form.name.trim(),
