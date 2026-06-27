@@ -1091,6 +1091,18 @@ export default function HabitsPage() {
     await reloadHabits()
   }
 
+  const handleRemoveGroup = async (packName: string) => {
+    if (!profileId) return
+    const count = groups.packs.find(p => p.name === packName)?.habits.length ?? 0
+    if (!confirm(`Odebrat skupinu „${prettyPack(packName)}"? ${count} habit(ů) se přesune do Testovací (nezmizí).`)) return
+    const err = await removeGroup(profileId, packName)
+    if (err) return
+    await reloadHabits()
+  }
+
+  // Názvy existujících skupin pro výběr v editoru (přidání do existující skupiny).
+  const existingGroups = groups.packs.map(p => p.name)
+
   // Rest days are intentional skips → drop them from today's denominator so the
   // "X/Y" counter reflects only the habits actually due today (a 3×/week habit on
   // its off day shouldn't read as a miss). The home page and the morning cron use
