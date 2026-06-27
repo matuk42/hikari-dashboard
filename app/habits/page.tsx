@@ -741,9 +741,13 @@ const labelStyle: React.CSSProperties = {
   color: 'rgba(255,255,255,0.35)', margin: '0 0 6px 2px', display: 'block',
 }
 
-function HabitEditor({ initial, isNew, onSave, onDelete, onClose }: {
+// Sentinel value v <select> pro „vytvořit novou skupinu".
+const NEW_GROUP = '__new__'
+
+function HabitEditor({ initial, isNew, existingGroups, onSave, onDelete, onClose }: {
   initial: HabitForm
   isNew: boolean
+  existingGroups: string[]
   onSave: (form: HabitForm) => Promise<void>
   onDelete?: () => Promise<void>
   onClose: () => void
@@ -751,12 +755,36 @@ function HabitEditor({ initial, isNew, onSave, onDelete, onClose }: {
   const [form, setForm] = useState<HabitForm>(initial)
   const [busy, setBusy] = useState<null | 'save' | 'delete'>(null)
   const [err, setErr] = useState('')
-  const isPack = form.group === 'imunita' || form.group === 'fyzicka'
+  const isPack = form.kind === 'pack'
+  // Existující skupina vybraná z dropdownu vs. nově psaný název.
+  // Pokud habit patří do skupiny, která ještě není mezi existingGroups (právě se tvoří),
+  // bereme to jako režim „nová skupina".
+  const [creatingGroup, setCreatingGroup] = useState(
+    isPack && !!form.packName && !existingGroups.includes(form.packName)
+  )
 
   const set = <K extends keyof HabitForm>(k: K, v: HabitForm[K]) => setForm(f => ({ ...f, [k]: v }))
 
+  // Hodnota <select>: fixní kind, nebo název existující skupiny, nebo NEW_GROUP.
+  const selectValue = !isPack ? form.kind : creatingGroup ? NEW_GROUP : form.packName
+
+  function handleGroupChange(value: string) {
+    if (value === 'active' || value === 'trial' || value === 'graduated') {
+      setCreatingGroup(false)
+      setForm(f => ({ ...f, kind: value as HabitKind, packName: '' }))
+    } else if (value === NEW_GROUP) {
+      setCreatingGroup(true)
+      setForm(f => ({ ...f, kind: 'pack', packName: '' }))
+    } else {
+      // existující skupina
+      setCreatingGroup(false)
+      setForm(f => ({ ...f, kind: 'pack', packName: value }))
+    }
+  }
+
   async function handleSave() {
     if (!form.name.trim()) { setErr('Název nesmí být prázdný.'); return }
+    if (form.kind === 'pack' && !form.packName.trim()) { setErr('Zadej název skupiny.'); return }
     setBusy('save'); setErr('')
     try { await onSave(form) } catch (e) { setErr(e instanceof Error ? e.message : 'Chyba'); setBusy(null) }
   }
