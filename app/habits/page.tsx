@@ -202,6 +202,21 @@ async function updateHabit(habitId: string, form: HabitForm): Promise<string | n
   return error ? error.message : null
 }
 
+/**
+ * Odebrat skupinu (balíček) — nedestruktivně: její habity zůstanou, jen vypadnou
+ * z balíčku (pack=null) a stanou se z nich Testovací solo habity (category='trial').
+ * Vrací chybovou hlášku nebo null.
+ */
+async function removeGroup(profileId: string, packName: string): Promise<string | null> {
+  let { error } = await supabase.from('habits')
+    .update({ category: 'trial', pack: null, pack_code: null })
+    .eq('profile_id', profileId).eq('pack', packName)
+  // Fallback pro pre-migration-003 DB bez pack sloupců (skupiny tam stejně nejsou)
+  if (error) ({ error } = await supabase.from('habits')
+    .update({ category: 'trial' }).eq('profile_id', profileId))
+  return error ? error.message : null
+}
+
 /** Soft-delete: category='retired' (reads everywhere filter it out; logs/streaks survive). */
 async function retireHabit(habitId: string): Promise<string | null> {
   const { error } = await supabase.from('habits').update({ category: 'retired' }).eq('id', habitId)
