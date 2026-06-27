@@ -1069,6 +1069,7 @@ export default function HabitsPage() {
       }
 
       loadRetiredHabits(pid).then(setArchived).catch(() => {})
+      loadPackMeta(pid).then(setPackMeta).catch(() => {})
 
       const ids = (dbHabits ?? []).map(h => h.id)
       const [dbStates, dbStreaks] = await Promise.all([
