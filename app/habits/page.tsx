@@ -1222,8 +1222,8 @@ export default function HabitsPage() {
     if (newName !== oldName) {
       const err = await renameGroup(profileId, oldName, newName)
       if (err) throw new Error(err)
-      // přesun podtitulku na nový klíč
-      await savePackSubtitle(profileId, oldName, '')
+      // přesun podtitulku na nový klíč — starý smazat
+      await deletePackSubtitle(profileId, oldName)
     }
     await savePackSubtitle(profileId, newName, subtitle)
     await reloadHabits()
