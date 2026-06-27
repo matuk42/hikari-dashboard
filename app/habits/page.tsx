@@ -253,15 +253,20 @@ async function loadPackMeta(profileId: string): Promise<Record<string, string>> 
   return map
 }
 
-/** Uloží/smaže podtitulek skupiny. Prázdný = smazat řádek (padne zpět na výchozí). */
+/**
+ * Uloží podtitulek skupiny — i prázdný (uložený jako "" → přebije výchozí mapu,
+ * takže „smazat text a uložit" zůstane prázdné, nepadne zpět na default).
+ */
 async function savePackSubtitle(profileId: string, name: string, subtitle: string): Promise<void> {
-  const key = `${PACK_SUB_PREFIX}${name}`
-  if (subtitle.trim()) {
-    await supabase.from('user_context').upsert(
-      { profile_id: profileId, key, value: subtitle.trim() }, { onConflict: 'profile_id,key' })
-  } else {
-    await supabase.from('user_context').delete().eq('profile_id', profileId).eq('key', key)
-  }
+  await supabase.from('user_context').upsert(
+    { profile_id: profileId, key: `${PACK_SUB_PREFIX}${name}`, value: subtitle.trim() },
+    { onConflict: 'profile_id,key' })
+}
+
+/** Smaže řádek podtitulku (úklid při přejmenování/odebrání skupiny → vrátí se výchozí). */
+async function deletePackSubtitle(profileId: string, name: string): Promise<void> {
+  await supabase.from('user_context').delete()
+    .eq('profile_id', profileId).eq('key', `${PACK_SUB_PREFIX}${name}`)
 }
 
 /** Přejmenuje skupinu = přepíše pack u všech jejích habitů. */
