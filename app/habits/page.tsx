@@ -826,11 +826,28 @@ function HabitEditor({ initial, isNew, existingGroups, onSave, onDelete, onClose
 
           <div>
             <label style={labelStyle}>Skupina</label>
-            <select value={form.group} onChange={e => set('group', e.target.value as HabitGroup)} style={{ ...fieldStyle, appearance: 'none' }}>
-              {(Object.keys(GROUP_LABELS) as HabitGroup[]).map(g => (
-                <option key={g} value={g} style={{ background: '#0e0e0e' }}>{GROUP_LABELS[g]}</option>
-              ))}
+            <select value={selectValue} onChange={e => handleGroupChange(e.target.value)} style={{ ...fieldStyle, appearance: 'none' }}>
+              <option value="active" style={{ background: '#0e0e0e' }}>{KIND_LABELS.active}</option>
+              <option value="trial" style={{ background: '#0e0e0e' }}>{KIND_LABELS.trial}</option>
+              <option value="graduated" style={{ background: '#0e0e0e' }}>{KIND_LABELS.graduated}</option>
+              {existingGroups.length > 0 && (
+                <optgroup label="Balíčky">
+                  {existingGroups.map(g => (
+                    <option key={g} value={g} style={{ background: '#0e0e0e' }}>{prettyPack(g)}</option>
+                  ))}
+                </optgroup>
+              )}
+              <option value={NEW_GROUP} style={{ background: '#0e0e0e' }}>+ Nová skupina…</option>
             </select>
+            {creatingGroup && (
+              <input
+                value={form.packName}
+                onChange={e => set('packName', e.target.value)}
+                placeholder="Název nové skupiny (např. Ranní rutina)"
+                style={{ ...fieldStyle, marginTop: 8 }}
+                autoFocus
+              />
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
