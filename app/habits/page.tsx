@@ -938,6 +938,78 @@ function HabitEditor({ initial, isNew, existingGroups, onSave, onDelete, onClose
   )
 }
 
+// ─── Pack (skupina) editor modal ──────────────────────────────────────────────
+
+function PackEditor({ initialName, initialSubtitle, count, onSave, onRemove, onClose }: {
+  initialName: string
+  initialSubtitle: string
+  count: number
+  onSave: (name: string, subtitle: string) => Promise<void>
+  onRemove: () => Promise<void>
+  onClose: () => void
+}) {
+  const [name, setName] = useState(prettyPack(initialName))
+  const [subtitle, setSubtitle] = useState(initialSubtitle)
+  const [busy, setBusy] = useState<null | 'save' | 'remove'>(null)
+  const [err, setErr] = useState('')
+
+  async function handleSave() {
+    if (!name.trim()) { setErr('Název nesmí být prázdný.'); return }
+    setBusy('save'); setErr('')
+    try { await onSave(name.trim(), subtitle) } catch (e) { setErr(e instanceof Error ? e.message : 'Chyba'); setBusy(null) }
+  }
+  async function handleRemove() {
+    setBusy('remove'); setErr('')
+    try { await onRemove() } catch (e) { setErr(e instanceof Error ? e.message : 'Chyba'); setBusy(null) }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 480, background: '#0e0e0e', borderTopLeftRadius: 18, borderTopRightRadius: 18, border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none', padding: '20px 20px 28px', maxHeight: '88vh', overflowY: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F59E0B', margin: 0 }}>Upravit skupinu</h2>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Název skupiny</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Např. Imunita" style={fieldStyle} autoFocus />
+          </div>
+          <div>
+            <label style={labelStyle}>Popisek (šedý text)</label>
+            <input value={subtitle} onChange={e => setSubtitle(e.target.value)} placeholder="Např. do 30.6." style={fieldStyle} />
+          </div>
+
+          {err && <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{err}</p>}
+
+          <button
+            onClick={handleSave}
+            disabled={busy !== null}
+            style={{ background: '#F59E0B', color: '#080808', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, padding: '12px 0', cursor: busy ? 'wait' : 'pointer', marginTop: 4 }}
+          >
+            {busy === 'save' ? 'Ukládám…' : 'Uložit změny'}
+          </button>
+
+          <button
+            onClick={handleRemove}
+            disabled={busy !== null}
+            style={{ background: 'transparent', color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, fontSize: 13, fontWeight: 600, padding: '10px 0', cursor: busy ? 'wait' : 'pointer' }}
+          >
+            {busy === 'remove' ? 'Odebírám…' : `Odebrat skupinu (${count} habit${count === 1 ? '' : count >= 2 && count <= 4 ? 'y' : 'ů'} → Testovací)`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function HabitsPage() {
