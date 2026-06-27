@@ -1356,6 +1356,7 @@ export default function HabitsPage() {
         <HabitEditor
           initial={editor.habit ? habitToForm(editor.habit) : emptyForm()}
           isNew={!editor.habit}
+          existingGroups={existingGroups}
           onSave={handleSaveHabit}
           onDelete={editor.habit ? handleDeleteHabit : undefined}
           onClose={() => setEditor(null)}
