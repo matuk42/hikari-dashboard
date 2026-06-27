@@ -25,7 +25,7 @@ interface Habit {
   trialEnd?: string     // display form ("30.6.")
   endIso?: string       // raw ISO ("2026-06-30") — for the editor date input
   trialIso?: string
-  pack?: 'imunita' | 'fyzicka'
+  pack?: string         // group name (balíček) — free-form; 'imunita'/'fyzicka' jsou jen výchozí
   packCode?: string
   mandatory?: boolean   // no grace day (autoškola) — streak breaks on a single miss
 }
