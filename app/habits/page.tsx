@@ -1264,17 +1264,23 @@ export default function HabitsPage() {
               </section>
             )}
 
-            {/* Balíčky */}
-            {(groups.imunita.length > 0 || groups.fyzicka.length > 0) && (
+            {/* Balíčky (skupiny) — dynamické */}
+            {groups.packs.length > 0 && (
               <section style={{ marginBottom: 20 }}>
                 <SectionLabel>Balíčky</SectionLabel>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {groups.imunita.length > 0 && (
-                    <PackSection title="Imunita" subtitle="Trial · do 30.6." habits={groups.imunita} done={done} rest={rest} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
-                  )}
-                  {groups.fyzicka.length > 0 && (
-                    <PackSection title="Fyzička" subtitle="Trial · od ~5.6." habits={groups.fyzicka} done={done} rest={rest} onToggle={toggle} streakMap={streakMap} editMode={editMode} onEdit={h => setEditor({ habit: h })} />
-                  )}
+                  {groups.packs.map(pack => (
+                    <PackSection
+                      key={pack.name}
+                      title={prettyPack(pack.name)}
+                      subtitle={PACK_SUBTITLES[pack.name] ?? ''}
+                      habits={pack.habits}
+                      done={done} rest={rest} onToggle={toggle} streakMap={streakMap}
+                      editMode={editMode}
+                      onEdit={h => setEditor({ habit: h })}
+                      onRemoveGroup={() => handleRemoveGroup(pack.name)}
+                    />
+                  ))}
                 </div>
               </section>
             )}
