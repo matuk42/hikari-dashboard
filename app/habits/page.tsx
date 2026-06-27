@@ -1029,8 +1029,11 @@ export default function HabitsPage() {
   const [dataLoaded, setDataLoaded] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [archived, setArchived] = useState<{ id: string; name: string }[]>([])
+  const [packMeta, setPackMeta] = useState<Record<string, string>>({})
   // null = closed; { habit } = edit existing; { habit: null } = add new
   const [editor, setEditor] = useState<null | { habit: Habit | null }>(null)
+  // null = closed; { name } = edit group with that pack name
+  const [packEditor, setPackEditor] = useState<null | { name: string }>(null)
 
   const groups = useMemo(() => groupHabits(habits), [habits])
 
