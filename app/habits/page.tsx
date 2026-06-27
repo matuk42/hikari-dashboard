@@ -1407,12 +1407,12 @@ export default function HabitsPage() {
                     <PackSection
                       key={pack.name}
                       title={prettyPack(pack.name)}
-                      subtitle={PACK_SUBTITLES[pack.name] ?? ''}
+                      subtitle={packSubtitle(pack.name)}
                       habits={pack.habits}
                       done={done} rest={rest} onToggle={toggle} streakMap={streakMap}
                       editMode={editMode}
                       onEdit={h => setEditor({ habit: h })}
-                      onRemoveGroup={() => handleRemoveGroup(pack.name)}
+                      onEditGroup={() => setPackEditor({ name: pack.name })}
                     />
                   ))}
                 </div>
