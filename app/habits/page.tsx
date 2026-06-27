@@ -1204,13 +1204,34 @@ export default function HabitsPage() {
     await reloadHabits()
   }
 
-  const handleRemoveGroup = async (packName: string) => {
-    if (!profileId) return
-    const count = groups.packs.find(p => p.name === packName)?.habits.length ?? 0
-    if (!confirm(`Odebrat skupinu „${prettyPack(packName)}"? ${count} habit(ů) se přesune do Testovací (nezmizí).`)) return
-    const err = await removeGroup(profileId, packName)
-    if (err) return
+  // Šedý podtitulek skupiny: vlastní (user_context) > výchozí mapa > prázdný.
+  const packSubtitle = useCallback(
+    (name: string) => packMeta[name] ?? PACK_SUBTITLES[name] ?? '',
+    [packMeta]
+  )
+
+  // Uložení úprav skupiny: přejmenování (přepíše pack u všech habitů) + podtitulek.
+  const handleSavePack = async (oldName: string, newDisplayName: string, subtitle: string) => {
+    if (!profileId) throw new Error('Nejsi přihlášený')
+    const newName = newDisplayName.trim().toLowerCase()
+    if (newName !== oldName) {
+      const err = await renameGroup(profileId, oldName, newName)
+      if (err) throw new Error(err)
+      // přesun podtitulku na nový klíč
+      await savePackSubtitle(profileId, oldName, '')
+    }
+    await savePackSubtitle(profileId, newName, subtitle)
     await reloadHabits()
+    setPackEditor(null)
+  }
+
+  const handleRemovePack = async (packName: string) => {
+    if (!profileId) throw new Error('Nejsi přihlášený')
+    const err = await removeGroup(profileId, packName)
+    if (err) throw new Error(err)
+    await savePackSubtitle(profileId, packName, '')   // úklid podtitulku
+    await reloadHabits()
+    setPackEditor(null)
   }
 
   // Názvy existujících skupin pro výběr v editoru (přidání do existující skupiny).
