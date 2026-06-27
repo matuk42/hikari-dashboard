@@ -1496,6 +1496,17 @@ export default function HabitsPage() {
           onClose={() => setEditor(null)}
         />
       )}
+
+      {packEditor && (
+        <PackEditor
+          initialName={packEditor.name}
+          initialSubtitle={packSubtitle(packEditor.name)}
+          count={groups.packs.find(p => p.name === packEditor.name)?.habits.length ?? 0}
+          onSave={(name, subtitle) => handleSavePack(packEditor.name, name, subtitle)}
+          onRemove={() => handleRemovePack(packEditor.name)}
+          onClose={() => setPackEditor(null)}
+        />
+      )}
     </div>
   )
 }
