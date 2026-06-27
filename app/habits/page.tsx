@@ -90,7 +90,7 @@ function dbToHabits(rows: DbHabit[]): Habit[] {
       trialEnd: r.trial_end ? formatShortCz(r.trial_end) : undefined,
       endIso: r.end_date ?? undefined,
       trialIso: r.trial_end ?? undefined,
-      pack: (r.pack === 'imunita' || r.pack === 'fyzicka') ? r.pack : undefined,
+      pack: r.pack?.trim() ? r.pack.trim() : undefined,
       packCode: r.pack_code ?? undefined,
       mandatory: !!r.mandatory,
     }))
