@@ -870,7 +870,7 @@ function HabitEditor({ initial, isNew, existingGroups, onSave, onDelete, onClose
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>{form.group === 'active' ? 'End-date (volitelné)' : 'Konec triálu (volitelné)'}</label>
+              <label style={labelStyle}>{form.kind === 'active' ? 'End-date (volitelné)' : 'Konec triálu (volitelné)'}</label>
               <input type="date" value={form.until} onChange={e => set('until', e.target.value)} style={{ ...fieldStyle, colorScheme: 'dark' }} />
             </div>
           </div>
