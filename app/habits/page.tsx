@@ -723,14 +723,17 @@ function PackSection({ title, subtitle, habits, done, rest, onToggle, streakMap,
           {subtitle && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginLeft: 8 }}>{subtitle}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {editMode && onRemoveGroup && (
+          {editMode && onEditGroup && (
             <span
               role="button"
               tabIndex={0}
-              onClick={(e) => { e.stopPropagation(); onRemoveGroup() }}
-              style={{ fontSize: 10, fontWeight: 600, color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
+              aria-label="Upravit skupinu"
+              onClick={(e) => { e.stopPropagation(); onEditGroup() }}
+              style={{ display: 'flex', alignItems: 'center', color: 'rgba(245,158,11,0.7)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '3px 6px', cursor: 'pointer' }}
             >
-              Odebrat skupinu
+              <svg viewBox="0 0 24 24" fill="none" style={{ width: 12, height: 12 }}>
+                <path d="M4 20h4l10-10-4-4L4 16v4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </span>
           )}
           <span style={{ fontSize: 12, fontWeight: 600, color: allPackDone ? '#F59E0B' : 'rgba(255,255,255,0.25)' }}>
