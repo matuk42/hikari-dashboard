@@ -208,12 +208,10 @@ async function updateHabit(habitId: string, form: HabitForm): Promise<string | n
  * Vrací chybovou hlášku nebo null.
  */
 async function removeGroup(profileId: string, packName: string): Promise<string | null> {
-  let { error } = await supabase.from('habits')
+  const { error } = await supabase.from('habits')
     .update({ category: 'trial', pack: null, pack_code: null })
     .eq('profile_id', profileId).eq('pack', packName)
-  // Fallback pro pre-migration-003 DB bez pack sloupců (skupiny tam stejně nejsou)
-  if (error) ({ error } = await supabase.from('habits')
-    .update({ category: 'trial' }).eq('profile_id', profileId))
+  // Bez pack sloupců (pre-migration-003) žádné skupiny neexistují → nic k odebrání.
   return error ? error.message : null
 }
 
