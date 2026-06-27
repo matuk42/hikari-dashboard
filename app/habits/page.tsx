@@ -238,6 +238,39 @@ async function loadRetiredHabits(profileId: string): Promise<{ id: string; name:
     .sort((a, b) => a.name.localeCompare(b.name, 'cs'))
 }
 
+// ─── Pack (skupina) meta — název je v habits.pack, podtitulek v user_context ────
+
+const PACK_SUB_PREFIX = 'pack_subtitle:'
+
+/** Podtitulky skupin (šedý text „do…") — uloženo v user_context jako pack_subtitle:<name>. */
+async function loadPackMeta(profileId: string): Promise<Record<string, string>> {
+  const { data } = await supabase.from('user_context')
+    .select('key, value').eq('profile_id', profileId).like('key', `${PACK_SUB_PREFIX}%`)
+  const map: Record<string, string> = {}
+  for (const r of data ?? []) {
+    map[(r.key as string).slice(PACK_SUB_PREFIX.length)] = (r.value as string) ?? ''
+  }
+  return map
+}
+
+/** Uloží/smaže podtitulek skupiny. Prázdný = smazat řádek (padne zpět na výchozí). */
+async function savePackSubtitle(profileId: string, name: string, subtitle: string): Promise<void> {
+  const key = `${PACK_SUB_PREFIX}${name}`
+  if (subtitle.trim()) {
+    await supabase.from('user_context').upsert(
+      { profile_id: profileId, key, value: subtitle.trim() }, { onConflict: 'profile_id,key' })
+  } else {
+    await supabase.from('user_context').delete().eq('profile_id', profileId).eq('key', key)
+  }
+}
+
+/** Přejmenuje skupinu = přepíše pack u všech jejích habitů. */
+async function renameGroup(profileId: string, oldName: string, newName: string): Promise<string | null> {
+  const { error } = await supabase.from('habits')
+    .update({ pack: newName }).eq('profile_id', profileId).eq('pack', oldName)
+  return error ? error.message : null
+}
+
 /**
  * Live habit list from the DB (the source of truth once vault sync has run).
  * Tolerates pack/pack_code being absent (migration 003 not applied) by retrying
