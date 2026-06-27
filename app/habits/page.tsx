@@ -133,8 +133,8 @@ function prettyPack(name: string): string {
 
 /** Podtitulek u známých výchozích balíčků; jinak prázdný. */
 const PACK_SUBTITLES: Record<string, string> = {
-  imunita: 'Trial · do 30.6.',
-  fyzicka: 'Trial · od ~5.6.',
+  imunita: 'do 30.6.',
+  fyzicka: 'od ~5.6.',
 }
 
 interface HabitForm {
