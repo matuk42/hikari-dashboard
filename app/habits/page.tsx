@@ -1234,7 +1234,7 @@ export default function HabitsPage() {
     if (!profileId) throw new Error('Nejsi přihlášený')
     const err = await removeGroup(profileId, packName)
     if (err) throw new Error(err)
-    await savePackSubtitle(profileId, packName, '')   // úklid podtitulku
+    await deletePackSubtitle(profileId, packName)   // úklid podtitulku
     await reloadHabits()
     setPackEditor(null)
   }
