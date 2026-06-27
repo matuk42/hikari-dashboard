@@ -97,11 +97,17 @@ function dbToHabits(rows: DbHabit[]): Habit[] {
 }
 
 function groupHabits(list: Habit[]) {
+  // Balíčky (skupiny) jsou dynamické — odvozené z `pack` hodnot napříč habity.
+  // Pořadí: výchozí imunita/fyzicka první (kvůli zpětné kompatibilitě), pak abecedně.
+  const packNames = Array.from(new Set(list.map(h => h.pack).filter((p): p is string => !!p)))
+  const order = (n: string) => (n === 'imunita' ? 0 : n === 'fyzicka' ? 1 : 2)
+  packNames.sort((a, b) => order(a) - order(b) || a.localeCompare(b, 'cs'))
+  const packs = packNames.map(name => ({ name, habits: list.filter(h => h.pack === name) }))
+
   return {
     active:    list.filter(h => h.status === 'active'),
     trialSolo: list.filter(h => h.status === 'trial' && !h.pack),
-    imunita:   list.filter(h => h.pack === 'imunita'),
-    fyzicka:   list.filter(h => h.pack === 'fyzicka'),
+    packs,
     graduated: list.filter(h => h.status === 'graduated'),
     trackable: list.filter(h => h.status !== 'graduated'),
   }
